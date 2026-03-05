@@ -259,7 +259,6 @@ const BottomNav = ({
           zIndex: 49         → nav (100) dan past, nav doim ko'rinadi
       */}
       <div
-        className="md:hidden"
         style={{
           position: "fixed",
           left: 0,
@@ -378,7 +377,7 @@ const BottomNav = ({
               gap: 12,
             }}
           >
-            {/* 1. O'zbek taomlari — yashil katta karta */}
+            {/* 1. O'zbek taomlari */}
             <BigCard
               cat={uzbekCat}
               lang={lang}
@@ -388,7 +387,130 @@ const BottomNav = ({
               delay={0}
             />
 
-            {/* 2. Asosiy kategoriyalar — 3 ustunli grid */}
+            {/* 2. Vaqt bo'yicha taomlar — O'zbek dan keyin */}
+            {[
+              {
+                id: "morning",
+                emoji: "🌅",
+                uz: "Nonushta taomlar",
+                en: "Breakfast Meals",
+              },
+              {
+                id: "lunch",
+                emoji: "🌞",
+                uz: "Tushlik taomlari",
+                en: "Lunch Meals",
+              },
+              {
+                id: "dinner",
+                emoji: "🌙",
+                uz: "Kechgi taomlar",
+                en: "Dinner Meals",
+              },
+            ].map((item, i) => (
+              <button
+                key={item.id}
+                onClick={() => handleCategorySelect(item.id)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  width: "100%",
+                  padding: "13px 18px",
+                  borderRadius: 14,
+                  background:
+                    activeCategory === item.id
+                      ? "rgba(34,197,94,0.1)"
+                      : "#f7f7f7",
+                  border:
+                    activeCategory === item.id
+                      ? "1.5px solid rgba(34,197,94,0.4)"
+                      : "1.5px solid #ebebeb",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  opacity: panelVisible ? 1 : 0,
+                  transform: panelVisible
+                    ? "translateY(0)"
+                    : "translateY(10px)",
+                  transition: `opacity 0.25s ease ${i * 0.05 + 0.05}s, transform 0.3s ease ${i * 0.05 + 0.05}s`,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <span style={{ fontSize: 24 }}>{item.emoji}</span>
+                  <span
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: activeCategory === item.id ? "#16a34a" : "#333",
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    }}
+                  >
+                    {lang === "uz" ? item.uz : item.en}
+                  </span>
+                </div>
+                <span
+                  style={{
+                    fontSize: 18,
+                    color: activeCategory === item.id ? "#16a34a" : "#aaa",
+                  }}
+                >
+                  ›
+                </span>
+              </button>
+            ))}
+
+            {/* 3. Admin panel */}
+            <button
+              onClick={() => handleCategorySelect("admin")}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                padding: "13px 18px",
+                borderRadius: 14,
+                background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
+                border: "none",
+                cursor: "pointer",
+                textAlign: "left",
+                opacity: panelVisible ? 1 : 0,
+                transform: panelVisible ? "translateY(0)" : "translateY(10px)",
+                transition: "opacity 0.25s ease 0.2s, transform 0.3s ease 0.2s",
+              }}
+            >
+              <span style={{ fontSize: 22 }}>⚙️</span>
+              <span
+                style={{
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "#fff",
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                }}
+              >
+                {lang === "uz" ? "Admin Panel" : "Admin Panel"}
+              </span>
+              <span
+                style={{
+                  marginLeft: "auto",
+                  color: "rgba(255,255,255,0.4)",
+                  fontSize: 18,
+                }}
+              >
+                ›
+              </span>
+            </button>
+
+            {/* 4. Davlat Taomlari */}
+            <BigCard
+              cat={worldCat}
+              lang={lang}
+              isAct={activeCategory === worldCat.id}
+              panelVisible={panelVisible}
+              onSelect={handleCategorySelect}
+              delay={0.05}
+              isWorld
+            />
+
+            {/* 3. Asosiy kategoriyalar */}
             <SectionLabel
               label={lang === "uz" ? "Taom turlari" : "Food Types"}
             />
@@ -411,87 +533,12 @@ const BottomNav = ({
                 />
               ))}
             </div>
-
-            {/* 3. Vaqt bo'yicha — 3 ustunli grid */}
-            <SectionLabel label={lang === "uz" ? "Vaqt bo'yicha" : "By Time"} />
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr 1fr",
-                gap: 8,
-              }}
-            >
-              {timeCats.map((cat, i) => (
-                <SmallCard
-                  key={cat.id}
-                  cat={cat}
-                  lang={lang}
-                  isAct={activeCategory === cat.id}
-                  panelVisible={panelVisible}
-                  onSelect={handleCategorySelect}
-                  delay={i * 0.04 + 0.15}
-                />
-              ))}
-            </div>
-
-            {/* 4. Admin panel — alohida tugma */}
-            <button
-              onClick={() => handleCategorySelect("admin")}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "13px 18px",
-                borderRadius: 14,
-                background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                cursor: "pointer",
-                textAlign: "left",
-                opacity: panelVisible ? 1 : 0,
-                transform: panelVisible ? "translateY(0)" : "translateY(10px)",
-                transition:
-                  "opacity 0.25s ease 0.25s, transform 0.3s ease 0.25s",
-              }}
-            >
-              <span style={{ fontSize: 20 }}>⚙️</span>
-              <span
-                style={{
-                  fontSize: 14,
-                  fontWeight: 700,
-                  color: "#fff",
-                  fontFamily: "'Plus Jakarta Sans', sans-serif",
-                }}
-              >
-                {lang === "uz" ? "Admin Panel" : "Admin Panel"}
-              </span>
-              <span
-                style={{
-                  marginLeft: "auto",
-                  color: "rgba(255,255,255,0.5)",
-                  fontSize: 18,
-                }}
-              >
-                ›
-              </span>
-            </button>
-
-            {/* 5. Davlat Taomlari — eng oxirida */}
-            <BigCard
-              cat={worldCat}
-              lang={lang}
-              isAct={activeCategory === worldCat.id}
-              panelVisible={panelVisible}
-              onSelect={handleCategorySelect}
-              delay={0.3}
-              isWorld
-            />
           </div>
         </div>
       </div>
 
       {/* ═══ BOTTOM NAV — yashil glassmorphism, DOIM ENG USTIDA ═══ */}
       <nav
-        className="md:hidden"
         style={{
           position: "fixed",
           bottom: 0,

@@ -56,7 +56,10 @@ const AppContent = () => {
     return (
       <div className="flex min-h-screen">
         <SideNav active={activeTab} onNavigate={handleNavigate} />
-        <main className="flex-1 max-w-4xl mx-auto">
+        <main
+          className="flex-1 max-w-4xl mx-auto"
+          style={{ paddingBottom: 100 }}
+        >
           <RecipeDetail
             recipe={selectedRecipe}
             onBack={() => {
@@ -81,7 +84,11 @@ const AppContent = () => {
       <SideNav active={activeTab} onNavigate={setActiveTab} />
       <main
         className="flex-1 md:p-6 max-w-5xl"
-        style={{ background: "hsl(138 30% 97%)", minHeight: "100vh" }}
+        style={{
+          background: "hsl(138 30% 97%)",
+          minHeight: "100vh",
+          paddingBottom: 100, // ← NAV OSTIDA CONTENT KO'RINADI
+        }}
       >
         {activeTab === "recipes" && (
           <RecipesTab

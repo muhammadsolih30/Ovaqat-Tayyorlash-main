@@ -12,10 +12,8 @@ import {
   Leaf,
   Coffee,
   Moon,
-  ChefHat,
   Shield,
 } from "lucide-react";
-import { chefs } from "@/data/videos";
 
 interface VideoSidebarProps {
   active: string;
@@ -124,51 +122,6 @@ const VideoSidebar = ({ active, onNavigate, open }: VideoSidebarProps) => {
             </button>
           );
         })}
-
-        {/* Popular chefs */}
-        <div
-          className="mt-4 pt-4"
-          style={{ borderTop: `1px solid ${borderColor}` }}
-        >
-          <div className="px-3 mb-3 flex items-center gap-2">
-            <ChefHat size={14} style={{ color: activeColor }} />
-            <span
-              className="text-xs font-bold uppercase tracking-wider"
-              style={{ color: textColor }}
-            >
-              {t("popularChefs")}
-            </span>
-          </div>
-          {chefs.map((chef) => (
-            <div
-              key={chef.id}
-              className="flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer hover:opacity-80 transition-opacity"
-            >
-              <img
-                src={chef.avatar}
-                alt={chef.name}
-                className="w-7 h-7 rounded-full object-cover"
-              />
-              <div className="min-w-0 flex-1">
-                <p
-                  className="text-xs font-semibold truncate"
-                  style={{
-                    color: dark ? "#f1f5f9" : "#111827",
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  }}
-                >
-                  {chef.name}
-                </p>
-                <p
-                  className="text-[10px] truncate"
-                  style={{ color: activeColor }}
-                >
-                  {chef.specialty[lang]}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
 
         {/* Admin access section */}
         <div
