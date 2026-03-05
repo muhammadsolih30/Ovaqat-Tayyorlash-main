@@ -1,5 +1,9 @@
+// src/components/ProfileSection.tsx
+// MAVJUD FAYLNI BU KOD BILAN ALMASHTIRING
+
 import { useState } from "react";
 import { useLang } from "@/contexts/LangContext";
+import { usePremium } from "@/contexts/PremiumContext";
 import {
   Globe,
   Shield,
@@ -8,6 +12,8 @@ import {
   Star,
   Heart,
   Leaf,
+  Crown,
+  Check,
 } from "lucide-react";
 
 interface ProfileSectionProps {
@@ -16,47 +22,139 @@ interface ProfileSectionProps {
 
 const ProfileSection = ({ onOpenAdmin }: ProfileSectionProps) => {
   const { lang, setLang, t } = useLang();
+  const { isPremium, openPremiumModal } = usePremium();
   const [showAdminHint, setShowAdminHint] = useState(false);
 
   return (
     <div className="p-4 pb-24 md:pb-8 animate-fade-in">
       {/* Profile hero */}
       <div
-        className="rounded-3xl p-6 mb-5 text-center"
+        className="rounded-3xl p-6 mb-5 text-center relative overflow-hidden"
         style={{
           background:
-            "linear-gradient(135deg, hsl(152 72% 28%) 0%, hsl(148 65% 22%) 100%)",
+            "linear-gradient(135deg, hsl(152 72% 18%) 0%, hsl(148 65% 12%) 100%)",
         }}
       >
+        {/* Decorative */}
         <div
-          className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl"
+          className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-15"
           style={{
-            background: "hsl(0 0% 100% / 0.18)",
-            border: "3px solid hsl(0 0% 100% / 0.3)",
+            background: "hsl(145 65% 55%)",
+            transform: "translate(30%, -30%)",
+          }}
+        />
+        <div
+          className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl relative z-10"
+          style={{
+            background: "hsl(0 0% 100% / 0.15)",
+            border: "3px solid hsl(0 0% 100% / 0.25)",
           }}
         >
           👨‍🍳
         </div>
         <h2
-          className="font-bold text-xl text-white mb-1"
+          className="font-bold text-xl text-white mb-1 relative z-10"
           style={{ fontFamily: "var(--font-display)" }}
         >
           {t("profile")}
         </h2>
-        <p className="text-white/60 text-sm">
+        <p className="text-white/60 text-sm relative z-10">
           {lang === "uz"
             ? "Ilovadan foydalanganingiz uchun rahmat!"
             : "Thank you for using the app!"}
         </p>
+        {isPremium && (
+          <div
+            className="inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 rounded-full text-xs font-black relative z-10"
+            style={{ background: "rgba(249,168,37,0.25)", color: "#f9a825" }}
+          >
+            <Crown size={12} />
+            Premium Foydalanuvchi
+          </div>
+        )}
       </div>
+
+      {/* Premium CTA (agar premium emas bo'lsa) */}
+      {!isPremium && (
+        <button
+          onClick={openPremiumModal}
+          className="w-full rounded-2xl p-4 mb-4 flex items-center justify-between transition-all hover:scale-[1.01] active:scale-[0.99]"
+          style={{
+            background: "linear-gradient(135deg, #fff8e1 0%, #fff3cd 100%)",
+            border: "2px solid #f9a825",
+            boxShadow: "0 6px 20px rgba(249,168,37,0.2)",
+          }}
+        >
+          <div className="text-left">
+            <div
+              className="font-black text-base mb-0.5"
+              style={{
+                fontFamily: "var(--font-display)",
+                color: "hsl(150 35% 8%)",
+              }}
+            >
+              👑 Premium olish
+            </div>
+            <div
+              className="text-xs font-semibold"
+              style={{ color: "hsl(145 12% 45%)" }}
+            >
+              {lang === "uz"
+                ? "Barcha jahon taomlarini ko'ring"
+                : "Unlock all world cuisines"}
+            </div>
+          </div>
+          <div className="flex items-center gap-1" style={{ color: "#e65c00" }}>
+            <span
+              className="font-black text-lg"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              $18
+            </span>
+            <ChevronRight size={18} />
+          </div>
+        </button>
+      )}
+
+      {/* Premium faol bo'lsa */}
+      {isPremium && (
+        <div
+          className="w-full rounded-2xl p-4 mb-4 flex items-center gap-3"
+          style={{
+            background: "hsl(145 55% 95%)",
+            border: "2px solid hsl(152 72% 40%)",
+          }}
+        >
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center"
+            style={{ background: "hsl(152 72% 28%)" }}
+          >
+            <Check size={18} className="text-white" />
+          </div>
+          <div>
+            <div
+              className="font-black text-sm"
+              style={{
+                fontFamily: "var(--font-display)",
+                color: "hsl(150 35% 8%)",
+              }}
+            >
+              Premium Faol ✓
+            </div>
+            <div className="text-xs" style={{ color: "hsl(152 72% 28%)" }}>
+              {lang === "uz" ? "Barcha taomlar ochiq" : "All recipes unlocked"}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Language */}
       <div
         className="rounded-2xl p-5 mb-4"
         style={{
-          background: "hsl(0 0% 100%)",
+          background: "white",
           border: "1.5px solid hsl(140 22% 87%)",
-          boxShadow: "0 2px 12px hsl(152 40% 25% / 0.08)",
+          boxShadow: "0 2px 12px hsl(152 40% 25% / 0.07)",
         }}
       >
         <div className="flex items-center gap-3 mb-4">
@@ -82,46 +180,29 @@ const ProfileSection = ({ onOpenAdmin }: ProfileSectionProps) => {
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={() => setLang("uz")}
-            className="py-3 rounded-xl text-sm font-semibold transition-all"
-            style={
-              lang === "uz"
-                ? {
-                    background:
-                      "linear-gradient(135deg, hsl(152 72% 28%) 0%, hsl(148 65% 22%) 100%)",
-                    color: "white",
-                    boxShadow: "0 4px 14px hsl(152 72% 25% / 0.4)",
-                  }
-                : {
-                    background: "hsl(145 55% 92%)",
-                    color: "hsl(152 72% 22%)",
-                    border: "1.5px solid hsl(143 40% 85%)",
-                  }
-            }
-          >
-            🇺🇿 O'zbekcha
-          </button>
-          <button
-            onClick={() => setLang("en")}
-            className="py-3 rounded-xl text-sm font-semibold transition-all"
-            style={
-              lang === "en"
-                ? {
-                    background:
-                      "linear-gradient(135deg, hsl(152 72% 28%) 0%, hsl(148 65% 22%) 100%)",
-                    color: "white",
-                    boxShadow: "0 4px 14px hsl(152 72% 25% / 0.4)",
-                  }
-                : {
-                    background: "hsl(145 55% 92%)",
-                    color: "hsl(152 72% 22%)",
-                    border: "1.5px solid hsl(143 40% 85%)",
-                  }
-            }
-          >
-            🇬🇧 English
-          </button>
+          {(["uz", "en"] as const).map((l) => (
+            <button
+              key={l}
+              onClick={() => setLang(l)}
+              className="py-3 rounded-xl text-sm font-semibold transition-all"
+              style={
+                lang === l
+                  ? {
+                      background:
+                        "linear-gradient(135deg, hsl(152 72% 28%) 0%, hsl(148 65% 22%) 100%)",
+                      color: "white",
+                      boxShadow: "0 4px 14px hsl(152 72% 25% / 0.4)",
+                    }
+                  : {
+                      background: "hsl(145 55% 92%)",
+                      color: "hsl(152 72% 22%)",
+                      border: "1.5px solid hsl(143 40% 85%)",
+                    }
+              }
+            >
+              {l === "uz" ? "🇺🇿 O'zbekcha" : "🇬🇧 English"}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -220,7 +301,7 @@ const ProfileSection = ({ onOpenAdmin }: ProfileSectionProps) => {
         </div>
       </div>
 
-      {/* ===== ADMIN KIRISH TUGMASI ===== */}
+      {/* Admin */}
       <div
         className="rounded-2xl overflow-hidden"
         style={{ border: "1.5px solid hsl(140 22% 87%)" }}
@@ -288,12 +369,12 @@ const ProfileSection = ({ onOpenAdmin }: ProfileSectionProps) => {
           >
             <p className="text-xs mb-3" style={{ color: "hsl(145 18% 40%)" }}>
               {lang === "uz"
-                ? "Admin paneliga kirish uchun maxsus login va parol kerak. Faqat vakolatli foydalanuvchilar uchun."
-                : "Admin panel requires special credentials. Authorized users only."}
+                ? "Admin paneliga kirish uchun maxsus login va parol kerak."
+                : "Admin panel requires special credentials."}
             </p>
             <button
               onClick={() => onOpenAdmin?.()}
-              className="w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
               style={{
                 background:
                   "linear-gradient(135deg, hsl(152 72% 28%) 0%, hsl(148 65% 22%) 100%)",

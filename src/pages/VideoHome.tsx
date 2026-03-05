@@ -171,12 +171,6 @@ const VideoHome = ({
                   >
                     {v.title[lang]}
                   </h4>
-                  <p
-                    className="text-xs font-semibold mb-1"
-                    style={{ color: "#1DB954" }}
-                  >
-                    {v.chef}
-                  </p>
                   <p className="text-[11px]" style={{ color: textMuted }}>
                     {formatViews(v.views)} {t("views")}
                   </p>

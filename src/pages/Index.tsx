@@ -1,6 +1,10 @@
+// src/pages/Index.tsx
+// MAVJUD FAYLNI BU KOD BILAN ALMASHTIRING
+
 import { useState } from "react";
 import { LangProvider } from "@/contexts/LangContext";
 import { AdminProvider, useAdmin } from "@/contexts/AdminContext";
+import { PremiumProvider } from "@/contexts/PremiumContext";
 import { recipes } from "@/data/recipes";
 import BottomNav from "@/components/BottomNav";
 import SideNav from "@/components/SideNav";
@@ -10,6 +14,7 @@ import IngredientsSearch from "@/components/IngredientsSearch";
 import SavedTab from "@/components/SavedTab";
 import TipsSection from "@/components/TipsSection";
 import ProfileSection from "@/components/ProfileSection";
+import PremiumModal from "@/components/PremiumModal";
 import AdminLogin from "@/pages/admin/AdminLogin";
 import AdminPanel from "@/pages/admin/AdminPanel";
 
@@ -18,6 +23,7 @@ const AppContent = () => {
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [activeCategory, setActiveCategory] = useState("all");
   const { isAdmin } = useAdmin();
 
   const toggleSave = (id: string) => {
@@ -30,7 +36,16 @@ const AppContent = () => {
     ? recipes.find((r) => r.id === selectedRecipeId)
     : null;
 
-  // Show admin login
+  const handleNavigate = (tab: string) => {
+    if (tab === "admin") {
+      setShowAdminLogin(true);
+      return;
+    }
+    setActiveTab(tab);
+    setSelectedRecipeId(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   if (showAdminLogin && !isAdmin) {
     return (
       <AdminLogin
@@ -40,34 +55,28 @@ const AppContent = () => {
     );
   }
 
-  // Show admin panel
-  if (isAdmin) {
-    return <AdminPanel onExit={() => {}} />;
-  }
+  if (isAdmin) return <AdminPanel onExit={() => {}} />;
 
   if (selectedRecipe) {
     return (
       <div className="flex min-h-screen">
-        <SideNav
-          active={activeTab}
-          onNavigate={(tab) => {
-            setActiveTab(tab);
-            setSelectedRecipeId(null);
-          }}
-        />
+        <SideNav active={activeTab} onNavigate={handleNavigate} />
         <main className="flex-1 max-w-4xl mx-auto">
           <RecipeDetail
             recipe={selectedRecipe}
-            onBack={() => setSelectedRecipeId(null)}
+            onBack={() => {
+              setSelectedRecipeId(null);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
           />
         </main>
         <BottomNav
           active={activeTab}
-          onNavigate={(tab) => {
-            setActiveTab(tab);
-            setSelectedRecipeId(null);
-          }}
+          onNavigate={handleNavigate}
+          activeCategory={activeCategory}
+          onCategoryChange={setActiveCategory}
         />
+        <PremiumModal />
       </div>
     );
   }
@@ -81,6 +90,8 @@ const AppContent = () => {
             onSelectRecipe={setSelectedRecipeId}
             savedIds={savedIds}
             onToggleSave={toggleSave}
+            forcedCategory={activeCategory}
+            onForcedCategoryChange={setActiveCategory}
           />
         )}
         {activeTab === "ingredients" && (
@@ -102,7 +113,13 @@ const AppContent = () => {
           <ProfileSection onOpenAdmin={() => setShowAdminLogin(true)} />
         )}
       </main>
-      <BottomNav active={activeTab} onNavigate={setActiveTab} />
+      <BottomNav
+        active={activeTab}
+        onNavigate={handleNavigate}
+        activeCategory={activeCategory}
+        onCategoryChange={setActiveCategory}
+      />
+      <PremiumModal />
     </div>
   );
 };
@@ -110,7 +127,9 @@ const AppContent = () => {
 const Index = () => (
   <AdminProvider>
     <LangProvider>
-      <AppContent />
+      <PremiumProvider>
+        <AppContent />
+      </PremiumProvider>
     </LangProvider>
   </AdminProvider>
 );

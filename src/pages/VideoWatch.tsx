@@ -218,23 +218,6 @@ const VideoWatch = ({
               {video.title[lang]}
             </h1>
             <div className="flex items-center gap-3 flex-wrap mb-4">
-              <img
-                src={video.chefAvatar}
-                onError={(e) =>
-                  (e.currentTarget.src = "https://i.pravatar.cc/150?img=1")
-                }
-                alt={video.chef}
-                className="w-8 h-8 rounded-full object-cover"
-              />
-              <span
-                className="font-bold text-sm"
-                style={{
-                  color: G,
-                  fontFamily: "'Plus Jakarta Sans', sans-serif",
-                }}
-              >
-                {video.chef}
-              </span>
               <span className="text-sm" style={{ color: muted }}>
                 {formatViews(video.views)} {t("views")}
               </span>

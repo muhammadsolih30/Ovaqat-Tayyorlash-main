@@ -1,3 +1,6 @@
+/* src/index.css */
+/* MAVJUD FAYLNI BU KOD BILAN ALMASHTIRING */
+
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500;600&display=swap');
 
 @tailwind base;
@@ -12,7 +15,7 @@
     --card-foreground: 150 35% 8%;
     --popover: 0 0% 100%;
     --popover-foreground: 150 35% 8%;
-    --primary: 152 72% 30%;
+    --primary: 152 72% 28%;
     --primary-foreground: 0 0% 100%;
     --secondary: 145 55% 92%;
     --secondary-foreground: 152 72% 22%;
@@ -96,12 +99,24 @@
     display: none;
   }
 
+  /* ===== ANIMATSIYALAR ===== */
+
   .animate-fade-in {
-    animation: fadeIn 0.35s ease-out;
+    animation: fadeIn 0.35s ease-out both;
   }
 
   .animate-slide-up {
-    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  /* Kategoriya o'zgarganda yangi kontent */
+  .animate-page-enter {
+    animation: pageEnter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  /* Kartochkalar uchun staggered animatsiya */
+  .animate-card-in {
+    animation: cardIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   }
 }
 
@@ -120,11 +135,48 @@
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(32px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
   }
 
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Premium lock pulsatsiya */
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.75;
   }
 }
