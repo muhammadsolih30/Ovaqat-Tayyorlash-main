@@ -1,14 +1,6 @@
 import { useState, useRef } from "react";
 import { useLang } from "@/contexts/LangContext";
-import { categoryList } from "@/data/recipes";
-import {
-  Home,
-  TrendingUp,
-  LayoutGrid,
-  Bookmark,
-  Globe,
-  ChevronDown,
-} from "lucide-react";
+import { Home, TrendingUp, LayoutGrid, Bookmark, Globe, X } from "lucide-react";
 
 interface BottomNavProps {
   active: string;
@@ -16,6 +8,105 @@ interface BottomNavProps {
   activeCategory?: string;
   onCategoryChange?: (cat: string) => void;
 }
+
+// Barcha kategoriyalar — to'liq ro'yxat
+const allCategories = [
+  // O'zbek taomlari — KATTA KARTA
+  {
+    id: "uzbek",
+    uz: "O'zbek taomlari",
+    en: "Uzbek Dishes",
+    emoji: "🇺🇿",
+    type: "big",
+    desc_uz: "Palov, Lagman, Somsa...",
+  },
+
+  // Asosiy kategoriyalar — 3 ustunli grid
+  {
+    id: "fast",
+    uz: "Tez taomlar",
+    en: "Fast Food",
+    emoji: "⚡",
+    type: "small",
+  },
+  {
+    id: "healthy",
+    uz: "Sog'lom ovqat",
+    en: "Healthy Food",
+    emoji: "🥗",
+    type: "small",
+  },
+  {
+    id: "dessert",
+    uz: "Shirinliklar",
+    en: "Desserts",
+    emoji: "🍰",
+    type: "small",
+  },
+  {
+    id: "vegetarian",
+    uz: "Vegetarian",
+    en: "Vegetarian",
+    emoji: "🥦",
+    type: "small",
+  },
+  {
+    id: "breakfast",
+    uz: "Nonushta",
+    en: "Breakfast",
+    emoji: "☀️",
+    type: "small",
+  },
+  {
+    id: "grill",
+    uz: "Kabob & Gril",
+    en: "Kabob & Grill",
+    emoji: "🔥",
+    type: "small",
+  },
+
+  // Vaqt bo'yicha — alohida bo'lim
+  {
+    id: "morning",
+    uz: "Nonushta uchun",
+    en: "For Breakfast",
+    emoji: "🌅",
+    type: "time",
+  },
+  {
+    id: "lunch",
+    uz: "Tushlik uchun",
+    en: "For Lunch",
+    emoji: "🌞",
+    type: "time",
+  },
+  {
+    id: "dinner",
+    uz: "Kechgi taomlar",
+    en: "For Dinner",
+    emoji: "🌙",
+    type: "time",
+  },
+
+  // Admin — alohida
+  {
+    id: "admin",
+    uz: "Admin Panel",
+    en: "Admin Panel",
+    emoji: "⚙️",
+    type: "admin",
+  },
+
+  // Davlat taomlari — KATTA KARTA (eng oxirida)
+  {
+    id: "world",
+    uz: "Davlat Taomlari",
+    en: "World Cuisines",
+    emoji: "🌍",
+    type: "big",
+    desc_uz: "10+ mamlakat oshxonasi",
+  },
+];
 
 const BottomNav = ({
   active,
@@ -37,12 +128,7 @@ const BottomNav = ({
       label: lang === "uz" ? "Bosh sahifa" : "Home",
       isCategory: false,
     },
-    {
-      id: "ingredients",
-      icon: TrendingUp,
-      label: "Trend",
-      isCategory: false,
-    },
+    { id: "ingredients", icon: TrendingUp, label: "Trend", isCategory: false },
     {
       id: "categories",
       icon: LayoutGrid,
@@ -76,6 +162,11 @@ const BottomNav = ({
   };
 
   const handleCategorySelect = (catId: string) => {
+    if (catId === "admin") {
+      onNavigate("admin");
+      setShowCategories(false);
+      return;
+    }
     onCategoryChange?.(catId);
     window.scrollTo({ top: 0, behavior: "smooth" });
     onNavigate("recipes");
@@ -123,10 +214,32 @@ const BottomNav = ({
 
   const activeId = showCategories ? "categories" : active;
   const panelVisible = showCategories && dragOffset < 350;
+  const NAV_HEIGHT = 80;
+
+  const bigCats = allCategories.filter((c) => c.type === "big");
+  const smallCats = allCategories.filter((c) => c.type === "small");
+  const timeCats = allCategories.filter((c) => c.type === "time");
+  const adminCat = allCategories.find((c) => c.type === "admin")!;
+  const uzbekCat = bigCats.find((c) => c.id === "uzbek")!;
+  const worldCat = bigCats.find((c) => c.id === "world")!;
 
   return (
     <>
-      {/* ── BACKDROP ── */}
+      <style>{`
+        @keyframes fadeInBg {
+          from { opacity: 0; } to { opacity: 1; }
+        }
+        @keyframes navGlow {
+          0%,100% { box-shadow: 0 0 30px rgba(34,197,94,0.45), 0 0 60px rgba(34,197,94,0.2), inset 0 1px 0 rgba(255,255,255,0.15); }
+          50%      { box-shadow: 0 0 45px rgba(34,197,94,0.65), 0 0 90px rgba(34,197,94,0.3), inset 0 1px 0 rgba(255,255,255,0.2); }
+        }
+        @keyframes activeGlow {
+          0%,100% { box-shadow: 0 0 0 2.5px rgba(255,255,255,0.45), 0 0 22px rgba(74,222,128,0.85), 0 0 44px rgba(34,197,94,0.5); }
+          50%      { box-shadow: 0 0 0 2.5px rgba(255,255,255,0.55), 0 0 32px rgba(74,222,128,1), 0 0 60px rgba(34,197,94,0.7); }
+        }
+      `}</style>
+
+      {/* BACKDROP */}
       {showCategories && (
         <div
           onClick={closePanel}
@@ -134,26 +247,29 @@ const BottomNav = ({
             position: "fixed",
             inset: 0,
             zIndex: 48,
-            background: "rgba(0,0,0,0.6)",
+            background: "rgba(0,0,0,0.5)",
             backdropFilter: "blur(4px)",
             animation: "fadeInBg 0.2s ease",
           }}
         />
       )}
 
-      {/* ── KATEGORIYALAR PANELI — nav ORQASIDA (z:49) ── */}
+      {/* ═══ KATEGORIYALAR PANELI ═══
+          bottom: NAV_HEIGHT → nav ustini HECH QACHON yopmaydi
+          zIndex: 49         → nav (100) dan past, nav doim ko'rinadi
+      */}
       <div
         className="md:hidden"
         style={{
           position: "fixed",
           left: 0,
           right: 0,
-          bottom: 0,
-          maxHeight: "78vh",
+          bottom: NAV_HEIGHT,
           zIndex: 49,
+          maxHeight: "72vh",
           transform: showCategories
             ? `translateY(${dragOffset}px)`
-            : "translateY(105%)",
+            : "translateY(110%)",
           transition: dragging.current
             ? "none"
             : showCategories
@@ -167,22 +283,17 @@ const BottomNav = ({
           style={{
             display: "flex",
             flexDirection: "column",
-            maxHeight: "78vh",
-            background: "rgba(4,20,10,0.97)",
-            backdropFilter: "blur(40px)",
-            borderRadius: "28px 28px 0 0",
-            borderTop: "1.5px solid rgba(74,222,128,0.35)",
-            borderLeft: "1px solid rgba(74,222,128,0.15)",
-            borderRight: "1px solid rgba(74,222,128,0.15)",
-            boxShadow: "0 -20px 80px rgba(34,197,94,0.25)",
-            /* Nav balandligi qadar joy qoldirish */
-            paddingBottom: "calc(100px + env(safe-area-inset-bottom, 0px))",
+            maxHeight: "72vh",
+            background: "#ffffff",
+            borderRadius: "24px 24px 0 0",
+            borderTop: "1px solid rgba(0,0,0,0.08)",
+            boxShadow: "0 -8px 40px rgba(0,0,0,0.18)",
+            overflow: "hidden",
           }}
         >
-          {/* Drag handle */}
+          {/* Drag handle + Header */}
           <div
             style={{ flexShrink: 0, cursor: "grab", userSelect: "none" }}
-            className="flex flex-col items-center pt-3 pb-1"
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
@@ -190,32 +301,41 @@ const BottomNav = ({
           >
             <div
               style={{
-                width: 44,
-                height: 4,
-                borderRadius: 99,
-                background: "rgba(74,222,128,0.4)",
-                marginBottom: 14,
+                display: "flex",
+                justifyContent: "center",
+                padding: "12px 0 0",
               }}
-            />
-            <div className="flex items-center justify-between w-full px-5 mb-3">
+            >
+              <div
+                style={{
+                  width: 40,
+                  height: 4,
+                  borderRadius: 99,
+                  background: "#e0e0e0",
+                }}
+              />
+            </div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "10px 20px 12px",
+              }}
+            >
               <div>
                 <p
                   style={{
-                    color: "#4ade80",
+                    margin: 0,
+                    fontSize: 18,
                     fontWeight: 800,
-                    fontSize: 16,
-                    fontFamily: "'Plus Jakarta Sans',sans-serif",
+                    color: "#111",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
                   }}
                 >
-                  🍽️ {lang === "uz" ? "Kategoriyalar" : "Categories"}
+                  {lang === "uz" ? "Kategoriyalar" : "Categories"}
                 </p>
-                <p
-                  style={{
-                    color: "rgba(255,255,255,0.3)",
-                    fontSize: 11,
-                    marginTop: 2,
-                  }}
-                >
+                <p style={{ margin: "3px 0 0", fontSize: 12, color: "#999" }}>
                   {lang === "uz" ? "Taom turini tanlang" : "Choose food type"}
                 </p>
               </div>
@@ -225,97 +345,151 @@ const BottomNav = ({
                   width: 32,
                   height: 32,
                   borderRadius: 99,
-                  background: "rgba(74,222,128,0.1)",
-                  border: "1px solid rgba(74,222,128,0.3)",
-                  color: "#4ade80",
+                  background: "#f0f0f0",
+                  border: "none",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   cursor: "pointer",
+                  color: "#666",
                 }}
               >
-                <ChevronDown size={16} strokeWidth={2.5} />
+                <X size={16} />
               </button>
             </div>
             <div
               style={{
-                margin: "0 20px",
                 height: 1,
                 background:
-                  "linear-gradient(90deg,transparent,rgba(74,222,128,0.3),transparent)",
-                alignSelf: "stretch",
+                  "linear-gradient(90deg,transparent,rgba(0,0,0,0.08),transparent)",
+                margin: "0 20px",
               }}
             />
           </div>
 
-          {/* Kategoriyalar grid */}
-          <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px 8px" }}>
+          {/* Scroll content */}
+          <div
+            style={{
+              flex: 1,
+              overflowY: "auto",
+              padding: "14px 14px 16px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+            }}
+          >
+            {/* 1. O'zbek taomlari — yashil katta karta */}
+            <BigCard
+              cat={uzbekCat}
+              lang={lang}
+              isAct={activeCategory === uzbekCat.id}
+              panelVisible={panelVisible}
+              onSelect={handleCategorySelect}
+              delay={0}
+            />
+
+            {/* 2. Asosiy kategoriyalar — 3 ustunli grid */}
+            <SectionLabel
+              label={lang === "uz" ? "Taom turlari" : "Food Types"}
+            />
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 10,
+                gridTemplateColumns: "1fr 1fr 1fr",
+                gap: 8,
               }}
             >
-              {categoryList.map((cat, i) => {
-                const isAct = activeCategory === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => handleCategorySelect(cat.id)}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      padding: "14px 14px",
-                      borderRadius: 16,
-                      background: isAct
-                        ? "rgba(34,197,94,0.22)"
-                        : "rgba(255,255,255,0.04)",
-                      border: isAct
-                        ? "1.5px solid rgba(74,222,128,0.6)"
-                        : "1px solid rgba(255,255,255,0.07)",
-                      color: isAct ? "#4ade80" : "rgba(255,255,255,0.6)",
-                      fontWeight: isAct ? 800 : 600,
-                      fontSize: 13,
-                      fontFamily: "'Plus Jakarta Sans',sans-serif",
-                      boxShadow: isAct
-                        ? "0 0 20px rgba(34,197,94,0.2), inset 0 0 20px rgba(74,222,128,0.05)"
-                        : "none",
-                      cursor: "pointer",
-                      textAlign: "left",
-                      opacity: panelVisible ? 1 : 0,
-                      transform: panelVisible
-                        ? "translateY(0) scale(1)"
-                        : "translateY(16px) scale(0.97)",
-                      transition: `opacity 0.25s ease ${i * 0.03}s, transform 0.35s cubic-bezier(0.34,1.56,0.64,1) ${i * 0.03}s, background 0.2s`,
-                    }}
-                  >
-                    <span style={{ fontSize: 22 }}>{cat.emoji}</span>
-                    <span style={{ flex: 1, lineHeight: 1.2 }}>
-                      {cat[lang]}
-                    </span>
-                    {isAct && (
-                      <div
-                        style={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: 99,
-                          background: "#4ade80",
-                          boxShadow: "0 0 6px #4ade80",
-                          flexShrink: 0,
-                        }}
-                      />
-                    )}
-                  </button>
-                );
-              })}
+              {smallCats.map((cat, i) => (
+                <SmallCard
+                  key={cat.id}
+                  cat={cat}
+                  lang={lang}
+                  isAct={activeCategory === cat.id}
+                  panelVisible={panelVisible}
+                  onSelect={handleCategorySelect}
+                  delay={i * 0.04 + 0.05}
+                />
+              ))}
             </div>
+
+            {/* 3. Vaqt bo'yicha — 3 ustunli grid */}
+            <SectionLabel label={lang === "uz" ? "Vaqt bo'yicha" : "By Time"} />
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr",
+                gap: 8,
+              }}
+            >
+              {timeCats.map((cat, i) => (
+                <SmallCard
+                  key={cat.id}
+                  cat={cat}
+                  lang={lang}
+                  isAct={activeCategory === cat.id}
+                  panelVisible={panelVisible}
+                  onSelect={handleCategorySelect}
+                  delay={i * 0.04 + 0.15}
+                />
+              ))}
+            </div>
+
+            {/* 4. Admin panel — alohida tugma */}
+            <button
+              onClick={() => handleCategorySelect("admin")}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                padding: "13px 18px",
+                borderRadius: 14,
+                background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                cursor: "pointer",
+                textAlign: "left",
+                opacity: panelVisible ? 1 : 0,
+                transform: panelVisible ? "translateY(0)" : "translateY(10px)",
+                transition:
+                  "opacity 0.25s ease 0.25s, transform 0.3s ease 0.25s",
+              }}
+            >
+              <span style={{ fontSize: 20 }}>⚙️</span>
+              <span
+                style={{
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "#fff",
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                }}
+              >
+                {lang === "uz" ? "Admin Panel" : "Admin Panel"}
+              </span>
+              <span
+                style={{
+                  marginLeft: "auto",
+                  color: "rgba(255,255,255,0.5)",
+                  fontSize: 18,
+                }}
+              >
+                ›
+              </span>
+            </button>
+
+            {/* 5. Davlat Taomlari — eng oxirida */}
+            <BigCard
+              cat={worldCat}
+              lang={lang}
+              isAct={activeCategory === worldCat.id}
+              panelVisible={panelVisible}
+              onSelect={handleCategorySelect}
+              delay={0.3}
+              isWorld
+            />
           </div>
         </div>
       </div>
 
-      {/* ── BOTTOM NAV — z:100, DOIM USTIDA ── */}
+      {/* ═══ BOTTOM NAV — yashil glassmorphism, DOIM ENG USTIDA ═══ */}
       <nav
         className="md:hidden"
         style={{
@@ -324,54 +498,47 @@ const BottomNav = ({
           left: 0,
           right: 0,
           zIndex: 100,
-          padding: "10px 14px",
+          padding: "10px 16px",
           paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)",
         }}
       >
-        {/* Outer glow */}
         <div
           style={{
             position: "absolute",
             bottom: 0,
-            left: "10%",
-            right: "10%",
-            height: 60,
+            left: "5%",
+            right: "5%",
+            height: 50,
             background:
-              "radial-gradient(ellipse at center, rgba(34,197,94,0.35) 0%, transparent 70%)",
+              "radial-gradient(ellipse at center, rgba(34,197,94,0.55) 0%, transparent 70%)",
             pointerEvents: "none",
-            filter: "blur(12px)",
+            filter: "blur(16px)",
           }}
         />
-
         <div
           style={{
             position: "relative",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-around",
-            borderRadius: 24,
-            padding: "6px 8px",
+            borderRadius: 28,
+            padding: "8px 6px",
             background:
-              "linear-gradient(135deg, rgba(10,40,20,0.92) 0%, rgba(6,26,14,0.96) 100%)",
-            backdropFilter: "blur(40px)",
-            border: "1.5px solid rgba(74,222,128,0.25)",
-            boxShadow:
-              "0 0 0 1px rgba(74,222,128,0.08), " +
-              "0 -2px 30px rgba(34,197,94,0.15), " +
-              "inset 0 1px 0 rgba(74,222,128,0.12), " +
-              "0 8px 40px rgba(0,0,0,0.5)",
+              "linear-gradient(145deg, rgba(20,90,45,0.88) 0%, rgba(12,60,28,0.94) 50%, rgba(18,80,40,0.90) 100%)",
+            backdropFilter: "blur(30px)",
+            border: "1.5px solid rgba(74,222,128,0.4)",
+            animation: "navGlow 3s ease-in-out infinite",
           }}
         >
-          {/* Inner top glow line */}
           <div
             style={{
               position: "absolute",
               top: 0,
-              left: "15%",
-              right: "15%",
+              left: "8%",
+              right: "8%",
               height: 1,
               background:
-                "linear-gradient(90deg, transparent, rgba(74,222,128,0.8) 50%, transparent)",
+                "linear-gradient(90deg, transparent, rgba(134,239,172,0.8) 30%, rgba(200,255,220,0.95) 50%, rgba(134,239,172,0.8) 70%, transparent)",
               borderRadius: 99,
               pointerEvents: "none",
             }}
@@ -391,102 +558,229 @@ const BottomNav = ({
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: 4,
+                  gap: 5,
                   flex: 1,
-                  padding: "6px 0 4px",
+                  padding: "4px 0 3px",
                   background: "none",
                   border: "none",
                   cursor: "pointer",
                   WebkitTapHighlightColor: "transparent",
                 }}
               >
-                {/* Icon container */}
                 <div
                   style={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    width: isActive ? 52 : 44,
-                    height: isActive ? 52 : 44,
-                    borderRadius: isActive ? 99 : 14,
+                    width: 48,
+                    height: 48,
+                    borderRadius: isActive ? 99 : 16,
                     background: isActive
-                      ? "radial-gradient(circle at 40% 35%, rgba(74,222,128,0.9) 0%, rgba(34,197,94,0.75) 60%, rgba(21,128,61,0.8) 100%)"
-                      : "rgba(255,255,255,0.06)",
+                      ? "radial-gradient(circle at 40% 30%, rgba(150,255,180,0.95) 0%, rgba(34,197,94,0.88) 50%, rgba(21,128,61,0.92) 100%)"
+                      : "rgba(255,255,255,0.09)",
                     border: isActive
-                      ? "1.5px solid rgba(255,255,255,0.3)"
-                      : "1px solid rgba(255,255,255,0.08)",
-                    boxShadow: isActive
-                      ? "0 0 0 3px rgba(74,222,128,0.25), 0 0 30px rgba(74,222,128,0.55), inset 0 1px 0 rgba(255,255,255,0.25)"
+                      ? "2px solid rgba(255,255,255,0.55)"
+                      : "1.5px solid rgba(255,255,255,0.13)",
+                    animation: isActive
+                      ? "activeGlow 2.5s ease-in-out infinite"
                       : "none",
-                    transition: "all 0.35s cubic-bezier(0.34,1.56,0.64,1)",
-                    transform: isActive ? "translateY(-4px)" : "translateY(0)",
+                    transition: "all 0.32s cubic-bezier(0.34,1.4,0.64,1)",
+                    transform: isActive
+                      ? "translateY(-2px) scale(1.06)"
+                      : "translateY(0) scale(1)",
                   }}
                 >
                   <Icon
-                    size={isActive ? 22 : 19}
-                    strokeWidth={isActive ? 2.2 : 1.6}
+                    size={21}
+                    strokeWidth={isActive ? 2.2 : 1.7}
                     style={{
-                      color: isActive ? "#fff" : "rgba(255,255,255,0.45)",
+                      color: "#ffffff",
                       filter: isActive
-                        ? "drop-shadow(0 1px 4px rgba(0,0,0,0.3))"
+                        ? "drop-shadow(0 0 5px rgba(255,255,255,0.7))"
                         : "none",
                       transition: "all 0.3s",
                     }}
                   />
                 </div>
-
-                {/* Label */}
                 <span
                   style={{
-                    fontSize: isActive ? 10 : 9.5,
+                    fontSize: 9.5,
                     fontWeight: isActive ? 800 : 500,
-                    color: isActive ? "#4ade80" : "rgba(255,255,255,0.35)",
+                    color: isActive ? "#86efac" : "rgba(255,255,255,0.5)",
                     lineHeight: 1,
                     fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    transition: "all 0.3s",
                     letterSpacing: isActive ? "0.01em" : "0",
                     filter: isActive
-                      ? "drop-shadow(0 0 6px rgba(74,222,128,0.6))"
+                      ? "drop-shadow(0 0 5px rgba(134,239,172,0.7))"
                       : "none",
+                    transition: "all 0.3s",
+                    whiteSpace: "nowrap",
                   }}
                 >
                   {label}
                 </span>
-
-                {/* Active dot at bottom */}
-                {isActive && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      bottom: 0,
-                      width: 5,
-                      height: 5,
-                      borderRadius: 99,
-                      background: "#4ade80",
-                      boxShadow:
-                        "0 0 10px rgba(74,222,128,0.9), 0 0 20px rgba(74,222,128,0.4)",
-                      animation: "dotPulse 2s ease-in-out infinite",
-                    }}
-                  />
-                )}
               </button>
             );
           })}
         </div>
       </nav>
-
-      <style>{`
-        @keyframes fadeInBg {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-        @keyframes dotPulse {
-          0%, 100% { opacity: 1; box-shadow: 0 0 10px rgba(74,222,128,0.9), 0 0 20px rgba(74,222,128,0.4); }
-          50%       { opacity: 0.6; box-shadow: 0 0 6px rgba(74,222,128,0.5), 0 0 12px rgba(74,222,128,0.2); }
-        }
-      `}</style>
     </>
   );
 };
+
+// ── Katta karta (uzbek / world) ──
+const BigCard = ({
+  cat,
+  lang,
+  isAct,
+  panelVisible,
+  onSelect,
+  delay,
+  isWorld,
+}: any) => (
+  <button
+    onClick={() => onSelect(cat.id)}
+    style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      width: "100%",
+      padding: "15px 18px",
+      borderRadius: 16,
+      background: isWorld
+        ? isAct
+          ? "rgba(59,130,246,0.15)"
+          : "#f7f7f7"
+        : isAct
+          ? "rgba(34,197,94,0.88)"
+          : "rgba(34,197,94,0.12)",
+      border: isWorld
+        ? isAct
+          ? "1.5px solid rgba(59,130,246,0.4)"
+          : "1.5px solid #ebebeb"
+        : "none",
+      cursor: "pointer",
+      textAlign: "left",
+      opacity: panelVisible ? 1 : 0,
+      transform: panelVisible ? "translateY(0)" : "translateY(12px)",
+      transition: `opacity 0.25s ease ${delay}s, transform 0.3s ease ${delay}s`,
+    }}
+  >
+    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: 12,
+          background: isWorld
+            ? "rgba(59,130,246,0.1)"
+            : isAct
+              ? "rgba(255,255,255,0.25)"
+              : "rgba(34,197,94,0.2)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 22,
+        }}
+      >
+        {cat.emoji}
+      </div>
+      <div style={{ textAlign: "left" }}>
+        <p
+          style={{
+            margin: 0,
+            fontWeight: 800,
+            fontSize: 15,
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            color: isWorld ? "#111" : isAct ? "#fff" : "#16a34a",
+          }}
+        >
+          {cat[lang]}
+        </p>
+        <p
+          style={{
+            margin: "2px 0 0",
+            fontSize: 12,
+            color: isWorld
+              ? "#999"
+              : isAct
+                ? "rgba(255,255,255,0.7)"
+                : "rgba(0,0,0,0.4)",
+          }}
+        >
+          {cat.desc_uz}
+        </p>
+      </div>
+    </div>
+    <span
+      style={{
+        fontSize: 20,
+        color: isWorld ? "#aaa" : isAct ? "#fff" : "#16a34a",
+      }}
+    >
+      ›
+    </span>
+  </button>
+);
+
+// ── Kichik karta (grid) ──
+const SmallCard = ({
+  cat,
+  lang,
+  isAct,
+  panelVisible,
+  onSelect,
+  delay,
+}: any) => (
+  <button
+    onClick={() => onSelect(cat.id)}
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "13px 6px",
+      borderRadius: 14,
+      gap: 5,
+      background: isAct ? "rgba(34,197,94,0.1)" : "#f7f7f7",
+      border: isAct ? "1.5px solid rgba(34,197,94,0.4)" : "1.5px solid #ebebeb",
+      cursor: "pointer",
+      opacity: panelVisible ? 1 : 0,
+      transform: panelVisible ? "translateY(0)" : "translateY(12px)",
+      transition: `opacity 0.25s ease ${delay}s, transform 0.3s ease ${delay}s`,
+    }}
+  >
+    <span style={{ fontSize: 22 }}>{cat.emoji}</span>
+    <span
+      style={{
+        fontSize: 11,
+        fontWeight: 600,
+        color: isAct ? "#16a34a" : "#333",
+        textAlign: "center",
+        lineHeight: 1.2,
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+      }}
+    >
+      {cat[lang]}
+    </span>
+  </button>
+);
+
+// ── Bo'lim sarlavhasi ──
+const SectionLabel = ({ label }: { label: string }) => (
+  <p
+    style={{
+      margin: "2px 0 0",
+      fontSize: 12,
+      fontWeight: 700,
+      color: "#aaa",
+      textTransform: "uppercase",
+      letterSpacing: "0.06em",
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
+    }}
+  >
+    {label}
+  </p>
+);
 
 export default BottomNav;
