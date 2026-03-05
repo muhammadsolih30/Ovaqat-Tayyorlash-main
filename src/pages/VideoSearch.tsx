@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { videos, Video, formatViews } from "@/data/videos";
 import { useVideoLang } from "@/contexts/VideoLangContext";
+import { useAdmin } from "@/contexts/AdminContext";
+import { formatViews } from "@/data/videos";
 import VideoCard from "@/components/video/VideoCard";
 import { SlidersHorizontal } from "lucide-react";
 
@@ -18,20 +19,18 @@ const VideoSearch = ({
   onToggleSave,
 }: VideoSearchProps) => {
   const { lang, t, dark } = useVideoLang();
+  const { videoList } = useAdmin(); // ← global ro'yxat
   const [filterTime, setFilterTime] = useState("all");
   const [filterDifficulty, setFilterDifficulty] = useState("all");
-  const [filterCuisine, setFilterCuisine] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
 
-  const cuisines = [...new Set(videos.map((v) => v.cuisine))];
-
   const results = useMemo(() => {
-    return videos.filter((v) => {
+    return videoList.filter((v) => {
       const matchQuery =
         !query ||
         v.title[lang].toLowerCase().includes(query.toLowerCase()) ||
         v.chef.toLowerCase().includes(query.toLowerCase()) ||
-        v.tags.some((t) => t.toLowerCase().includes(query.toLowerCase()));
+        v.tags.some((tg) => tg.toLowerCase().includes(query.toLowerCase()));
       const matchTime =
         filterTime === "all" ||
         (filterTime === "under10" && v.cookTime < 10) ||
@@ -39,16 +38,14 @@ const VideoSearch = ({
         (filterTime === "over30" && v.cookTime > 30);
       const matchDiff =
         filterDifficulty === "all" || v.difficulty === filterDifficulty;
-      const matchCuisine =
-        filterCuisine === "all" || v.cuisine === filterCuisine;
-      return matchQuery && matchTime && matchDiff && matchCuisine;
+      return matchQuery && matchTime && matchDiff;
     });
-  }, [query, filterTime, filterDifficulty, filterCuisine, lang]);
+  }, [query, filterTime, filterDifficulty, lang, videoList]);
 
-  const bg = dark ? "#0f172a" : "#f9fafb";
-  const cardBg = dark ? "#1e293b" : "white";
   const borderColor = dark ? "rgba(255,255,255,0.07)" : "rgba(21,128,61,0.1)";
+  const cardBg = dark ? "#1e293b" : "white";
   const textMuted = dark ? "#94a3b8" : "#6b7280";
+  const G = "#1DB954";
 
   const filterBtn = (active: boolean) =>
     ({
@@ -64,13 +61,12 @@ const VideoSearch = ({
         : dark
           ? "rgba(255,255,255,0.06)"
           : "rgba(21,128,61,0.06)",
-      color: active ? "white" : dark ? "#94a3b8" : "#15803d",
+      color: active ? "white" : dark ? "#94a3b8" : G,
       border: `1px solid ${active ? "transparent" : borderColor}`,
     }) as React.CSSProperties;
 
   return (
     <div className="pb-24 md:pb-8 animate-fade-in">
-      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2
@@ -82,7 +78,7 @@ const VideoSearch = ({
           >
             {t("searchResults")}
           </h2>
-          <p className="text-sm" style={{ color: "#1DB954" }}>
+          <p className="text-sm" style={{ color: G }}>
             "{query}" — {results.length} ta natija
           </p>
         </div>
@@ -91,11 +87,11 @@ const VideoSearch = ({
           className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold"
           style={{
             background: showFilters
-              ? "linear-gradient(135deg, #1DB954, #15803d)"
+              ? "linear-gradient(135deg,#1DB954,#15803d)"
               : dark
                 ? "rgba(255,255,255,0.06)"
                 : "rgba(21,128,61,0.06)",
-            color: showFilters ? "white" : dark ? "#94a3b8" : "#15803d",
+            color: showFilters ? "white" : dark ? "#94a3b8" : G,
             fontFamily: "'Plus Jakarta Sans', sans-serif",
           }}
         >
@@ -103,7 +99,6 @@ const VideoSearch = ({
         </button>
       </div>
 
-      {/* Filters */}
       {showFilters && (
         <div
           className="rounded-2xl p-4 mb-6"
@@ -123,13 +118,13 @@ const VideoSearch = ({
                   ["under10", "< 10 min"],
                   ["under30", "< 30 min"],
                   ["over30", "> 30 min"],
-                ].map(([val, label]) => (
+                ].map(([v, l]) => (
                   <button
-                    key={val}
-                    style={filterBtn(filterTime === val)}
-                    onClick={() => setFilterTime(val)}
+                    key={v}
+                    style={filterBtn(filterTime === v)}
+                    onClick={() => setFilterTime(v)}
                   >
-                    {label}
+                    {l}
                   </button>
                 ))}
               </div>
@@ -141,19 +136,19 @@ const VideoSearch = ({
               >
                 {t("difficulty")}
               </p>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 {[
                   ["all", "Barchasi"],
                   ["easy", t("easy")],
                   ["medium", t("medium")],
                   ["hard", t("hard")],
-                ].map(([val, label]) => (
+                ].map(([v, l]) => (
                   <button
-                    key={val}
-                    style={filterBtn(filterDifficulty === val)}
-                    onClick={() => setFilterDifficulty(val)}
+                    key={v}
+                    style={filterBtn(filterDifficulty === v)}
+                    onClick={() => setFilterDifficulty(v)}
                   >
-                    {label}
+                    {l}
                   </button>
                 ))}
               </div>

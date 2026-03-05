@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { VideoLangProvider, useVideoLang } from "@/contexts/VideoLangContext";
 import { AdminProvider, useAdmin } from "@/contexts/AdminContext";
-import { videos } from "@/data/videos";
 import VideoHeader from "@/components/video/VideoHeader";
 import VideoSidebar from "@/components/video/VideoSidebar";
 import VideoMobileNav from "@/components/video/VideoMobileNav";
@@ -14,7 +13,7 @@ import AdminPanel from "./admin/AdminPanel";
 
 const VideoAppContent = () => {
   const { dark } = useVideoLang();
-  const { isAdmin } = useAdmin();
+  const { isAdmin, videoList, incrementView } = useAdmin();
   const [page, setPage] = useState<string>("home");
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -22,11 +21,10 @@ const VideoAppContent = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
 
-  const toggleSave = (id: string) => {
+  const toggleSave = (id: string) =>
     setSavedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
-  };
 
   const handleSearch = (q: string) => {
     setSearchQuery(q);
@@ -47,19 +45,21 @@ const VideoAppContent = () => {
   };
 
   const handleSelectVideo = (id: string) => {
+    incrementView(id); // ko'rishlar +1
     setSelectedVideoId(id);
     setPage("video");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // videoList dan izlaymiz — admin o'zgartirsa user ham ko'radi
   const selectedVideo = selectedVideoId
-    ? videos.find((v) => v.id === selectedVideoId)
+    ? (videoList.find((v) => v.id === selectedVideoId) ?? null)
     : null;
 
   const bg = dark ? "#0f172a" : "#f9fafb";
   const currentPage = selectedVideo ? "video" : page;
 
-  // Admin login screen
+  // Admin login ekrani
   if (showAdminLogin && !isAdmin) {
     return (
       <AdminLogin
@@ -94,9 +94,8 @@ const VideoAppContent = () => {
         <VideoSidebar
           active={selectedVideo ? "" : page}
           onNavigate={(p) => {
-            if (p === "admin") {
-              setShowAdminLogin(true);
-            } else {
+            if (p === "admin") setShowAdminLogin(true);
+            else {
               setPage(p);
               setSelectedVideoId(null);
             }

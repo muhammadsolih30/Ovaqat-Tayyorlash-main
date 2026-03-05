@@ -1,5 +1,6 @@
-import { videos, Video } from "@/data/videos";
 import { useVideoLang } from "@/contexts/VideoLangContext";
+import { useAdmin } from "@/contexts/AdminContext";
+import { Video } from "@/data/videos";
 import VideoCard from "@/components/video/VideoCard";
 
 interface VideoGridProps {
@@ -24,11 +25,7 @@ const categoryMeta: Record<
     emoji: "🌍",
     filter: (v) => v.cuisine !== "uzbek",
   },
-  quick: {
-    title: "Tez taomlar (30 min)",
-    emoji: "⚡",
-    filter: (v) => v.cookTime <= 30,
-  },
+  quick: { title: "Tez taomlar", emoji: "⚡", filter: (v) => v.cookTime <= 30 },
   healthy: {
     title: "Sog'lom ovqat",
     emoji: "🥗",
@@ -65,33 +62,28 @@ const categoryMeta: Record<
     filter: (v) => v.category === "dinner",
   },
   favorites: { title: "Sevimlilar", emoji: "❤️", filter: () => true },
-  categories: { title: "Kategoriyalar", emoji: "📂", filter: () => true },
 };
-
-interface VideoGridPropsExtended extends VideoGridProps {
-  savedIds: string[];
-}
 
 const VideoGrid = ({
   category,
   onSelectVideo,
   savedIds,
   onToggleSave,
-}: VideoGridPropsExtended) => {
+}: VideoGridProps) => {
   const { dark } = useVideoLang();
+  const { videoList } = useAdmin(); // ← global ro'yxat
+
   const meta = categoryMeta[category] || categoryMeta["trending"];
 
   const filtered =
     category === "favorites"
-      ? videos.filter((v) => savedIds.includes(v.id))
-      : meta.filter === categoryMeta["trending"].filter &&
-          category === "trending"
-        ? [...videos].sort((a, b) => b.views - a.views)
-        : videos.filter(meta.filter);
+      ? videoList.filter((v) => savedIds.includes(v.id))
+      : category === "trending"
+        ? [...videoList].sort((a, b) => b.views - a.views) // eng ko'p ko'rilganlar yuqorida
+        : videoList.filter(meta.filter);
 
   return (
     <div className="pb-24 md:pb-8 animate-fade-in">
-      {/* Header */}
       <div className="mb-6">
         <h2
           className="font-black text-2xl"
