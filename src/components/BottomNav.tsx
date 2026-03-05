@@ -17,8 +17,6 @@ interface BottomNavProps {
   onCategoryChange?: (cat: string) => void;
 }
 
-const NAV_HEIGHT = 76;
-
 const BottomNav = ({
   active,
   onNavigate,
@@ -39,7 +37,12 @@ const BottomNav = ({
       label: lang === "uz" ? "Bosh sahifa" : "Home",
       isCategory: false,
     },
-    { id: "ingredients", icon: TrendingUp, label: "Trend", isCategory: false },
+    {
+      id: "ingredients",
+      icon: TrendingUp,
+      label: "Trend",
+      isCategory: false,
+    },
     {
       id: "categories",
       icon: LayoutGrid,
@@ -76,7 +79,7 @@ const BottomNav = ({
     onCategoryChange?.(catId);
     window.scrollTo({ top: 0, behavior: "smooth" });
     onNavigate("recipes");
-    // Panel ochiq qoladi — boshqa kategoriya tanlash uchun qulay
+    setShowCategories(false);
   };
 
   const closePanel = () => {
@@ -84,7 +87,6 @@ const BottomNav = ({
     setDragOffset(0);
   };
 
-  // ── Swipe down to close ──────────────────────────────────────
   const startDrag = (y: number) => {
     dragStartY.current = y;
     dragDelta.current = 0;
@@ -120,47 +122,43 @@ const BottomNav = ({
   };
 
   const activeId = showCategories ? "categories" : active;
+  const panelVisible = showCategories && dragOffset < 350;
 
   return (
     <>
-      {/* ── 1. BACKDROP — navni YOPMAYDI (z:48) ── */}
+      {/* ── BACKDROP ── */}
       {showCategories && (
         <div
           onClick={closePanel}
           style={{
             position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            // Faqat nav tepasigacha — nav ko'rinadi
-            bottom: NAV_HEIGHT + 12,
+            inset: 0,
             zIndex: 48,
-            background: "rgba(0,0,0,0.55)",
-            backdropFilter: "blur(3px)",
-            animation: "fadeIn 0.22s ease",
+            background: "rgba(0,0,0,0.6)",
+            backdropFilter: "blur(4px)",
+            animation: "fadeInBg 0.2s ease",
           }}
         />
       )}
 
-      {/* ── 2. KATEGORIYALAR PANELI — nav ustida, lekin navni yopmaydi (z:49) ── */}
+      {/* ── KATEGORIYALAR PANELI — nav ORQASIDA (z:49) ── */}
       <div
         className="md:hidden"
         style={{
           position: "fixed",
           left: 0,
           right: 0,
-          // Nav TEPASIDAN boshlanadi — nav hech qachon yo'qolmaydi
-          bottom: NAV_HEIGHT + 12,
-          maxHeight: "70vh",
+          bottom: 0,
+          maxHeight: "78vh",
           zIndex: 49,
           transform: showCategories
             ? `translateY(${dragOffset}px)`
-            : "translateY(calc(70vh + 40px))",
+            : "translateY(105%)",
           transition: dragging.current
             ? "none"
             : showCategories
-              ? "transform 0.44s cubic-bezier(0.34,1.4,0.64,1)"
-              : "transform 0.32s cubic-bezier(0.55,0,0.45,1)",
+              ? "transform 0.44s cubic-bezier(0.34,1.3,0.64,1)"
+              : "transform 0.28s cubic-bezier(0.55,0,0.45,1)",
           willChange: "transform",
           pointerEvents: showCategories ? "auto" : "none",
         }}
@@ -169,20 +167,22 @@ const BottomNav = ({
           style={{
             display: "flex",
             flexDirection: "column",
-            maxHeight: "70vh",
-            background: "rgba(5,26,14,0.97)",
-            backdropFilter: "blur(32px)",
-            borderRadius: "24px 24px 0 0",
-            borderTop: "1px solid rgba(74,222,128,0.28)",
-            borderLeft: "1px solid rgba(74,222,128,0.12)",
-            borderRight: "1px solid rgba(74,222,128,0.12)",
-            boxShadow: "0 -16px 60px rgba(34,168,106,0.2)",
+            maxHeight: "78vh",
+            background: "rgba(4,20,10,0.97)",
+            backdropFilter: "blur(40px)",
+            borderRadius: "28px 28px 0 0",
+            borderTop: "1.5px solid rgba(74,222,128,0.35)",
+            borderLeft: "1px solid rgba(74,222,128,0.15)",
+            borderRight: "1px solid rgba(74,222,128,0.15)",
+            boxShadow: "0 -20px 80px rgba(34,197,94,0.25)",
+            /* Nav balandligi qadar joy qoldirish */
+            paddingBottom: "calc(100px + env(safe-area-inset-bottom, 0px))",
           }}
         >
           {/* Drag handle */}
           <div
             style={{ flexShrink: 0, cursor: "grab", userSelect: "none" }}
-            className="flex flex-col items-center pt-3 pb-2"
+            className="flex flex-col items-center pt-3 pb-1"
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
@@ -190,23 +190,30 @@ const BottomNav = ({
           >
             <div
               style={{
-                width: 40,
+                width: 44,
                 height: 4,
-                borderRadius: 9999,
-                background: "rgba(74,222,128,0.35)",
-                marginBottom: 10,
+                borderRadius: 99,
+                background: "rgba(74,222,128,0.4)",
+                marginBottom: 14,
               }}
             />
-            <div className="flex items-center justify-between w-full px-5">
+            <div className="flex items-center justify-between w-full px-5 mb-3">
               <div>
-                <p style={{ color: "#4ade80", fontWeight: 800, fontSize: 15 }}>
+                <p
+                  style={{
+                    color: "#4ade80",
+                    fontWeight: 800,
+                    fontSize: 16,
+                    fontFamily: "'Plus Jakarta Sans',sans-serif",
+                  }}
+                >
                   🍽️ {lang === "uz" ? "Kategoriyalar" : "Categories"}
                 </p>
                 <p
                   style={{
-                    color: "rgba(255,255,255,0.35)",
+                    color: "rgba(255,255,255,0.3)",
                     fontSize: 11,
-                    marginTop: 1,
+                    marginTop: 2,
                   }}
                 >
                   {lang === "uz" ? "Taom turini tanlang" : "Choose food type"}
@@ -215,11 +222,11 @@ const BottomNav = ({
               <button
                 onClick={closePanel}
                 style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 9999,
-                  background: "rgba(74,222,128,0.12)",
-                  border: "1px solid rgba(74,222,128,0.25)",
+                  width: 32,
+                  height: 32,
+                  borderRadius: 99,
+                  background: "rgba(74,222,128,0.1)",
+                  border: "1px solid rgba(74,222,128,0.3)",
                   color: "#4ade80",
                   display: "flex",
                   alignItems: "center",
@@ -227,12 +234,12 @@ const BottomNav = ({
                   cursor: "pointer",
                 }}
               >
-                <ChevronDown size={15} strokeWidth={2.5} />
+                <ChevronDown size={16} strokeWidth={2.5} />
               </button>
             </div>
             <div
               style={{
-                margin: "12px 20px 0",
+                margin: "0 20px",
                 height: 1,
                 background:
                   "linear-gradient(90deg,transparent,rgba(74,222,128,0.3),transparent)",
@@ -241,10 +248,8 @@ const BottomNav = ({
             />
           </div>
 
-          {/* Scroll list */}
-          <div
-            style={{ flex: 1, overflowY: "auto", padding: "12px 16px 16px" }}
-          >
+          {/* Kategoriyalar grid */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px 8px" }}>
             <div
               style={{
                 display: "grid",
@@ -262,109 +267,55 @@ const BottomNav = ({
                       display: "flex",
                       alignItems: "center",
                       gap: 10,
-                      padding: "14px 16px",
+                      padding: "14px 14px",
                       borderRadius: 16,
                       background: isAct
-                        ? "rgba(34,168,106,0.28)"
-                        : "rgba(255,255,255,0.05)",
+                        ? "rgba(34,197,94,0.22)"
+                        : "rgba(255,255,255,0.04)",
                       border: isAct
-                        ? "1.5px solid rgba(74,222,128,0.55)"
-                        : "1px solid rgba(255,255,255,0.08)",
-                      color: isAct ? "#4ade80" : "rgba(255,255,255,0.65)",
+                        ? "1.5px solid rgba(74,222,128,0.6)"
+                        : "1px solid rgba(255,255,255,0.07)",
+                      color: isAct ? "#4ade80" : "rgba(255,255,255,0.6)",
                       fontWeight: isAct ? 800 : 600,
                       fontSize: 13,
+                      fontFamily: "'Plus Jakarta Sans',sans-serif",
                       boxShadow: isAct
-                        ? "0 0 18px rgba(34,168,106,0.2)"
+                        ? "0 0 20px rgba(34,197,94,0.2), inset 0 0 20px rgba(74,222,128,0.05)"
                         : "none",
                       cursor: "pointer",
                       textAlign: "left",
-                      opacity: showCategories ? 1 : 0,
-                      transform: showCategories
-                        ? "translateY(0)"
-                        : "translateY(14px)",
-                      transition: `opacity 0.3s ease ${i * 0.04}s, transform 0.38s cubic-bezier(0.34,1.56,0.64,1) ${i * 0.04}s, background 0.2s`,
+                      opacity: panelVisible ? 1 : 0,
+                      transform: panelVisible
+                        ? "translateY(0) scale(1)"
+                        : "translateY(16px) scale(0.97)",
+                      transition: `opacity 0.25s ease ${i * 0.03}s, transform 0.35s cubic-bezier(0.34,1.56,0.64,1) ${i * 0.03}s, background 0.2s`,
                     }}
                   >
-                    <span style={{ fontSize: 20 }}>{cat.emoji}</span>
-                    <span style={{ flex: 1 }}>{cat[lang]}</span>
-                    {isAct && <span style={{ fontSize: 11 }}>✓</span>}
+                    <span style={{ fontSize: 22 }}>{cat.emoji}</span>
+                    <span style={{ flex: 1, lineHeight: 1.2 }}>
+                      {cat[lang]}
+                    </span>
+                    {isAct && (
+                      <div
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: 99,
+                          background: "#4ade80",
+                          boxShadow: "0 0 6px #4ade80",
+                          flexShrink: 0,
+                        }}
+                      />
+                    )}
                   </button>
                 );
               })}
             </div>
-
-            {/* Admin kirish tugmasi */}
-            <button
-              onClick={() => {
-                closePanel();
-                onNavigate("admin");
-              }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                width: "100%",
-                marginTop: 10,
-                padding: "13px 16px",
-                borderRadius: 16,
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.09)",
-                color: "rgba(255,255,255,0.5)",
-                fontWeight: 600,
-                fontSize: 13,
-                cursor: "pointer",
-                textAlign: "left",
-                opacity: showCategories ? 1 : 0,
-                transform: showCategories
-                  ? "translateY(0)"
-                  : "translateY(14px)",
-                transition: `opacity 0.3s ease ${categoryList.length * 0.04 + 0.06}s, transform 0.4s cubic-bezier(0.34,1.56,0.64,1) ${categoryList.length * 0.04 + 0.06}s`,
-              }}
-            >
-              <div
-                style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 10,
-                  flexShrink: 0,
-                  background: "rgba(255,255,255,0.06)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 16,
-                }}
-              >
-                🛡️
-              </div>
-              <div style={{ flex: 1 }}>
-                <div
-                  style={{
-                    color: "rgba(255,255,255,0.65)",
-                    fontWeight: 700,
-                    fontSize: 13,
-                  }}
-                >
-                  Admin Panel
-                </div>
-                <div
-                  style={{
-                    color: "rgba(255,255,255,0.3)",
-                    fontSize: 11,
-                    marginTop: 1,
-                  }}
-                >
-                  {lang === "uz" ? "Boshqaruv paneli" : "Management panel"}
-                </div>
-              </div>
-              <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 18 }}>
-                ›
-              </span>
-            </button>
           </div>
         </div>
       </div>
 
-      {/* ── 3. BOTTOM NAV — DOIM z:50, hech narsa ustiga chiqmaydi ── */}
+      {/* ── BOTTOM NAV — z:100, DOIM USTIDA ── */}
       <nav
         className="md:hidden"
         style={{
@@ -372,38 +323,56 @@ const BottomNav = ({
           bottom: 0,
           left: 0,
           right: 0,
-          zIndex: 50,
-          paddingBottom: "calc(env(safe-area-inset-bottom) + 10px)",
-          paddingTop: 10,
-          paddingLeft: 12,
-          paddingRight: 12,
+          zIndex: 100,
+          padding: "10px 14px",
+          paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)",
         }}
       >
+        {/* Outer glow */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: "10%",
+            right: "10%",
+            height: 60,
+            background:
+              "radial-gradient(ellipse at center, rgba(34,197,94,0.35) 0%, transparent 70%)",
+            pointerEvents: "none",
+            filter: "blur(12px)",
+          }}
+        />
+
         <div
           style={{
             position: "relative",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-around",
-            borderRadius: 20,
-            padding: "4px 4px",
-            background: "rgba(6,24,13,0.96)",
-            backdropFilter: "blur(32px)",
-            border: "1px solid rgba(46,208,128,0.22)",
+            borderRadius: 24,
+            padding: "6px 8px",
+            background:
+              "linear-gradient(135deg, rgba(10,40,20,0.92) 0%, rgba(6,26,14,0.96) 100%)",
+            backdropFilter: "blur(40px)",
+            border: "1.5px solid rgba(74,222,128,0.25)",
             boxShadow:
-              "0 0 0 1px rgba(46,208,128,0.07), 0 -4px 40px rgba(34,168,106,0.12), 0 8px 48px rgba(0,0,0,0.6)",
+              "0 0 0 1px rgba(74,222,128,0.08), " +
+              "0 -2px 30px rgba(34,197,94,0.15), " +
+              "inset 0 1px 0 rgba(74,222,128,0.12), " +
+              "0 8px 40px rgba(0,0,0,0.5)",
           }}
         >
-          {/* Top neon line */}
+          {/* Inner top glow line */}
           <div
             style={{
               position: "absolute",
               top: 0,
-              left: 32,
-              right: 32,
+              left: "15%",
+              right: "15%",
               height: 1,
               background:
-                "linear-gradient(90deg,transparent,rgba(74,222,128,0.7) 50%,transparent)",
+                "linear-gradient(90deg, transparent, rgba(74,222,128,0.8) 50%, transparent)",
+              borderRadius: 99,
               pointerEvents: "none",
             }}
           />
@@ -422,71 +391,81 @@ const BottomNav = ({
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: 2,
+                  gap: 4,
                   flex: 1,
-                  padding: "8px 0",
-                  color: isActive ? "#4ade80" : "rgba(255,255,255,0.32)",
-                  transform: isActive
-                    ? "scale(1.1) translateY(-1px)"
-                    : "scale(1)",
-                  transition: "all 0.3s",
+                  padding: "6px 0 4px",
                   background: "none",
                   border: "none",
                   cursor: "pointer",
+                  WebkitTapHighlightColor: "transparent",
                 }}
               >
+                {/* Icon container */}
                 <div
                   style={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    width: 42,
-                    height: 42,
-                    borderRadius: 14,
+                    width: isActive ? 52 : 44,
+                    height: isActive ? 52 : 44,
+                    borderRadius: isActive ? 99 : 14,
                     background: isActive
-                      ? "rgba(34,168,106,0.22)"
-                      : "transparent",
+                      ? "radial-gradient(circle at 40% 35%, rgba(74,222,128,0.9) 0%, rgba(34,197,94,0.75) 60%, rgba(21,128,61,0.8) 100%)"
+                      : "rgba(255,255,255,0.06)",
                     border: isActive
-                      ? "1px solid rgba(74,222,128,0.4)"
-                      : "1px solid transparent",
+                      ? "1.5px solid rgba(255,255,255,0.3)"
+                      : "1px solid rgba(255,255,255,0.08)",
                     boxShadow: isActive
-                      ? "0 0 22px rgba(74,222,128,0.32)"
+                      ? "0 0 0 3px rgba(74,222,128,0.25), 0 0 30px rgba(74,222,128,0.55), inset 0 1px 0 rgba(255,255,255,0.25)"
                       : "none",
-                    transition: "all 0.3s",
+                    transition: "all 0.35s cubic-bezier(0.34,1.56,0.64,1)",
+                    transform: isActive ? "translateY(-4px)" : "translateY(0)",
                   }}
                 >
                   <Icon
-                    size={20}
-                    strokeWidth={isActive ? 2.5 : 1.6}
+                    size={isActive ? 22 : 19}
+                    strokeWidth={isActive ? 2.2 : 1.6}
                     style={{
+                      color: isActive ? "#fff" : "rgba(255,255,255,0.45)",
                       filter: isActive
-                        ? "drop-shadow(0 0 7px rgba(74,222,128,0.9))"
+                        ? "drop-shadow(0 1px 4px rgba(0,0,0,0.3))"
                         : "none",
-                      transition: "filter 0.3s",
+                      transition: "all 0.3s",
                     }}
                   />
                 </div>
+
+                {/* Label */}
                 <span
                   style={{
-                    fontSize: 9.5,
+                    fontSize: isActive ? 10 : 9.5,
                     fontWeight: isActive ? 800 : 500,
-                    opacity: isActive ? 1 : 0.4,
+                    color: isActive ? "#4ade80" : "rgba(255,255,255,0.35)",
                     lineHeight: 1,
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
                     transition: "all 0.3s",
+                    letterSpacing: isActive ? "0.01em" : "0",
+                    filter: isActive
+                      ? "drop-shadow(0 0 6px rgba(74,222,128,0.6))"
+                      : "none",
                   }}
                 >
                   {label}
                 </span>
+
+                {/* Active dot at bottom */}
                 {isActive && (
                   <div
                     style={{
                       position: "absolute",
-                      bottom: -2,
-                      width: 4,
-                      height: 4,
-                      borderRadius: 9999,
+                      bottom: 0,
+                      width: 5,
+                      height: 5,
+                      borderRadius: 99,
                       background: "#4ade80",
-                      boxShadow: "0 0 8px #4ade80",
+                      boxShadow:
+                        "0 0 10px rgba(74,222,128,0.9), 0 0 20px rgba(74,222,128,0.4)",
+                      animation: "dotPulse 2s ease-in-out infinite",
                     }}
                   />
                 )}
@@ -495,6 +474,17 @@ const BottomNav = ({
           })}
         </div>
       </nav>
+
+      <style>{`
+        @keyframes fadeInBg {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        @keyframes dotPulse {
+          0%, 100% { opacity: 1; box-shadow: 0 0 10px rgba(74,222,128,0.9), 0 0 20px rgba(74,222,128,0.4); }
+          50%       { opacity: 0.6; box-shadow: 0 0 6px rgba(74,222,128,0.5), 0 0 12px rgba(74,222,128,0.2); }
+        }
+      `}</style>
     </>
   );
 };

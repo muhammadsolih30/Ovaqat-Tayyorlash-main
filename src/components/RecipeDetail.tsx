@@ -1,6 +1,6 @@
-import { Recipe } from '@/data/recipes';
-import { useLang } from '@/contexts/LangContext';
-import { ArrowLeft, Clock, Users, ChefHat } from 'lucide-react';
+import { Recipe } from "@/data/recipes";
+import { useLang } from "@/contexts/LangContext";
+import { ArrowLeft, Clock, Users, ChefHat } from "lucide-react";
 
 interface RecipeDetailProps {
   recipe: Recipe;
@@ -14,7 +14,7 @@ const RecipeDetail = ({ recipe, onBack }: RecipeDetailProps) => {
     <div className="animate-fade-in pb-24 md:pb-8">
       <div className="relative">
         <img
-          src={recipe.image + '&w=800&h=400'}
+          src={recipe.image + "&w=800&h=400"}
           alt={recipe.name[lang]}
           className="w-full h-56 md:h-72 object-cover"
         />
@@ -26,10 +26,16 @@ const RecipeDetail = ({ recipe, onBack }: RecipeDetailProps) => {
           <ArrowLeft size={18} />
         </button>
         <div className="absolute bottom-4 left-4 right-4">
-          <h1 className="text-2xl font-display font-bold text-white mb-2">{recipe.name[lang]}</h1>
+          <h1 className="text-2xl font-display font-bold text-white mb-2">
+            {recipe.name[lang]}
+          </h1>
           <div className="flex items-center gap-4 text-white/80 text-sm">
-            <span className="flex items-center gap-1"><Clock size={14} /> {recipe.time} {t('minutes')}</span>
-            <span className="flex items-center gap-1"><Users size={14} /> {recipe.servings} {t('servings')}</span>
+            <span className="flex items-center gap-1">
+              <Clock size={14} /> {recipe.time} {t("minutes")}
+            </span>
+            <span className="flex items-center gap-1">
+              <Users size={14} /> {recipe.servings} {t("servings")}
+            </span>
             {recipe.calories && <span>{recipe.calories} kcal</span>}
           </div>
         </div>
@@ -41,11 +47,14 @@ const RecipeDetail = ({ recipe, onBack }: RecipeDetailProps) => {
         <div className="mb-6">
           <h2 className="font-display font-bold text-lg text-foreground mb-3 flex items-center gap-2">
             <ChefHat size={20} className="text-primary" />
-            {t('ingredientsList')}
+            {t("ingredientsList")}
           </h2>
           <div className="bg-secondary/50 rounded-xl p-4 space-y-2">
             {recipe.ingredients.map((ing, i) => (
-              <div key={i} className="flex items-center gap-2 text-sm text-foreground">
+              <div
+                key={i}
+                className="flex items-center gap-2 text-sm text-foreground"
+              >
                 <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
                 {ing[lang]}
               </div>
@@ -55,7 +64,7 @@ const RecipeDetail = ({ recipe, onBack }: RecipeDetailProps) => {
 
         <div>
           <h2 className="font-display font-bold text-lg text-foreground mb-3">
-            {t('howToCook')}
+            {t("howToCook")}
           </h2>
           <div className="space-y-4">
             {recipe.steps.map((step, i) => (
@@ -63,7 +72,9 @@ const RecipeDetail = ({ recipe, onBack }: RecipeDetailProps) => {
                 <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center mt-0.5">
                   {i + 1}
                 </div>
-                <p className="text-sm text-foreground leading-relaxed pt-1">{step[lang]}</p>
+                <p className="text-sm text-foreground leading-relaxed pt-1">
+                  {step[lang]}
+                </p>
               </div>
             ))}
           </div>

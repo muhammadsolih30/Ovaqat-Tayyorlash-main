@@ -1,14 +1,18 @@
-import { tips } from '@/data/recipes';
-import { useLang } from '@/contexts/LangContext';
+import { tips } from "@/data/recipes";
+import { useLang } from "@/contexts/LangContext";
 
 const TipsSection = () => {
   const { lang, t } = useLang();
 
   return (
     <div className="p-4 pb-24 md:pb-8 animate-fade-in">
-      <h2 className="font-display font-bold text-xl text-foreground mb-1">{t('healthTips')}</h2>
+      <h2 className="font-display font-bold text-xl text-foreground mb-1">
+        {t("healthTips")}
+      </h2>
       <p className="text-sm text-muted-foreground mb-4">
-        {lang === 'uz' ? "Sog'lom ovqatlanish uchun foydali maslahatlar" : "Useful tips for healthy eating"}
+        {lang === "uz"
+          ? "Sog'lom ovqatlanish uchun foydali maslahatlar"
+          : "Useful tips for healthy eating"}
       </p>
 
       <div className="space-y-3">

@@ -1,192 +1,243 @@
-import { Video, formatViews } from "@/data/videos";
 import { useVideoLang } from "@/contexts/VideoLangContext";
-import { Clock, Eye, Bookmark } from "lucide-react";
-import { useState } from "react";
+import { useAdmin } from "@/contexts/AdminContext";
+import VideoCard from "@/components/video/VideoCard";
 
-interface VideoCardProps {
-  video: Video;
-  onClick: () => void;
-  savedIds?: string[];
-  onToggleSave?: (id: string) => void;
-  size?: "normal" | "small" | "horizontal";
+interface VideoGridProps {
+  category: string;
+  onSelectVideo: (id: string) => void;
+  savedIds: string[];
+  onToggleSave: (id: string) => void;
 }
 
-const difficultyColor: Record<string, string> = {
-  easy: "#1DB954",
-  medium: "#f59e0b",
-  hard: "#ef4444",
+const categoryTitles: Record<
+  string,
+  { uz: string; en: string; ru: string; icon: string }
+> = {
+  uzbek: {
+    uz: "O'zbek taomlari",
+    en: "Uzbek Cuisine",
+    ru: "Узбекская кухня",
+    icon: "🇺🇿",
+  },
+  world: {
+    uz: "Jahon taomlari",
+    en: "World Cuisine",
+    ru: "Мировая кухня",
+    icon: "🌍",
+  },
+  trending: {
+    uz: "Trend videolar",
+    en: "Trending",
+    ru: "В тренде",
+    icon: "🔥",
+  },
+  quick: {
+    uz: "Tez taomlar",
+    en: "Quick Meals",
+    ru: "Быстрые блюда",
+    icon: "⚡",
+  },
+  healthy: {
+    uz: "Sog'lom ovqat",
+    en: "Healthy Food",
+    ru: "Здоровая еда",
+    icon: "🥗",
+  },
+  dessert: { uz: "Shirinliklar", en: "Desserts", ru: "Десерты", icon: "🍰" },
+  bbq: {
+    uz: "Kabob & Gril",
+    en: "BBQ & Grill",
+    ru: "Шашлык и гриль",
+    icon: "🔥",
+  },
+  vegetarian: {
+    uz: "Vegetarian",
+    en: "Vegetarian",
+    ru: "Вегетарианское",
+    icon: "🥦",
+  },
+  breakfast: { uz: "Nonushta", en: "Breakfast", ru: "Завтрак", icon: "☀️" },
+  dinner: { uz: "Kechki ovqat", en: "Dinner", ru: "Ужин", icon: "🌙" },
+  street: {
+    uz: "Ko'cha ovqatlari",
+    en: "Street Food",
+    ru: "Уличная еда",
+    icon: "🌮",
+  },
+  favorites: { uz: "Sevimlilar", en: "Favorites", ru: "Избранное", icon: "❤️" },
+  italian: {
+    uz: "Italya taomlari",
+    en: "Italian Cuisine",
+    ru: "Итальянская кухня",
+    icon: "🇮🇹",
+  },
+  japanese: {
+    uz: "Yaponiya taomlari",
+    en: "Japanese Cuisine",
+    ru: "Японская кухня",
+    icon: "🇯🇵",
+  },
+  american: {
+    uz: "Amerika taomlari",
+    en: "American Cuisine",
+    ru: "Американская кухня",
+    icon: "🇺🇸",
+  },
+  french: {
+    uz: "Fransiya taomlari",
+    en: "French Cuisine",
+    ru: "Французская кухня",
+    icon: "🇫🇷",
+  },
+  korean: {
+    uz: "Koreya taomlari",
+    en: "Korean Cuisine",
+    ru: "Корейская кухня",
+    icon: "🇰🇷",
+  },
+  indian: {
+    uz: "Hindiston taomlari",
+    en: "Indian Cuisine",
+    ru: "Индийская кухня",
+    icon: "🇮🇳",
+  },
+  mexican: {
+    uz: "Meksika taomlari",
+    en: "Mexican Cuisine",
+    ru: "Мексиканская кухня",
+    icon: "🇲🇽",
+  },
+  chinese: {
+    uz: "Xitoy taomlari",
+    en: "Chinese Cuisine",
+    ru: "Китайская кухня",
+    icon: "🇨🇳",
+  },
+  turkish: {
+    uz: "Turkiya taomlari",
+    en: "Turkish Cuisine",
+    ru: "Турецкая кухня",
+    icon: "🇹🇷",
+  },
+  russian: {
+    uz: "Rossiya taomlari",
+    en: "Russian Cuisine",
+    ru: "Русская кухня",
+    icon: "🇷🇺",
+  },
 };
 
-const VideoCard = ({
-  video,
-  onClick,
-  savedIds = [],
+const VideoGrid = ({
+  category,
+  onSelectVideo,
+  savedIds,
   onToggleSave,
-  size = "normal",
-}: VideoCardProps) => {
+}: VideoGridProps) => {
   const { lang, t, dark } = useVideoLang();
-  const [imgError, setImgError] = useState(false);
-  const saved = savedIds.includes(video.id);
+  const { videoList } = useAdmin();
 
-  const cardBg = dark ? "#1e293b" : "#ffffff";
-  const borderColor = dark ? "rgba(255,255,255,0.06)" : "rgba(21,128,61,0.1)";
+  // Filter videos by category
+  const filtered = (() => {
+    if (category === "trending") {
+      return [...videoList].sort((a, b) => b.views - a.views);
+    }
+    if (category === "favorites") {
+      return videoList.filter((v) => savedIds.includes(v.id));
+    }
+    // country cuisines
+    const countryCuisines = [
+      "italian",
+      "japanese",
+      "american",
+      "french",
+      "korean",
+      "indian",
+      "mexican",
+      "chinese",
+      "turkish",
+      "russian",
+      "uzbek",
+    ];
+    if (countryCuisines.includes(category)) {
+      return videoList.filter((v) => v.cuisine === category);
+    }
+    // other categories (quick, healthy, dessert, bbq, vegetarian, breakfast, dinner, street, world)
+    if (category === "world") {
+      return videoList.filter((v) => v.cuisine !== "uzbek");
+    }
+    return videoList.filter(
+      (v) => v.category === category || v.tags.includes(category),
+    );
+  })();
+
+  const info = categoryTitles[category];
+  const icon = info?.icon ?? "🍽️";
+  const title = info?.[lang] ?? category;
+
+  const textMain = dark ? "#f1f5f9" : "#111827";
   const textMuted = dark ? "#94a3b8" : "#6b7280";
 
-  if (size === "horizontal") {
-    return (
-      <div
-        className="flex gap-3 cursor-pointer group"
-        onClick={onClick}
-        style={{ fontFamily: "'DM Sans', sans-serif" }}
-      >
-        <div className="relative flex-shrink-0 w-32 h-20 rounded-xl overflow-hidden">
-          <img
-            src={
-              imgError
-                ? "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=130&fit=crop"
-                : video.thumbnail
-            }
-            alt={video.title[lang]}
-            onError={() => setImgError(true)}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-          <div
-            className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-md text-white text-[10px] font-bold"
-            style={{ background: "rgba(0,0,0,0.75)" }}
-          >
-            {video.duration}
-          </div>
+  return (
+    <div className="pb-24 md:pb-8 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-6 px-1">
+        <div
+          className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
+          style={{
+            background: dark ? "rgba(29,185,84,0.15)" : "rgba(209,250,229,0.8)",
+            border: "1.5px solid rgba(29,185,84,0.2)",
+          }}
+        >
+          {icon}
         </div>
-        <div className="flex-1 min-w-0 py-0.5">
-          <h4
-            className="text-sm font-semibold line-clamp-2 leading-snug mb-1"
+        <div>
+          <h1
+            className="font-black text-2xl leading-tight"
             style={{
-              color: dark ? "#f1f5f9" : "#111827",
               fontFamily: "'Plus Jakarta Sans', sans-serif",
+              color: textMain,
             }}
           >
-            {video.title[lang]}
-          </h4>
-          <p className="text-[11px]" style={{ color: textMuted }}>
-            {formatViews(video.views)} {t("views")}
+            {title}
+          </h1>
+          <p className="text-sm mt-0.5" style={{ color: textMuted }}>
+            {filtered.length} ta video
           </p>
         </div>
       </div>
-    );
-  }
 
-  return (
-    <div
-      className="group cursor-pointer rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
-      onClick={onClick}
-      style={{
-        background: cardBg,
-        border: `1px solid ${borderColor}`,
-        boxShadow: `0 2px 12px ${dark ? "rgba(0,0,0,0.3)" : "rgba(21,128,61,0.07)"}`,
-      }}
-      onMouseEnter={(e) =>
-        (e.currentTarget.style.boxShadow = `0 10px 35px ${dark ? "rgba(0,0,0,0.4)" : "rgba(21,128,61,0.18)"}`)
-      }
-      onMouseLeave={(e) =>
-        (e.currentTarget.style.boxShadow = `0 2px 12px ${dark ? "rgba(0,0,0,0.3)" : "rgba(21,128,61,0.07)"}`)
-      }
-    >
-      {/* Thumbnail */}
-      <div
-        className="relative overflow-hidden"
-        style={{ aspectRatio: size === "small" ? "16/9" : "16/9" }}
-      >
-        <img
-          src={
-            imgError
-              ? "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=225&fit=crop"
-              : video.thumbnail
-          }
-          alt={video.title[lang]}
-          onError={() => setImgError(true)}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-          loading="lazy"
-        />
-        {/* Overlay */}
-        <div
-          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center"
-          style={{ background: "rgba(0,0,0,0.35)" }}
-        >
-          <div
-            className="w-12 h-12 rounded-full flex items-center justify-center"
+      {/* Empty state */}
+      {filtered.length === 0 ? (
+        <div className="text-center py-24">
+          <p className="text-5xl mb-4">🎬</p>
+          <p
+            className="font-bold text-lg mb-2"
             style={{
-              background: "rgba(29,185,84,0.9)",
-              backdropFilter: "blur(8px)",
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              color: textMain,
             }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </div>
+            {t("noResults")}
+          </p>
+          <p className="text-sm" style={{ color: textMuted }}>
+            Bu kategoriyada hali video yo'q
+          </p>
         </div>
-        {/* Duration */}
-        <div
-          className="absolute bottom-2 right-2 px-2 py-0.5 rounded-lg text-white text-[11px] font-bold"
-          style={{
-            background: "rgba(0,0,0,0.78)",
-            backdropFilter: "blur(4px)",
-          }}
-        >
-          {video.duration}
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+          {filtered.map((video) => (
+            <VideoCard
+              key={video.id}
+              video={video}
+              onClick={() => onSelectVideo(video.id)}
+              savedIds={savedIds}
+              onToggleSave={onToggleSave}
+            />
+          ))}
         </div>
-        {/* Save button */}
-        {onToggleSave && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleSave(video.id);
-            }}
-            className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center transition-all"
-            style={{
-              background: saved ? "#1DB954" : "rgba(0,0,0,0.5)",
-              color: "white",
-              backdropFilter: "blur(4px)",
-            }}
-          >
-            <Bookmark size={13} fill={saved ? "white" : "none"} />
-          </button>
-        )}
-        {/* Difficulty badge */}
-        <div
-          className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-white text-[10px] font-bold"
-          style={{ background: difficultyColor[video.difficulty] + "dd" }}
-        >
-          {t(video.difficulty)}
-        </div>
-      </div>
-
-      {/* Info */}
-      <div className="p-3">
-        <h3
-          className="font-bold text-sm leading-snug line-clamp-2 mb-2"
-          style={{
-            color: dark ? "#f1f5f9" : "#111827",
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
-          }}
-        >
-          {video.title[lang]}
-        </h3>
-        <div
-          className="flex items-center gap-3 text-[11px]"
-          style={{ color: textMuted }}
-        >
-          <span className="flex items-center gap-1">
-            <Eye size={11} style={{ color: "#1DB954" }} />
-            {formatViews(video.views)}
-          </span>
-          <span className="flex items-center gap-1">
-            <Clock size={11} style={{ color: "#1DB954" }} />
-            {video.cookTime} {t("minutes")}
-          </span>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
 
-export default VideoCard;
+export default VideoGrid;

@@ -79,7 +79,10 @@ const AppContent = () => {
   return (
     <div className="flex min-h-screen">
       <SideNav active={activeTab} onNavigate={setActiveTab} />
-      <main className="flex-1 md:p-6 max-w-5xl" style={{ background: "hsl(138 30% 97%)", minHeight: "100vh" }}>
+      <main
+        className="flex-1 md:p-6 max-w-5xl"
+        style={{ background: "hsl(138 30% 97%)", minHeight: "100vh" }}
+      >
         {activeTab === "recipes" && (
           <RecipesTab
             onSelectRecipe={setSelectedRecipeId}
