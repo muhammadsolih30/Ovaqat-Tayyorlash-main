@@ -1,5 +1,3 @@
-// src/components/BottomNav.tsx
-
 import { useState, useRef } from "react";
 import { useLang } from "@/contexts/LangContext";
 import { categoryList } from "@/data/recipes";
@@ -19,6 +17,8 @@ interface BottomNavProps {
   onCategoryChange?: (cat: string) => void;
 }
 
+const NAV_HEIGHT = 76;
+
 const BottomNav = ({
   active,
   onNavigate,
@@ -31,9 +31,6 @@ const BottomNav = ({
   const dragStartY = useRef<number | null>(null);
   const dragDelta = useRef(0);
   const dragging = useRef(false);
-
-  // Nav bar height — panel shu balandlikni hisobga oladi
-  const NAV_HEIGHT = 76;
 
   const tabs = [
     {
@@ -79,7 +76,7 @@ const BottomNav = ({
     onCategoryChange?.(catId);
     window.scrollTo({ top: 0, behavior: "smooth" });
     onNavigate("recipes");
-    // Panel ochiq qoladi
+    // Panel ochiq qoladi — boshqa kategoriya tanlash uchun qulay
   };
 
   const closePanel = () => {
@@ -87,7 +84,7 @@ const BottomNav = ({
     setDragOffset(0);
   };
 
-  // Swipe down to close
+  // ── Swipe down to close ──────────────────────────────────────
   const startDrag = (y: number) => {
     dragStartY.current = y;
     dragDelta.current = 0;
@@ -126,49 +123,53 @@ const BottomNav = ({
 
   return (
     <>
-      {/* ── 1. DIM BACKDROP ── z:48 */}
+      {/* ── 1. BACKDROP — navni YOPMAYDI (z:48) ── */}
       {showCategories && (
         <div
           onClick={closePanel}
           style={{
             position: "fixed",
-            inset: 0,
+            top: 0,
+            left: 0,
+            right: 0,
+            // Faqat nav tepasigacha — nav ko'rinadi
+            bottom: NAV_HEIGHT + 12,
             zIndex: 48,
-            background: "rgba(0,0,0,0.5)",
+            background: "rgba(0,0,0,0.55)",
             backdropFilter: "blur(3px)",
-            animation: "fadeIn 0.25s ease",
+            animation: "fadeIn 0.22s ease",
           }}
         />
       )}
 
-      {/* ── 2. CATEGORIES PANEL ── z:49  (nav z:50 dan past) */}
+      {/* ── 2. KATEGORIYALAR PANELI — nav ustida, lekin navni yopmaydi (z:49) ── */}
       <div
+        className="md:hidden"
         style={{
           position: "fixed",
           left: 0,
           right: 0,
+          // Nav TEPASIDAN boshlanadi — nav hech qachon yo'qolmaydi
+          bottom: NAV_HEIGHT + 12,
+          maxHeight: "70vh",
           zIndex: 49,
-          // Panel nav ustida EMAS, nav ostida qoladi — bottom: NAV_HEIGHT
-          bottom: NAV_HEIGHT,
-          height: "70vh",
           transform: showCategories
             ? `translateY(${dragOffset}px)`
-            : "translateY(calc(70vh + 20px))",
+            : "translateY(calc(70vh + 40px))",
           transition: dragging.current
             ? "none"
             : showCategories
               ? "transform 0.44s cubic-bezier(0.34,1.4,0.64,1)"
-              : "transform 0.34s cubic-bezier(0.55,0,0.45,1)",
+              : "transform 0.32s cubic-bezier(0.55,0,0.45,1)",
           willChange: "transform",
           pointerEvents: showCategories ? "auto" : "none",
         }}
-        className="md:hidden"
       >
         <div
           style={{
-            height: "100%",
             display: "flex",
             flexDirection: "column",
+            maxHeight: "70vh",
             background: "rgba(5,26,14,0.97)",
             backdropFilter: "blur(32px)",
             borderRadius: "24px 24px 0 0",
@@ -198,14 +199,7 @@ const BottomNav = ({
             />
             <div className="flex items-center justify-between w-full px-5">
               <div>
-                <p
-                  style={{
-                    color: "#4ade80",
-                    fontFamily: "var(--font-display)",
-                    fontWeight: 800,
-                    fontSize: 15,
-                  }}
-                >
+                <p style={{ color: "#4ade80", fontWeight: 800, fontSize: 15 }}>
                   🍽️ {lang === "uz" ? "Kategoriyalar" : "Categories"}
                 </p>
                 <p
@@ -230,6 +224,7 @@ const BottomNav = ({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  cursor: "pointer",
                 }}
               >
                 <ChevronDown size={15} strokeWidth={2.5} />
@@ -246,7 +241,7 @@ const BottomNav = ({
             />
           </div>
 
-          {/* Scrollable list */}
+          {/* Scroll list */}
           <div
             style={{ flex: 1, overflowY: "auto", padding: "12px 16px 16px" }}
           >
@@ -276,7 +271,6 @@ const BottomNav = ({
                         ? "1.5px solid rgba(74,222,128,0.55)"
                         : "1px solid rgba(255,255,255,0.08)",
                       color: isAct ? "#4ade80" : "rgba(255,255,255,0.65)",
-                      fontFamily: "var(--font-display)",
                       fontWeight: isAct ? 800 : 600,
                       fontSize: 13,
                       boxShadow: isAct
@@ -284,7 +278,6 @@ const BottomNav = ({
                         : "none",
                       cursor: "pointer",
                       textAlign: "left",
-                      // staggered animation
                       opacity: showCategories ? 1 : 0,
                       transform: showCategories
                         ? "translateY(0)"
@@ -300,7 +293,7 @@ const BottomNav = ({
               })}
             </div>
 
-            {/* ── Admin kirish tugmasi ── */}
+            {/* Admin kirish tugmasi */}
             <button
               onClick={() => {
                 closePanel();
@@ -317,7 +310,6 @@ const BottomNav = ({
                 background: "rgba(255,255,255,0.04)",
                 border: "1px solid rgba(255,255,255,0.09)",
                 color: "rgba(255,255,255,0.5)",
-                fontFamily: "var(--font-display)",
                 fontWeight: 600,
                 fontSize: 13,
                 cursor: "pointer",
@@ -372,7 +364,7 @@ const BottomNav = ({
         </div>
       </div>
 
-      {/* ── 3. BOTTOM NAV BAR ── z:50  DOIM USTIDA */}
+      {/* ── 3. BOTTOM NAV — DOIM z:50, hech narsa ustiga chiqmaydi ── */}
       <nav
         className="md:hidden"
         style={{
@@ -380,7 +372,7 @@ const BottomNav = ({
           bottom: 0,
           left: 0,
           right: 0,
-          zIndex: 50, // ← ENG YUQORI, hech narsa ustiga chiqmaydi
+          zIndex: 50,
           paddingBottom: "calc(env(safe-area-inset-bottom) + 10px)",
           paddingTop: 10,
           paddingLeft: 12,
@@ -476,7 +468,6 @@ const BottomNav = ({
                 </div>
                 <span
                   style={{
-                    fontFamily: "var(--font-display)",
                     fontSize: 9.5,
                     fontWeight: isActive ? 800 : 500,
                     opacity: isActive ? 1 : 0.4,

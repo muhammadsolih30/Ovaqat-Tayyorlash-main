@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAdmin } from "@/contexts/AdminContext";
 import { Video, chefs } from "@/data/videos";
+import { Recipe, categoryList as recipeCategoryList } from "@/data/recipes";
 import {
   LayoutDashboard,
   PlaySquare,
@@ -39,12 +40,13 @@ type AdminPage =
   | "add"
   | "chefs"
   | "stats"
-  | "settings";
+  | "settings"
+  | "recipes"
+  | "add-recipe"
+  | "categories";
 
-// ─── helpers ──────────────────────────────────────────────────────────────
 const G = "#1DB954";
 
-// Extract YouTube video ID from any youtube URL or plain ID
 function parseYoutubeId(input: string): string {
   const patterns = [
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/,
@@ -56,16 +58,13 @@ function parseYoutubeId(input: string): string {
   }
   return "";
 }
-
 function ytEmbed(id: string) {
   return `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1`;
 }
-
 function ytThumbnail(id: string) {
   return `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
 }
 
-// ─── styles ───────────────────────────────────────────────────────────────
 const card = {
   background: "white",
   border: "1px solid rgba(21,128,61,0.1)",
@@ -107,14 +106,36 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
     deleteVideo,
     updateVideo,
     incrementView,
+    recipeList,
+    addRecipe,
+    deleteRecipe,
+    updateRecipe,
   } = useAdmin();
+
   const [page, setPage] = useState<AdminPage>("dashboard");
   const [searchQ, setSearchQ] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editVideo, setEditVideo] = useState<Video | null>(null);
   const [notif, setNotif] = useState<{ msg: string; ok: boolean } | null>(null);
 
-  // ── Add video form ──────────────────────────────────────────────────────
+  const [recipeForm, setRecipeForm] = useState({
+    name_uz: "",
+    name_en: "",
+    desc_uz: "",
+    desc_en: "",
+    image: "",
+    country: "uzbek",
+    time: "30",
+    servings: "4",
+    category: "dinner",
+    calories: "",
+    ingredients_uz: "",
+    ingredients_en: "",
+    steps_uz: "",
+    steps_en: "",
+  });
+  const [editRecipeId, setEditRecipeId] = useState<string | null>(null);
+
   const emptyForm = {
     ytUrl: "",
     ytId: "",
@@ -149,7 +170,6 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
   const setF = (k: string, v: string | boolean) =>
     setForm((p) => ({ ...p, [k]: v }));
 
-  // Parse YouTube URL live
   const handleYtUrl = (val: string) => {
     setF("ytUrl", val);
     const id = parseYoutubeId(val);
@@ -188,7 +208,6 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
       toast("Davomiylik majburiy! (masalan: 15:30)", false);
       return;
     }
-
     const v: Video = {
       id: `v${Date.now()}`,
       title: {
@@ -229,7 +248,6 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
     toast("Video muvaffaqiyatli qo'shildi! ✅");
   };
 
-  // ── Edit save ──────────────────────────────────────────────────────────
   const handleEditSave = () => {
     if (!editVideo) return;
     updateVideo(editVideo);
@@ -237,7 +255,6 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
     toast("Video yangilandi! ✅");
   };
 
-  // ── Filtered list ──────────────────────────────────────────────────────
   const filtered = videoList.filter(
     (v) =>
       v.title.uz.toLowerCase().includes(searchQ.toLowerCase()) ||
@@ -245,23 +262,20 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
       v.cuisine.toLowerCase().includes(searchQ.toLowerCase()),
   );
 
-  // ── Stats ──────────────────────────────────────────────────────────────
   const totalViews = videoList.reduce((a, v) => a + v.views, 0);
   const topVideos = [...videoList].sort((a, b) => b.views - a.views);
 
-  // ── nav ────────────────────────────────────────────────────────────────
-  const navItems: {
-    id: AdminPage;
-    label: string;
-    icon: typeof LayoutDashboard;
-  }[] = [
+  const navItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "videos", label: "Videolar", icon: PlaySquare },
     { id: "add", label: "Video Qo'shish", icon: Plus },
+    { id: "recipes", label: "Taomlar", icon: Tag },
+    { id: "add-recipe", label: "Taom Qo'shish", icon: Plus },
+    { id: "categories", label: "Kategoriyalar", icon: LayoutDashboard },
     { id: "chefs", label: "Oshpazlar", icon: ChefHat },
     { id: "stats", label: "Statistika", icon: BarChart3 },
     { id: "settings", label: "Sozlamalar", icon: Settings },
-  ];
+  ] as { id: AdminPage; label: string; icon: typeof LayoutDashboard }[];
 
   return (
     <div
@@ -271,7 +285,7 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
         fontFamily: "'Plus Jakarta Sans',sans-serif",
       }}
     >
-      {/* ── Toast ── */}
+      {/* Toast */}
       {notif && (
         <div
           className="fixed top-5 right-5 z-[999] flex items-center gap-2.5 px-5 py-3 rounded-2xl text-white text-sm font-bold shadow-2xl"
@@ -287,14 +301,13 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
         </div>
       )}
 
-      {/* ── Sidebar ── */}
+      {/* Sidebar */}
       <aside
         className="w-56 flex-shrink-0 flex flex-col h-screen sticky top-0"
         style={{
           background: "linear-gradient(180deg,#0d2818 0%,#166534 100%)",
         }}
       >
-        {/* logo */}
         <div className="flex items-center gap-2.5 px-5 py-5 border-b border-white/10">
           <div
             className="w-9 h-9 rounded-xl flex items-center justify-center"
@@ -307,12 +320,11 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
               Admin Panel
             </div>
             <div style={{ color: G }} className="text-[10px] font-bold">
-              Cook<span className="text-white">Tube</span>
+              Taom<span className="text-white">Uz</span>
             </div>
           </div>
         </div>
 
-        {/* nav */}
         <nav className="flex-1 p-3 pt-4 flex flex-col gap-0.5">
           {navItems.map(({ id, label, icon: Icon }) => (
             <button
@@ -332,7 +344,6 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
           ))}
         </nav>
 
-        {/* user + logout */}
         <div className="p-4 border-t border-white/10">
           <div className="flex items-center gap-2.5 px-2 mb-3">
             <div
@@ -361,9 +372,9 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
         </div>
       </aside>
 
-      {/* ── Main ── */}
+      {/* Main */}
       <main className="flex-1 min-w-0 overflow-auto p-6">
-        {/* ════════════ DASHBOARD ════════════ */}
+        {/* ═══ DASHBOARD ═══ */}
         {page === "dashboard" && (
           <div>
             <h1
@@ -373,10 +384,8 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
               📊 Dashboard
             </h1>
             <p className="text-sm text-gray-400 mb-6">
-              CookTube boshqaruv markazi
+              TaomUz boshqaruv markazi
             </p>
-
-            {/* stat cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               {[
                 {
@@ -394,15 +403,15 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                   bg: "rgba(59,130,246,0.1)",
                 },
                 {
-                  label: "Trend Videolar",
-                  val: topVideos.slice(0, 3).length,
-                  icon: TrendingUp,
+                  label: "Jami Taomlar",
+                  val: recipeList.length,
+                  icon: Tag,
                   color: "#f59e0b",
                   bg: "rgba(245,158,11,0.1)",
                 },
                 {
-                  label: "O'zbek taomlari",
-                  val: videoList.filter((v) => v.cuisine === "uzbek").length,
+                  label: "Kategoriyalar",
+                  val: recipeCategoryList.length,
                   icon: Star,
                   color: "#8b5cf6",
                   bg: "rgba(139,92,246,0.1)",
@@ -428,11 +437,10 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
               ))}
             </div>
 
-            {/* latest 5 videos */}
             <div className="rounded-2xl overflow-hidden mb-4" style={card}>
               <div className="px-5 py-4 flex items-center justify-between border-b border-green-50">
                 <h3 className="font-black text-sm" style={{ color: "#111827" }}>
-                  🎬 So'nggi qo'shilgan videolar
+                  🎬 So'nggi videolar
                 </h3>
                 <button
                   onClick={() => setPage("videos")}
@@ -516,7 +524,6 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
               </table>
             </div>
 
-            {/* quick actions */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
                 {
@@ -526,22 +533,22 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                   color: G,
                 },
                 {
-                  label: "Videolar Ro'yxati",
-                  icon: PlaySquare,
-                  action: () => setPage("videos"),
-                  color: "#3b82f6",
+                  label: "Taom Qo'shish",
+                  icon: Tag,
+                  action: () => setPage("add-recipe"),
+                  color: "#f59e0b",
+                },
+                {
+                  label: "Kategoriyalar",
+                  icon: LayoutDashboard,
+                  action: () => setPage("categories"),
+                  color: "#8b5cf6",
                 },
                 {
                   label: "Statistika",
                   icon: BarChart3,
                   action: () => setPage("stats"),
-                  color: "#f59e0b",
-                },
-                {
-                  label: "Sozlamalar",
-                  icon: Settings,
-                  action: () => setPage("settings"),
-                  color: "#8b5cf6",
+                  color: "#3b82f6",
                 },
               ].map(({ label, icon: Icon, action, color }) => (
                 <button
@@ -571,7 +578,7 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
           </div>
         )}
 
-        {/* ════════════ ADD VIDEO ════════════ */}
+        {/* ═══ VIDEO QO'SHISH ═══ */}
         {page === "add" && (
           <div>
             <h1
@@ -583,11 +590,8 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
             <p className="text-sm text-gray-400 mb-6">
               YouTube linkini kiriting — thumbnail avtomatik olinadi
             </p>
-
             <div className="grid lg:grid-cols-[1fr_360px] gap-6">
-              {/* Left: form */}
               <div className="space-y-5">
-                {/* YouTube URL */}
                 <div className="p-5 rounded-2xl" style={card}>
                   <h3
                     className="font-black text-sm mb-4 flex items-center gap-2"
@@ -607,7 +611,7 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                       type="text"
                       value={form.ytUrl}
                       onChange={(e) => handleYtUrl(e.target.value)}
-                      placeholder="https://youtube.com/watch?v=... yoki Video ID"
+                      placeholder="https://youtube.com/watch?v=..."
                       style={{ ...inp, paddingLeft: "36px" }}
                     />
                   </div>
@@ -616,12 +620,10 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                       className="mt-2 flex items-center gap-2 text-xs font-semibold"
                       style={{ color: G }}
                     >
-                      <Check size={13} /> Video ID topildi:{" "}
+                      <Check size={13} /> ID:{" "}
                       <span className="font-black">{form.ytId}</span>
                     </div>
                   )}
-
-                  {/* Custom thumbnail toggle */}
                   <div className="mt-4">
                     <label className="flex items-center gap-2.5 cursor-pointer">
                       <div
@@ -666,7 +668,6 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                   </div>
                 </div>
 
-                {/* Titles */}
                 <div className="p-5 rounded-2xl" style={card}>
                   <h3
                     className="font-black text-sm mb-4 flex items-center gap-2"
@@ -694,7 +695,6 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                   </div>
                 </div>
 
-                {/* Descriptions */}
                 <div className="p-5 rounded-2xl" style={card}>
                   <h3
                     className="font-black text-sm mb-4"
@@ -722,7 +722,6 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                   ))}
                 </div>
 
-                {/* Meta */}
                 <div className="p-5 rounded-2xl" style={card}>
                   <h3
                     className="font-black text-sm mb-4"
@@ -731,46 +730,23 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                     ⚙️ Video Ma'lumotlari
                   </h3>
                   <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label style={lbl}>Oshpaz nomi *</label>
-                      <input
-                        type="text"
-                        value={form.chef}
-                        onChange={(e) => setF("chef", e.target.value)}
-                        placeholder="Aziz Karimov"
-                        style={inp}
-                      />
-                    </div>
-                    <div>
-                      <label style={lbl}>Davomiyligi * (15:30)</label>
-                      <input
-                        type="text"
-                        value={form.duration}
-                        onChange={(e) => setF("duration", e.target.value)}
-                        placeholder="15:30"
-                        style={inp}
-                      />
-                    </div>
-                    <div>
-                      <label style={lbl}>Pishirish vaqti (min)</label>
-                      <input
-                        type="number"
-                        value={form.cookTime}
-                        onChange={(e) => setF("cookTime", e.target.value)}
-                        placeholder="30"
-                        style={inp}
-                      />
-                    </div>
-                    <div>
-                      <label style={lbl}>Kaloriya (ixtiyoriy)</label>
-                      <input
-                        type="number"
-                        value={form.calories}
-                        onChange={(e) => setF("calories", e.target.value)}
-                        placeholder="450"
-                        style={inp}
-                      />
-                    </div>
+                    {[
+                      ["Oshpaz nomi *", "text", "chef", "Aziz Karimov"],
+                      ["Davomiyligi * (15:30)", "text", "duration", "15:30"],
+                      ["Pishirish vaqti (min)", "number", "cookTime", "30"],
+                      ["Kaloriya (ixtiyoriy)", "number", "calories", "450"],
+                    ].map(([label, type, key, ph]) => (
+                      <div key={key}>
+                        <label style={lbl}>{label}</label>
+                        <input
+                          type={type}
+                          value={(form as any)[key]}
+                          onChange={(e) => setF(key, e.target.value)}
+                          placeholder={ph}
+                          style={inp}
+                        />
+                      </div>
+                    ))}
                     <div>
                       <label style={lbl}>Qiyinlik darajasi</label>
                       <select
@@ -831,7 +807,6 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                           ["world", "Jahon"],
                           ["quick", "Tez"],
                           ["healthy", "Sog'lom"],
-                          ["street", "Ko'cha"],
                           ["dessert", "Shirinlik"],
                           ["bbq", "Kabob"],
                           ["vegetarian", "Vegetarian"],
@@ -881,7 +856,6 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                   </div>
                 </div>
 
-                {/* Submit */}
                 <button
                   onClick={handleAdd}
                   className="w-full py-4 rounded-2xl font-black text-white text-base transition-all hover:scale-[1.02] active:scale-[0.98]"
@@ -896,7 +870,6 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                 </button>
               </div>
 
-              {/* Right: live preview */}
               <div className="space-y-4">
                 <div className="p-5 rounded-2xl sticky top-4" style={card}>
                   <h3
@@ -905,8 +878,6 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                   >
                     👁️ Live Ko'rinish
                   </h3>
-
-                  {/* Video preview */}
                   <div className="rounded-xl overflow-hidden mb-3 aspect-video bg-gray-100 flex items-center justify-center">
                     {ytPreview ? (
                       <iframe
@@ -929,8 +900,6 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                       </div>
                     )}
                   </div>
-
-                  {/* Thumbnail preview */}
                   <div className="mb-3">
                     <p style={{ ...lbl, marginBottom: "8px" }}>
                       Thumbnail Ko'rinishi
@@ -952,8 +921,6 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                       />
                     </div>
                   </div>
-
-                  {/* Card preview */}
                   <div
                     className="rounded-xl overflow-hidden border"
                     style={{ borderColor: "rgba(21,128,61,0.15)" }}
@@ -986,7 +953,7 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
           </div>
         )}
 
-        {/* ════════════ VIDEOS LIST ════════════ */}
+        {/* ═══ VIDEOLAR RO'YXATI ═══ */}
         {page === "videos" && (
           <div>
             <div className="flex items-center justify-between mb-6">
@@ -1012,8 +979,6 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                 <Plus size={17} /> Yangi Video
               </button>
             </div>
-
-            {/* search */}
             <div className="relative mb-4">
               <Search
                 size={15}
@@ -1034,8 +999,6 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                 }}
               />
             </div>
-
-            {/* table */}
             <div className="rounded-2xl overflow-hidden" style={card}>
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -1130,7 +1093,6 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                               onClick={() => setEditVideo({ ...v })}
                               className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:bg-blue-50"
                               style={{ color: "#3b82f6" }}
-                              title="Tahrirlash"
                             >
                               <Edit3 size={14} />
                             </button>
@@ -1138,7 +1100,6 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                               onClick={() => setDeleteId(v.id)}
                               className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:bg-red-50"
                               style={{ color: "#ef4444" }}
-                              title="O'chirish"
                             >
                               <Trash2 size={14} />
                             </button>
@@ -1159,7 +1120,7 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
           </div>
         )}
 
-        {/* ════════════ CHEFS ════════════ */}
+        {/* ═══ OSHPAZLAR ═══ */}
         {page === "chefs" && (
           <div>
             <h1
@@ -1244,7 +1205,7 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
           </div>
         )}
 
-        {/* ════════════ STATS ════════════ */}
+        {/* ═══ STATISTIKA ═══ */}
         {page === "stats" && (
           <div>
             <h1
@@ -1254,8 +1215,6 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
               📈 Statistika
             </h1>
             <p className="text-sm text-gray-400 mb-6">Sayt faoliyati tahlili</p>
-
-            {/* top 10 trending */}
             <div className="rounded-2xl overflow-hidden mb-5" style={card}>
               <div className="px-5 py-4 border-b border-green-50 flex items-center gap-2">
                 <Flame size={18} style={{ color: "#ef4444" }} />
@@ -1313,8 +1272,6 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                 ))}
               </div>
             </div>
-
-            {/* by cuisine */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-5 rounded-2xl" style={card}>
                 <h3
@@ -1407,7 +1364,7 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
           </div>
         )}
 
-        {/* ════════════ SETTINGS ════════════ */}
+        {/* ═══ SOZLAMALAR ═══ */}
         {page === "settings" && (
           <div>
             <h1
@@ -1459,10 +1416,11 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                   🌐 Sayt holati
                 </h3>
                 {[
-                  ["Sayt nomi", "CookTube"],
+                  ["Sayt nomi", "TaomUz"],
                   ["Versiya", "2.1.0"],
                   ["Status", "🟢 Aktiv"],
                   ["Jami video", String(videoList.length)],
+                  ["Jami taom", String(recipeList.length)],
                   ["Jami ko'rishlar", `${(totalViews / 1000).toFixed(1)}K`],
                 ].map(([k, v]) => (
                   <div
@@ -1494,9 +1452,506 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
             </div>
           </div>
         )}
+
+        {/* ═══ TAOMLAR ═══ */}
+        {page === "recipes" && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-2xl font-black" style={{ color: "#111827" }}>
+                🍽️ Taomlar
+              </h1>
+              <button
+                onClick={() => {
+                  setEditRecipeId(null);
+                  setRecipeForm({
+                    name_uz: "",
+                    name_en: "",
+                    desc_uz: "",
+                    desc_en: "",
+                    image: "",
+                    country: "uzbek",
+                    time: "30",
+                    servings: "4",
+                    category: "dinner",
+                    calories: "",
+                    ingredients_uz: "",
+                    ingredients_en: "",
+                    steps_uz: "",
+                    steps_en: "",
+                  });
+                  setPage("add-recipe");
+                }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white"
+                style={{
+                  background: "linear-gradient(135deg,#1DB954,#15803d)",
+                }}
+              >
+                <Plus size={15} /> Taom Qo'shish
+              </button>
+            </div>
+            <div style={{ ...card, overflow: "hidden" }}>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr
+                    style={{
+                      background: "#f0fdf4",
+                      borderBottom: "1px solid rgba(21,128,61,0.1)",
+                    }}
+                  >
+                    {["Rasm", "Nomi", "Kategoriya", "Vaqt", "Amallar"].map(
+                      (h) => (
+                        <th
+                          key={h}
+                          className="text-left px-4 py-3 text-xs font-bold uppercase"
+                          style={{ color: "#6b7280", letterSpacing: "0.05em" }}
+                        >
+                          {h}
+                        </th>
+                      ),
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {recipeList.map((r, i) => (
+                    <tr
+                      key={r.id}
+                      style={{
+                        borderBottom:
+                          i < recipeList.length - 1
+                            ? "1px solid rgba(0,0,0,0.04)"
+                            : "none",
+                      }}
+                    >
+                      <td className="px-4 py-3">
+                        <img
+                          src={r.image}
+                          alt={r.name.uz}
+                          className="w-12 h-10 rounded-lg object-cover"
+                        />
+                      </td>
+                      <td
+                        className="px-4 py-3 font-semibold"
+                        style={{ color: "#111827" }}
+                      >
+                        {r.name.uz}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className="px-2 py-0.5 rounded-full text-xs font-bold"
+                          style={{
+                            background: "rgba(21,128,61,0.1)",
+                            color: "#15803d",
+                          }}
+                        >
+                          {
+                            recipeCategoryList.find((c) => c.id === r.category)
+                              ?.emoji
+                          }{" "}
+                          {recipeCategoryList.find((c) => c.id === r.category)
+                            ?.uz || r.category}
+                        </span>
+                      </td>
+                      <td
+                        className="px-4 py-3 text-xs"
+                        style={{ color: "#6b7280" }}
+                      >
+                        ⏱ {r.time} daq
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              setEditRecipeId(r.id);
+                              setRecipeForm({
+                                name_uz: r.name.uz,
+                                name_en: r.name.en,
+                                desc_uz: r.description.uz,
+                                desc_en: r.description.en,
+                                image: r.image,
+                                country: r.country,
+                                time: String(r.time),
+                                servings: String(r.servings),
+                                category: r.category,
+                                calories: String(r.calories || ""),
+                                ingredients_uz: r.ingredients
+                                  .map((i) => i.uz)
+                                  .join("\n"),
+                                ingredients_en: r.ingredients
+                                  .map((i) => i.en)
+                                  .join("\n"),
+                                steps_uz: r.steps.map((s) => s.uz).join("\n"),
+                                steps_en: r.steps.map((s) => s.en).join("\n"),
+                              });
+                              setPage("add-recipe");
+                            }}
+                            className="p-1.5 rounded-lg hover:bg-blue-50"
+                            style={{ color: "#3b82f6" }}
+                          >
+                            <Edit3 size={14} />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm("O'chirilsinmi?")) {
+                                deleteRecipe(r.id);
+                                toast("Taom o'chirildi", true);
+                              }
+                            }}
+                            className="p-1.5 rounded-lg hover:bg-red-50"
+                            style={{ color: "#ef4444" }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {recipeList.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="px-4 py-12 text-center text-sm"
+                        style={{ color: "#9ca3af" }}
+                      >
+                        Hech qanday taom yo'q. Taom qo'shing!
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ═══ TAOM QO'SHISH / TAHRIRLASH ═══ */}
+        {page === "add-recipe" && (
+          <div>
+            <div className="flex items-center gap-3 mb-6">
+              <button
+                onClick={() => setPage("recipes")}
+                className="p-2 rounded-xl hover:bg-gray-100"
+              >
+                <X size={18} />
+              </button>
+              <h1 className="text-2xl font-black" style={{ color: "#111827" }}>
+                {editRecipeId
+                  ? "✏️ Taomni Tahrirlash"
+                  : "➕ Yangi Taom Qo'shish"}
+              </h1>
+            </div>
+            <div style={{ ...card, padding: 24, maxWidth: 640 }}>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                  <label style={lbl}>Nomi (O'zbek)</label>
+                  <input
+                    style={inp}
+                    value={recipeForm.name_uz}
+                    onChange={(e) =>
+                      setRecipeForm((f) => ({ ...f, name_uz: e.target.value }))
+                    }
+                    placeholder="Osh (Palov)"
+                  />
+                </div>
+                <div>
+                  <label style={lbl}>Nomi (English)</label>
+                  <input
+                    style={inp}
+                    value={recipeForm.name_en}
+                    onChange={(e) =>
+                      setRecipeForm((f) => ({ ...f, name_en: e.target.value }))
+                    }
+                    placeholder="Plov (Pilaf)"
+                  />
+                </div>
+              </div>
+              <div className="mb-4">
+                <label style={lbl}>Rasm URL</label>
+                <input
+                  style={inp}
+                  value={recipeForm.image}
+                  onChange={(e) =>
+                    setRecipeForm((f) => ({ ...f, image: e.target.value }))
+                  }
+                  placeholder="https://images.unsplash.com/photo-..."
+                />
+                {recipeForm.image && (
+                  <img
+                    src={recipeForm.image}
+                    className="mt-2 h-24 rounded-xl object-cover"
+                    onError={(e) => (e.currentTarget.style.display = "none")}
+                  />
+                )}
+              </div>
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                <div>
+                  <label style={lbl}>Kategoriya</label>
+                  <select
+                    style={inp}
+                    value={recipeForm.category}
+                    onChange={(e) =>
+                      setRecipeForm((f) => ({ ...f, category: e.target.value }))
+                    }
+                  >
+                    {recipeCategoryList.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.emoji} {c.uz}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label style={lbl}>Vaqt (daqiqa)</label>
+                  <input
+                    style={inp}
+                    type="number"
+                    value={recipeForm.time}
+                    onChange={(e) =>
+                      setRecipeForm((f) => ({ ...f, time: e.target.value }))
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={lbl}>Porsiya</label>
+                  <input
+                    style={inp}
+                    type="number"
+                    value={recipeForm.servings}
+                    onChange={(e) =>
+                      setRecipeForm((f) => ({ ...f, servings: e.target.value }))
+                    }
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                  <label style={lbl}>Tavsif (UZ)</label>
+                  <textarea
+                    style={
+                      {
+                        ...inp,
+                        height: 70,
+                        resize: "none",
+                      } as React.CSSProperties
+                    }
+                    value={recipeForm.desc_uz}
+                    onChange={(e) =>
+                      setRecipeForm((f) => ({ ...f, desc_uz: e.target.value }))
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={lbl}>Tavsif (EN)</label>
+                  <textarea
+                    style={
+                      {
+                        ...inp,
+                        height: 70,
+                        resize: "none",
+                      } as React.CSSProperties
+                    }
+                    value={recipeForm.desc_en}
+                    onChange={(e) =>
+                      setRecipeForm((f) => ({ ...f, desc_en: e.target.value }))
+                    }
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                  <label style={lbl}>
+                    Tarkibi (UZ) — har biri yangi qatorda
+                  </label>
+                  <textarea
+                    style={
+                      {
+                        ...inp,
+                        height: 100,
+                        resize: "none",
+                      } as React.CSSProperties
+                    }
+                    value={recipeForm.ingredients_uz}
+                    onChange={(e) =>
+                      setRecipeForm((f) => ({
+                        ...f,
+                        ingredients_uz: e.target.value,
+                      }))
+                    }
+                    placeholder={"Guruch - 1 kg\nSabzi - 500 g"}
+                  />
+                </div>
+                <div>
+                  <label style={lbl}>Tarkibi (EN)</label>
+                  <textarea
+                    style={
+                      {
+                        ...inp,
+                        height: 100,
+                        resize: "none",
+                      } as React.CSSProperties
+                    }
+                    value={recipeForm.ingredients_en}
+                    onChange={(e) =>
+                      setRecipeForm((f) => ({
+                        ...f,
+                        ingredients_en: e.target.value,
+                      }))
+                    }
+                    placeholder={"Rice - 1 kg\nCarrots - 500 g"}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mb-5">
+                <div>
+                  <label style={lbl}>Qadamlar (UZ)</label>
+                  <textarea
+                    style={
+                      {
+                        ...inp,
+                        height: 100,
+                        resize: "none",
+                      } as React.CSSProperties
+                    }
+                    value={recipeForm.steps_uz}
+                    onChange={(e) =>
+                      setRecipeForm((f) => ({ ...f, steps_uz: e.target.value }))
+                    }
+                  />
+                </div>
+                <div>
+                  <label style={lbl}>Qadamlar (EN)</label>
+                  <textarea
+                    style={
+                      {
+                        ...inp,
+                        height: 100,
+                        resize: "none",
+                      } as React.CSSProperties
+                    }
+                    value={recipeForm.steps_en}
+                    onChange={(e) =>
+                      setRecipeForm((f) => ({ ...f, steps_en: e.target.value }))
+                    }
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setPage("recipes")}
+                  className="flex-1 py-3 rounded-xl font-bold text-sm"
+                  style={{ background: "#f3f4f6", color: "#374151" }}
+                >
+                  Bekor
+                </button>
+                <button
+                  onClick={() => {
+                    if (!recipeForm.name_uz.trim()) {
+                      toast("Iltimos nomi (UZ) kiriting", false);
+                      return;
+                    }
+                    const ingUZ = recipeForm.ingredients_uz
+                      .split("\n")
+                      .filter(Boolean);
+                    const ingEN = recipeForm.ingredients_en
+                      .split("\n")
+                      .filter(Boolean);
+                    const stUZ = recipeForm.steps_uz
+                      .split("\n")
+                      .filter(Boolean);
+                    const stEN = recipeForm.steps_en
+                      .split("\n")
+                      .filter(Boolean);
+                    const rec: Recipe = {
+                      id: editRecipeId || String(Date.now()),
+                      name: {
+                        uz: recipeForm.name_uz,
+                        en: recipeForm.name_en || recipeForm.name_uz,
+                      },
+                      description: {
+                        uz: recipeForm.desc_uz,
+                        en: recipeForm.desc_en || recipeForm.desc_uz,
+                      },
+                      image:
+                        recipeForm.image ||
+                        "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop",
+                      country: recipeForm.country,
+                      time: Number(recipeForm.time) || 30,
+                      servings: Number(recipeForm.servings) || 4,
+                      category: recipeForm.category,
+                      calories: recipeForm.calories
+                        ? Number(recipeForm.calories)
+                        : undefined,
+                      ingredients: ingUZ.map((u, i) => ({
+                        uz: u,
+                        en: ingEN[i] || u,
+                      })),
+                      steps: stUZ.map((u, i) => ({ uz: u, en: stEN[i] || u })),
+                    };
+                    if (editRecipeId) {
+                      updateRecipe(rec);
+                      toast("Taom yangilandi ✓", true);
+                    } else {
+                      addRecipe(rec);
+                      toast("Yangi taom qo'shildi ✓", true);
+                    }
+                    setEditRecipeId(null);
+                    setPage("recipes");
+                  }}
+                  className="flex-1 py-3 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2"
+                  style={{
+                    background: "linear-gradient(135deg,#1DB954,#15803d)",
+                  }}
+                >
+                  <Check size={15} /> Saqlash
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ═══ KATEGORIYALAR ═══ */}
+        {page === "categories" && (
+          <div>
+            <h1
+              className="text-2xl font-black mb-6"
+              style={{ color: "#111827" }}
+            >
+              📂 Kategoriyalar
+            </h1>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {recipeCategoryList.map((cat) => {
+                const cnt = recipeList.filter(
+                  (r) => r.category === cat.id,
+                ).length;
+                return (
+                  <div key={cat.id} style={card} className="p-5">
+                    <div className="text-3xl mb-3">{cat.emoji}</div>
+                    <div
+                      className="font-bold text-sm mb-1"
+                      style={{ color: "#111827" }}
+                    >
+                      {cat.uz}
+                    </div>
+                    <div className="text-xs mb-3" style={{ color: "#6b7280" }}>
+                      {cnt} ta taom
+                    </div>
+                    <button
+                      onClick={() => setPage("recipes")}
+                      className="w-full py-1.5 rounded-lg text-xs font-bold hover:opacity-90"
+                      style={{
+                        background: "rgba(21,128,61,0.1)",
+                        color: "#15803d",
+                      }}
+                    >
+                      Ko'rish →
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </main>
 
-      {/* ════════ DELETE MODAL ════════ */}
+      {/* Delete modal */}
       {deleteId && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -1547,7 +2002,7 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
         </div>
       )}
 
-      {/* ════════ EDIT MODAL ════════ */}
+      {/* Edit video modal */}
       {editVideo && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"

@@ -1,11 +1,7 @@
-// src/pages/Index.tsx
-// MAVJUD FAYLNI BU KOD BILAN ALMASHTIRING
-
 import { useState } from "react";
 import { LangProvider } from "@/contexts/LangContext";
 import { AdminProvider, useAdmin } from "@/contexts/AdminContext";
 import { PremiumProvider } from "@/contexts/PremiumContext";
-import { recipes } from "@/data/recipes";
 import BottomNav from "@/components/BottomNav";
 import SideNav from "@/components/SideNav";
 import RecipesTab from "@/components/RecipesTab";
@@ -13,7 +9,6 @@ import RecipeDetail from "@/components/RecipeDetail";
 import IngredientsSearch from "@/components/IngredientsSearch";
 import SavedTab from "@/components/SavedTab";
 import TipsSection from "@/components/TipsSection";
-import ProfileSection from "@/components/ProfileSection";
 import PremiumModal from "@/components/PremiumModal";
 import AdminLogin from "@/pages/admin/AdminLogin";
 import AdminPanel from "@/pages/admin/AdminPanel";
@@ -24,7 +19,7 @@ const AppContent = () => {
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [activeCategory, setActiveCategory] = useState("all");
-  const { isAdmin } = useAdmin();
+  const { isAdmin, recipeList } = useAdmin();
 
   const toggleSave = (id: string) => {
     setSavedIds((prev) =>
@@ -33,7 +28,7 @@ const AppContent = () => {
   };
 
   const selectedRecipe = selectedRecipeId
-    ? recipes.find((r) => r.id === selectedRecipeId)
+    ? recipeList.find((r) => r.id === selectedRecipeId)
     : null;
 
   const handleNavigate = (tab: string) => {
@@ -84,7 +79,7 @@ const AppContent = () => {
   return (
     <div className="flex min-h-screen">
       <SideNav active={activeTab} onNavigate={setActiveTab} />
-      <main className="flex-1 md:p-6 max-w-5xl">
+      <main className="flex-1 md:p-6 max-w-5xl" style={{ background: "hsl(138 30% 97%)", minHeight: "100vh" }}>
         {activeTab === "recipes" && (
           <RecipesTab
             onSelectRecipe={setSelectedRecipeId}
@@ -109,9 +104,6 @@ const AppContent = () => {
           />
         )}
         {activeTab === "tips" && <TipsSection />}
-        {activeTab === "profile" && (
-          <ProfileSection onOpenAdmin={() => setShowAdminLogin(true)} />
-        )}
       </main>
       <BottomNav
         active={activeTab}
