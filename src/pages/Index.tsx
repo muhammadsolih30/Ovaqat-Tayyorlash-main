@@ -9,6 +9,7 @@ import RecipeDetail from "@/components/RecipeDetail";
 import IngredientsSearch from "@/components/IngredientsSearch";
 import SavedTab from "@/components/SavedTab";
 import TipsSection from "@/components/TipsSection";
+import Footer from "@/components/Footer";
 import PremiumModal from "@/components/PremiumModal";
 import AdminLogin from "@/pages/admin/AdminLogin";
 import AdminPanel from "@/pages/admin/AdminPanel";
@@ -56,10 +57,7 @@ const AppContent = () => {
     return (
       <div className="flex min-h-screen">
         <SideNav active={activeTab} onNavigate={handleNavigate} />
-        <main
-          className="flex-1 max-w-4xl mx-auto"
-          style={{ paddingBottom: 100 }}
-        >
+        <main className="flex-1 max-w-4xl mx-auto">
           <RecipeDetail
             recipe={selectedRecipe}
             onBack={() => {
@@ -84,11 +82,7 @@ const AppContent = () => {
       <SideNav active={activeTab} onNavigate={setActiveTab} />
       <main
         className="flex-1 md:p-6 max-w-5xl"
-        style={{
-          background: "hsl(138 30% 97%)",
-          minHeight: "100vh",
-          paddingBottom: 100, // ← NAV OSTIDA CONTENT KO'RINADI
-        }}
+        style={{ background: "hsl(138 30% 97%)", minHeight: "100vh" }}
       >
         {activeTab === "recipes" && (
           <RecipesTab
@@ -114,6 +108,7 @@ const AppContent = () => {
           />
         )}
         {activeTab === "tips" && <TipsSection />}
+        <Footer />
       </main>
       <BottomNav
         active={activeTab}

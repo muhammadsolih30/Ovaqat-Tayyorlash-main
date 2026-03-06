@@ -79,7 +79,7 @@ const VideoHeader = ({
   if (mobileSearchOpen) {
     return (
       <header
-        className="sticky top-0 z-50 h-[70px] flex items-center px-4 gap-3 md:hidden"
+        className="fixed top-0 left-0 right-0 z-50 h-[70px] flex items-center px-4 gap-3 md:hidden"
         style={{
           background: headerBg,
           backdropFilter: "blur(20px)",
@@ -169,9 +169,6 @@ const VideoHeader = ({
                     >
                       {v.title[lang]}
                     </p>
-                    <p className="text-xs" style={{ color: G }}>
-                      {v.chef}
-                    </p>
                   </div>
                 </button>
               ))}
@@ -184,7 +181,7 @@ const VideoHeader = ({
 
   return (
     <header
-      className="sticky top-0 z-50 h-[70px] flex items-center px-4 md:px-6 gap-3 md:gap-6"
+      className="fixed md:sticky top-0 left-0 right-0 z-50 h-[70px] flex items-center px-4 md:px-6 gap-3 md:gap-6"
       style={{
         background: headerBg,
         backdropFilter: "blur(20px)",
@@ -223,7 +220,7 @@ const VideoHeader = ({
               color: dark ? "#f8fafc" : "#15803d",
             }}
           >
-            Cook<span style={{ color: G }}>Tube</span>
+            Taom<span style={{ color: G }}>Uz</span>
           </span>
         </button>
       </div>
@@ -292,9 +289,6 @@ const VideoHeader = ({
                     }}
                   >
                     {v.title[lang]}
-                  </p>
-                  <p className="text-xs" style={{ color: G }}>
-                    {v.chef}
                   </p>
                 </div>
               </button>

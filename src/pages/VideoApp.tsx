@@ -103,7 +103,7 @@ const VideoAppContent = () => {
           open={sidebarOpen}
         />
 
-        <main className="flex-1 min-w-0 p-4 md:p-6 max-w-screen-2xl">
+        <main className="flex-1 min-w-0 p-4 md:p-6 max-w-screen-2xl [padding-top:calc(70px+1rem)] md:!pt-6">
           {selectedVideo ? (
             <VideoWatch
               video={selectedVideo}

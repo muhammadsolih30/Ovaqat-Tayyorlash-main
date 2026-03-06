@@ -54,9 +54,11 @@ const RecipesTab = ({
 
   return (
     <div className="pb-28 md:pb-8 animate-fade-in">
-      {/* Sticky header */}
+      {/* Fixed header uchun joy — mobilda */}
+      <div className="md:hidden" style={{ height: 130 }} />
+      {/* Fixed header */}
       <div
-        className="sticky top-0 z-10 px-4 pt-4 pb-2 md:px-0 md:pt-0"
+        className="fixed top-0 left-0 right-0 z-40 px-4 pt-4 pb-2 md:px-0 md:pt-0 md:static md:z-auto"
         style={{
           background: "hsl(138 30% 97% / 0.92)",
           backdropFilter: "blur(16px)",

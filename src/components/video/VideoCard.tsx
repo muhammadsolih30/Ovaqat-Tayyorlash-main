@@ -67,9 +67,6 @@ const VideoCard = ({
           >
             {video.title[lang]}
           </h4>
-          <p className="text-xs mb-1" style={{ color: "#1DB954" }}>
-            {video.chef}
-          </p>
           <p className="text-[11px]" style={{ color: textMuted }}>
             {formatViews(video.views)} {t("views")}
           </p>
@@ -174,16 +171,6 @@ const VideoCard = ({
         >
           {video.title[lang]}
         </h3>
-        <div className="flex items-center gap-2 mb-2">
-          <img
-            src={video.chefAvatar}
-            alt={video.chef}
-            className="w-5 h-5 rounded-full object-cover"
-          />
-          <span className="text-xs font-semibold" style={{ color: "#1DB954" }}>
-            {video.chef}
-          </span>
-        </div>
         <div
           className="flex items-center gap-3 text-[11px]"
           style={{ color: textMuted }}

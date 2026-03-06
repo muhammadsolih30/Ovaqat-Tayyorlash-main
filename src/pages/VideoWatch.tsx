@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Video, formatViews } from "@/data/videos";
 import { useVideoLang } from "@/contexts/VideoLangContext";
 import { useAdmin } from "@/contexts/AdminContext";
@@ -33,7 +33,7 @@ const VideoWatch = ({
   onToggleSave,
 }: VideoWatchProps) => {
   const { lang, t, dark } = useVideoLang();
-  const { videoList } = useAdmin(); // ← global ro'yxat (trend uchun)
+  const { videoList } = useAdmin();
   const [liked, setLiked] = useState(false);
   const [checkedIngredients, setCheckedIngredients] = useState<number[]>([]);
   const [timerSeconds, setTimerSeconds] = useState(0);
@@ -42,9 +42,26 @@ const VideoWatch = ({
     typeof setInterval
   > | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isSticky, setIsSticky] = useState(false);
+  const videoWrapRef = useRef<HTMLDivElement>(null);
   const saved = savedIds.includes(video.id);
 
-  // Related: same cuisine or category, from global list
+  // Faqat mobilda: video tepasi header ostiga tekkanda sticky qilish
+  useEffect(() => {
+    const isMobile = () => window.innerWidth < 768;
+    const onScroll = () => {
+      if (!isMobile() || !videoWrapRef.current) {
+        setIsSticky(false);
+        return;
+      }
+      const rect = videoWrapRef.current.getBoundingClientRect();
+      // rect.top <= 70 — ya'ni video header (70px) ga tekkanda
+      setIsSticky(rect.top <= 70);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   const related = videoList
     .filter(
       (v) =>
@@ -119,89 +136,111 @@ const VideoWatch = ({
       <div className="flex flex-col lg:flex-row gap-6">
         {/* ── LEFT ── */}
         <div className="flex-1 min-w-0">
-          {/* ── VIDEO PLAYER ── */}
-          <div
-            className="rounded-2xl overflow-hidden mb-4"
-            style={{
-              background: "#000",
-              boxShadow: "0 8px 40px rgba(0,0,0,0.3)",
-            }}
-          >
-            {isPlaying ? (
-              // Real YouTube embed
-              <div style={{ position: "relative", paddingBottom: "56.25%" }}>
-                <iframe
-                  src={`${video.videoUrl}&autoplay=1`}
-                  title={video.title[lang]}
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    width: "100%",
-                    height: "100%",
-                    border: "none",
-                  }}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-            ) : (
-              // Thumbnail + play button
+          {/* ── STICKY VIDEO PLAYER ── */}
+          {/* ref shu div ga — pozitsiyasini scroll da o'lchaymiz */}
+          <div ref={videoWrapRef}>
+            <div
+              style={
+                isSticky
+                  ? {
+                      position: "fixed",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      zIndex: 90,
+                      padding: "0",
+                    }
+                  : { position: "relative" }
+              }
+            >
               <div
-                className="relative cursor-pointer"
-                style={{ paddingBottom: "56.25%" }}
-                onClick={() => setIsPlaying(true)}
+                className="rounded-2xl overflow-hidden mb-4"
+                style={{
+                  background: "#000",
+                  boxShadow: "0 8px 40px rgba(0,0,0,0.3)",
+                  borderRadius: isSticky ? 0 : undefined,
+                }}
               >
-                <img
-                  src={video.thumbnail}
-                  onError={(e) =>
-                    (e.currentTarget.src =
-                      "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=900&h=506&fit=crop")
-                  }
-                  alt={video.title[lang]}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-                {/* dark overlay */}
-                <div
-                  className="absolute inset-0 flex flex-col items-center justify-center gap-3"
-                  style={{ background: "rgba(0,0,0,0.35)" }}
-                >
+                {isPlaying ? (
                   <div
-                    className="w-20 h-20 rounded-full flex items-center justify-center transition-transform hover:scale-110"
-                    style={{
-                      background: "rgba(29,185,84,0.92)",
-                      backdropFilter: "blur(8px)",
-                      boxShadow: "0 0 40px rgba(29,185,84,0.5)",
-                    }}
+                    style={{ position: "relative", paddingBottom: "56.25%" }}
                   >
-                    <svg
-                      width="32"
-                      height="32"
-                      viewBox="0 0 24 24"
-                      fill="white"
-                    >
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
+                    <iframe
+                      src={`${video.videoUrl}&autoplay=1`}
+                      title={video.title[lang]}
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        width: "100%",
+                        height: "100%",
+                        border: "none",
+                      }}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
                   </div>
-                  <span
-                    className="text-white text-sm font-bold px-4 py-1.5 rounded-full"
-                    style={{
-                      background: "rgba(0,0,0,0.5)",
-                      backdropFilter: "blur(8px)",
-                    }}
+                ) : (
+                  <div
+                    className="relative cursor-pointer"
+                    style={{ paddingBottom: "56.25%" }}
+                    onClick={() => setIsPlaying(true)}
                   >
-                    ▶ {t("watchNow")}
-                  </span>
-                </div>
-                {/* duration badge */}
-                <div
-                  className="absolute bottom-3 right-3 px-2.5 py-1 rounded-lg text-white text-xs font-bold"
-                  style={{ background: "rgba(0,0,0,0.78)" }}
-                >
-                  {video.duration}
-                </div>
+                    <img
+                      src={video.thumbnail}
+                      onError={(e) =>
+                        (e.currentTarget.src =
+                          "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=900&h=506&fit=crop")
+                      }
+                      alt={video.title[lang]}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    <div
+                      className="absolute inset-0 flex flex-col items-center justify-center gap-3"
+                      style={{ background: "rgba(0,0,0,0.35)" }}
+                    >
+                      <div
+                        className="w-20 h-20 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+                        style={{
+                          background: "rgba(29,185,84,0.92)",
+                          backdropFilter: "blur(8px)",
+                          boxShadow: "0 0 40px rgba(29,185,84,0.5)",
+                        }}
+                      >
+                        <svg
+                          width="32"
+                          height="32"
+                          viewBox="0 0 24 24"
+                          fill="white"
+                        >
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      </div>
+                      <span
+                        className="text-white text-sm font-bold px-4 py-1.5 rounded-full"
+                        style={{
+                          background: "rgba(0,0,0,0.5)",
+                          backdropFilter: "blur(8px)",
+                        }}
+                      >
+                        ▶ {t("watchNow")}
+                      </span>
+                    </div>
+                    <div
+                      className="absolute bottom-3 right-3 px-2.5 py-1 rounded-lg text-white text-xs font-bold"
+                      style={{ background: "rgba(0,0,0,0.78)" }}
+                    >
+                      {video.duration}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
+
+          {/* Sticky paytda video o'rnini bo'sh qoldirmaslik uchun */}
+          {isSticky && (
+            <div style={{ paddingBottom: "56.25%", marginBottom: 16 }} />
+          )}
 
           {/* ── TITLE & ACTIONS ── */}
           <div
@@ -241,7 +280,7 @@ const VideoWatch = ({
                   icon: ThumbsUp,
                 },
                 {
-                  label: saved ? t("favorites") : t("favorites"),
+                  label: t("favorites"),
                   active: saved,
                   onClick: () => onToggleSave(video.id),
                   icon: Bookmark,
