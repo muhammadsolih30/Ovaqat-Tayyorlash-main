@@ -9,105 +9,6 @@ interface BottomNavProps {
   onCategoryChange?: (cat: string) => void;
 }
 
-// Barcha kategoriyalar — to'liq ro'yxat
-const allCategories = [
-  // O'zbek taomlari — KATTA KARTA
-  {
-    id: "uzbek",
-    uz: "O'zbek taomlari",
-    en: "Uzbek Dishes",
-    emoji: "🇺🇿",
-    type: "big",
-    desc_uz: "Palov, Lagman, Somsa...",
-  },
-
-  // Asosiy kategoriyalar — 3 ustunli grid
-  {
-    id: "fast",
-    uz: "Tez taomlar",
-    en: "Fast Food",
-    emoji: "⚡",
-    type: "small",
-  },
-  {
-    id: "healthy",
-    uz: "Sog'lom ovqat",
-    en: "Healthy Food",
-    emoji: "🥗",
-    type: "small",
-  },
-  {
-    id: "dessert",
-    uz: "Shirinliklar",
-    en: "Desserts",
-    emoji: "🍰",
-    type: "small",
-  },
-  {
-    id: "vegetarian",
-    uz: "Vegetarian",
-    en: "Vegetarian",
-    emoji: "🥦",
-    type: "small",
-  },
-  {
-    id: "breakfast",
-    uz: "Nonushta",
-    en: "Breakfast",
-    emoji: "☀️",
-    type: "small",
-  },
-  {
-    id: "grill",
-    uz: "Kabob & Gril",
-    en: "Kabob & Grill",
-    emoji: "🔥",
-    type: "small",
-  },
-
-  // Vaqt bo'yicha — alohida bo'lim
-  {
-    id: "morning",
-    uz: "Nonushta uchun",
-    en: "For Breakfast",
-    emoji: "🌅",
-    type: "time",
-  },
-  {
-    id: "lunch",
-    uz: "Tushlik uchun",
-    en: "For Lunch",
-    emoji: "🌞",
-    type: "time",
-  },
-  {
-    id: "dinner",
-    uz: "Kechgi taomlar",
-    en: "For Dinner",
-    emoji: "🌙",
-    type: "time",
-  },
-
-  // Admin — alohida
-  {
-    id: "admin",
-    uz: "Admin Panel",
-    en: "Admin Panel",
-    emoji: "⚙️",
-    type: "admin",
-  },
-
-  // Davlat taomlari — KATTA KARTA (eng oxirida)
-  {
-    id: "world",
-    uz: "Davlat Taomlari",
-    en: "World Cuisines",
-    emoji: "🌍",
-    type: "big",
-    desc_uz: "10+ mamlakat oshxonasi",
-  },
-];
-
 const BottomNav = ({
   active,
   onNavigate,
@@ -147,6 +48,15 @@ const BottomNav = ({
       label: lang === "uz" ? "Dunyo" : "World",
       isCategory: false,
     },
+  ];
+
+  const smallCats = [
+    { id: "fast", uz: "Tez taomlar", en: "Fast Food", emoji: "⚡" },
+    { id: "healthy", uz: "Sog'lom ovqat", en: "Healthy Food", emoji: "🥗" },
+    { id: "dessert", uz: "Shirinliklar", en: "Desserts", emoji: "🍰" },
+    { id: "vegetarian", uz: "Vegetarian", en: "Vegetarian", emoji: "🥦" },
+    { id: "breakfast", uz: "Nonushta", en: "Breakfast", emoji: "☀️" },
+    { id: "grill", uz: "Kabob & Gril", en: "Kabob & Grill", emoji: "🔥" },
   ];
 
   const handleTabClick = (tab: (typeof tabs)[0]) => {
@@ -216,26 +126,17 @@ const BottomNav = ({
   const panelVisible = showCategories && dragOffset < 350;
   const NAV_HEIGHT = 80;
 
-  const bigCats = allCategories.filter((c) => c.type === "big");
-  const smallCats = allCategories.filter((c) => c.type === "small");
-  const timeCats = allCategories.filter((c) => c.type === "time");
-  const adminCat = allCategories.find((c) => c.type === "admin")!;
-  const uzbekCat = bigCats.find((c) => c.id === "uzbek")!;
-  const worldCat = bigCats.find((c) => c.id === "world")!;
-
   return (
     <>
       <style>{`
-        @keyframes fadeInBg {
-          from { opacity: 0; } to { opacity: 1; }
-        }
+        @keyframes fadeInBg { from{opacity:0} to{opacity:1} }
         @keyframes navGlow {
-          0%,100% { box-shadow: 0 0 30px rgba(34,197,94,0.45), 0 0 60px rgba(34,197,94,0.2), inset 0 1px 0 rgba(255,255,255,0.15); }
-          50%      { box-shadow: 0 0 45px rgba(34,197,94,0.65), 0 0 90px rgba(34,197,94,0.3), inset 0 1px 0 rgba(255,255,255,0.2); }
+          0%,100%{box-shadow:0 0 30px rgba(34,197,94,0.45),0 0 60px rgba(34,197,94,0.2),inset 0 1px 0 rgba(255,255,255,0.15)}
+          50%{box-shadow:0 0 45px rgba(34,197,94,0.65),0 0 90px rgba(34,197,94,0.3),inset 0 1px 0 rgba(255,255,255,0.2)}
         }
         @keyframes activeGlow {
-          0%,100% { box-shadow: 0 0 0 2.5px rgba(255,255,255,0.45), 0 0 22px rgba(74,222,128,0.85), 0 0 44px rgba(34,197,94,0.5); }
-          50%      { box-shadow: 0 0 0 2.5px rgba(255,255,255,0.55), 0 0 32px rgba(74,222,128,1), 0 0 60px rgba(34,197,94,0.7); }
+          0%,100%{box-shadow:0 0 0 2.5px rgba(255,255,255,0.45),0 0 22px rgba(74,222,128,0.85),0 0 44px rgba(34,197,94,0.5)}
+          50%{box-shadow:0 0 0 2.5px rgba(255,255,255,0.55),0 0 32px rgba(74,222,128,1),0 0 60px rgba(34,197,94,0.7)}
         }
       `}</style>
 
@@ -254,10 +155,7 @@ const BottomNav = ({
         />
       )}
 
-      {/* ═══ KATEGORIYALAR PANELI ═══
-          bottom: NAV_HEIGHT → nav ustini HECH QACHON yopmaydi
-          zIndex: 49         → nav (100) dan past, nav doim ko'rinadi
-      */}
+      {/* ═══ KATEGORIYALAR PANELI ═══ */}
       <div
         style={{
           position: "fixed",
@@ -265,7 +163,7 @@ const BottomNav = ({
           right: 0,
           bottom: NAV_HEIGHT,
           zIndex: 49,
-          maxHeight: "72vh",
+          maxHeight: "80vh",
           transform: showCategories
             ? `translateY(${dragOffset}px)`
             : "translateY(110%)",
@@ -282,15 +180,15 @@ const BottomNav = ({
           style={{
             display: "flex",
             flexDirection: "column",
-            maxHeight: "72vh",
-            background: "#ffffff",
+            maxHeight: "80vh",
+            background: "#fff",
             borderRadius: "24px 24px 0 0",
             borderTop: "1px solid rgba(0,0,0,0.08)",
             boxShadow: "0 -8px 40px rgba(0,0,0,0.18)",
             overflow: "hidden",
           }}
         >
-          {/* Drag handle + Header */}
+          {/* ── Header ── */}
           <div
             style={{ flexShrink: 0, cursor: "grab", userSelect: "none" }}
             onTouchStart={onTouchStart}
@@ -329,7 +227,7 @@ const BottomNav = ({
                     fontSize: 18,
                     fontWeight: 800,
                     color: "#111",
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    fontFamily: "'Plus Jakarta Sans',sans-serif",
                   }}
                 >
                   {lang === "uz" ? "Kategoriyalar" : "Categories"}
@@ -366,159 +264,134 @@ const BottomNav = ({
             />
           </div>
 
-          {/* Scroll content */}
+          {/* ── Scroll Content ── */}
           <div
             style={{
               flex: 1,
               overflowY: "auto",
-              padding: "14px 14px 16px",
+              padding: "14px 14px 20px",
               display: "flex",
               flexDirection: "column",
-              gap: 12,
+              gap: 10,
             }}
           >
-            {/* 1. O'zbek taomlari */}
+            {/* 1. O'ZBEK TAOMLARI */}
             <BigCard
-              cat={uzbekCat}
+              id="uzbek"
+              emoji="🇺🇿"
+              titleUz="O'zbek taomlari"
+              titleEn="Uzbek Dishes"
+              descUz="Palov, Lagman, Somsa..."
+              descEn="Palov, Lagman, Somsa..."
+              color="green"
               lang={lang}
-              isAct={activeCategory === uzbekCat.id}
+              isAct={activeCategory === "uzbek"}
               panelVisible={panelVisible}
               onSelect={handleCategorySelect}
               delay={0}
             />
 
-            {/* 2. Vaqt bo'yicha taomlar — O'zbek dan keyin */}
-            {[
-              {
-                id: "morning",
-                emoji: "🌅",
-                uz: "Nonushta taomlar",
-                en: "Breakfast Meals",
-              },
-              {
-                id: "lunch",
-                emoji: "🌞",
-                uz: "Tushlik taomlari",
-                en: "Lunch Meals",
-              },
-              {
-                id: "dinner",
-                emoji: "🌙",
-                uz: "Kechgi taomlar",
-                en: "Dinner Meals",
-              },
-            ].map((item, i) => (
-              <button
-                key={item.id}
-                onClick={() => handleCategorySelect(item.id)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  width: "100%",
-                  padding: "13px 18px",
-                  borderRadius: 14,
-                  background:
-                    activeCategory === item.id
-                      ? "rgba(34,197,94,0.1)"
-                      : "#f7f7f7",
-                  border:
-                    activeCategory === item.id
-                      ? "1.5px solid rgba(34,197,94,0.4)"
-                      : "1.5px solid #ebebeb",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  opacity: panelVisible ? 1 : 0,
-                  transform: panelVisible
-                    ? "translateY(0)"
-                    : "translateY(10px)",
-                  transition: `opacity 0.25s ease ${i * 0.05 + 0.05}s, transform 0.3s ease ${i * 0.05 + 0.05}s`,
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <span style={{ fontSize: 24 }}>{item.emoji}</span>
-                  <span
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 600,
-                      color: activeCategory === item.id ? "#16a34a" : "#333",
-                      fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    }}
-                  >
-                    {lang === "uz" ? item.uz : item.en}
-                  </span>
-                </div>
-                <span
-                  style={{
-                    fontSize: 18,
-                    color: activeCategory === item.id ? "#16a34a" : "#aaa",
-                  }}
-                >
-                  ›
-                </span>
-              </button>
-            ))}
-
-            {/* 3. Admin panel */}
-            <button
-              onClick={() => handleCategorySelect("admin")}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "13px 18px",
-                borderRadius: 14,
-                background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
-                border: "none",
-                cursor: "pointer",
-                textAlign: "left",
-                opacity: panelVisible ? 1 : 0,
-                transform: panelVisible ? "translateY(0)" : "translateY(10px)",
-                transition: "opacity 0.25s ease 0.2s, transform 0.3s ease 0.2s",
-              }}
-            >
-              <span style={{ fontSize: 22 }}>⚙️</span>
-              <span
-                style={{
-                  fontSize: 14,
-                  fontWeight: 700,
-                  color: "#fff",
-                  fontFamily: "'Plus Jakarta Sans', sans-serif",
-                }}
-              >
-                {lang === "uz" ? "Admin Panel" : "Admin Panel"}
-              </span>
-              <span
-                style={{
-                  marginLeft: "auto",
-                  color: "rgba(255,255,255,0.4)",
-                  fontSize: 18,
-                }}
-              >
-                ›
-              </span>
-            </button>
-
-            {/* 4. Davlat Taomlari */}
+            {/* 2. DAVLAT TAOMLARI */}
             <BigCard
-              cat={worldCat}
+              id="world"
+              emoji="🌍"
+              titleUz="Davlat Taomlari"
+              titleEn="World Cuisines"
+              descUz="10+ mamlakat oshxonasi"
+              descEn="10+ country cuisines"
+              color="blue"
               lang={lang}
-              isAct={activeCategory === worldCat.id}
+              isAct={activeCategory === "world"}
               panelVisible={panelVisible}
               onSelect={handleCategorySelect}
-              delay={0.05}
-              isWorld
+              delay={0.04}
             />
 
-            {/* 3. Asosiy kategoriyalar */}
+            <Divider visible={panelVisible} />
+
+            {/* VAQT BO'YICHA */}
             <SectionLabel
-              label={lang === "uz" ? "Taom turlari" : "Food Types"}
+              label={lang === "uz" ? "🕐  Vaqt bo'yicha" : "🕐  By Time of Day"}
+              panelVisible={panelVisible}
+              delay={0.08}
             />
+
+            {/* 3. ERTALABGI NONUSHTA */}
+            <TimeCard
+              id="morning"
+              emoji="🌅"
+              titleUz="Ertalabgi nonushta"
+              titleEn="Morning Breakfast"
+              descUz="Tarvuz, yumurtqa, choy..."
+              descEn="Eggs, tea, fresh fruits..."
+              gradient="linear-gradient(135deg,#fff7ed,#ffedd5)"
+              borderColor="rgba(251,146,60,0.35)"
+              iconBg="rgba(251,146,60,0.15)"
+              textColor="#c2410c"
+              lang={lang}
+              isAct={activeCategory === "morning"}
+              panelVisible={panelVisible}
+              onSelect={handleCategorySelect}
+              delay={0.1}
+            />
+
+            {/* 4. TUSHLIK */}
+            <TimeCard
+              id="lunch"
+              emoji="🌞"
+              titleUz="Tushlik taomlari"
+              titleEn="Lunch Meals"
+              descUz="Sho'rva, lagman, palov..."
+              descEn="Soup, lagman, rice..."
+              gradient="linear-gradient(135deg,#fefce8,#fef9c3)"
+              borderColor="rgba(234,179,8,0.35)"
+              iconBg="rgba(234,179,8,0.15)"
+              textColor="#a16207"
+              lang={lang}
+              isAct={activeCategory === "lunch"}
+              panelVisible={panelVisible}
+              onSelect={handleCategorySelect}
+              delay={0.14}
+            />
+
+            {/* 5. KECHGI NONUSHTA */}
+            <TimeCard
+              id="dinner"
+              emoji="🌙"
+              titleUz="Kechgi nonushta"
+              titleEn="Evening Dinner"
+              descUz="Yengil va mazali kechki taomlar"
+              descEn="Light & tasty dinner meals"
+              gradient="linear-gradient(135deg,#f5f3ff,#ede9fe)"
+              borderColor="rgba(139,92,246,0.35)"
+              iconBg="rgba(139,92,246,0.15)"
+              textColor="#7c3aed"
+              lang={lang}
+              isAct={activeCategory === "dinner"}
+              panelVisible={panelVisible}
+              onSelect={handleCategorySelect}
+              delay={0.18}
+            />
+
+            <Divider visible={panelVisible} />
+
+            {/* TAOM TURLARI */}
+            <SectionLabel
+              label={lang === "uz" ? "🍽  Taom turlari" : "🍽  Food Types"}
+              panelVisible={panelVisible}
+              delay={0.22}
+            />
+
+            {/* 6. KICHIK GRID */}
             <div
               style={{
                 display: "grid",
                 gridTemplateColumns: "1fr 1fr 1fr",
                 gap: 8,
+                opacity: panelVisible ? 1 : 0,
+                transform: panelVisible ? "translateY(0)" : "translateY(12px)",
+                transition:
+                  "opacity 0.28s ease 0.24s, transform 0.3s ease 0.24s",
               }}
             >
               {smallCats.map((cat, i) => (
@@ -529,15 +402,80 @@ const BottomNav = ({
                   isAct={activeCategory === cat.id}
                   panelVisible={panelVisible}
                   onSelect={handleCategorySelect}
-                  delay={i * 0.04 + 0.05}
+                  delay={i * 0.03 + 0.24}
                 />
               ))}
             </div>
+
+            <Divider visible={panelVisible} />
+
+            {/* 7. ADMIN PANEL */}
+            <button
+              onClick={() => handleCategorySelect("admin")}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
+                padding: "14px 18px",
+                borderRadius: 16,
+                background:
+                  "linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#0f172a 100%)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                cursor: "pointer",
+                textAlign: "left",
+                opacity: panelVisible ? 1 : 0,
+                transform: panelVisible ? "translateY(0)" : "translateY(10px)",
+                transition:
+                  "opacity 0.28s ease 0.38s, transform 0.3s ease 0.38s",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
+              }}
+            >
+              <div
+                style={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: 12,
+                  background: "rgba(255,255,255,0.08)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 20,
+                  border: "1px solid rgba(255,255,255,0.1)",
+                }}
+              >
+                ⚙️
+              </div>
+              <div style={{ flex: 1 }}>
+                <p
+                  style={{
+                    margin: 0,
+                    fontWeight: 800,
+                    fontSize: 14,
+                    color: "#fff",
+                    fontFamily: "'Plus Jakarta Sans',sans-serif",
+                  }}
+                >
+                  Admin Panel
+                </p>
+                <p
+                  style={{
+                    margin: "2px 0 0",
+                    fontSize: 11,
+                    color: "rgba(255,255,255,0.45)",
+                  }}
+                >
+                  {lang === "uz" ? "Boshqaruv paneli" : "Management panel"}
+                </p>
+              </div>
+              <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 18 }}>
+                ›
+              </span>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* ═══ BOTTOM NAV — yashil glassmorphism, DOIM ENG USTIDA ═══ */}
+      {/* ═══ BOTTOM NAV ═══ */}
       <nav
         style={{
           position: "fixed",
@@ -546,7 +484,7 @@ const BottomNav = ({
           right: 0,
           zIndex: 100,
           padding: "10px 16px",
-          paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)",
+          paddingBottom: "calc(env(safe-area-inset-bottom,0px) + 10px)",
         }}
       >
         <div
@@ -557,7 +495,7 @@ const BottomNav = ({
             right: "5%",
             height: 50,
             background:
-              "radial-gradient(ellipse at center, rgba(34,197,94,0.55) 0%, transparent 70%)",
+              "radial-gradient(ellipse at center,rgba(34,197,94,0.55) 0%,transparent 70%)",
             pointerEvents: "none",
             filter: "blur(16px)",
           }}
@@ -571,7 +509,7 @@ const BottomNav = ({
             borderRadius: 28,
             padding: "8px 6px",
             background:
-              "linear-gradient(145deg, rgba(20,90,45,0.88) 0%, rgba(12,60,28,0.94) 50%, rgba(18,80,40,0.90) 100%)",
+              "linear-gradient(145deg,rgba(20,90,45,0.88) 0%,rgba(12,60,28,0.94) 50%,rgba(18,80,40,0.90) 100%)",
             backdropFilter: "blur(30px)",
             border: "1.5px solid rgba(74,222,128,0.4)",
             animation: "navGlow 3s ease-in-out infinite",
@@ -585,12 +523,11 @@ const BottomNav = ({
               right: "8%",
               height: 1,
               background:
-                "linear-gradient(90deg, transparent, rgba(134,239,172,0.8) 30%, rgba(200,255,220,0.95) 50%, rgba(134,239,172,0.8) 70%, transparent)",
+                "linear-gradient(90deg,transparent,rgba(134,239,172,0.8) 30%,rgba(200,255,220,0.95) 50%,rgba(134,239,172,0.8) 70%,transparent)",
               borderRadius: 99,
               pointerEvents: "none",
             }}
           />
-
           {tabs.map(({ id, icon: Icon, label, isCategory }) => {
             const isActive = id === activeId;
             return (
@@ -623,7 +560,7 @@ const BottomNav = ({
                     height: 48,
                     borderRadius: isActive ? 99 : 16,
                     background: isActive
-                      ? "radial-gradient(circle at 40% 30%, rgba(150,255,180,0.95) 0%, rgba(34,197,94,0.88) 50%, rgba(21,128,61,0.92) 100%)"
+                      ? "radial-gradient(circle at 40% 30%,rgba(150,255,180,0.95) 0%,rgba(34,197,94,0.88) 50%,rgba(21,128,61,0.92) 100%)"
                       : "rgba(255,255,255,0.09)",
                     border: isActive
                       ? "2px solid rgba(255,255,255,0.55)"
@@ -655,7 +592,7 @@ const BottomNav = ({
                     fontWeight: isActive ? 800 : 500,
                     color: isActive ? "#86efac" : "rgba(255,255,255,0.5)",
                     lineHeight: 1,
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    fontFamily: "'Plus Jakarta Sans',sans-serif",
                     letterSpacing: isActive ? "0.01em" : "0",
                     filter: isActive
                       ? "drop-shadow(0 0 5px rgba(134,239,172,0.7))"
@@ -675,102 +612,212 @@ const BottomNav = ({
   );
 };
 
-// ── Katta karta (uzbek / world) ──
+// ══════════════════════════════════════════════
+// ── BigCard (O'zbek / Davlat taomlari) ──
+// ══════════════════════════════════════════════
 const BigCard = ({
-  cat,
+  id,
+  emoji,
+  titleUz,
+  titleEn,
+  descUz,
+  descEn,
+  color,
   lang,
   isAct,
   panelVisible,
   onSelect,
   delay,
-  isWorld,
+}: any) => {
+  const g = color === "green";
+  return (
+    <button
+      onClick={() => onSelect(id)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        width: "100%",
+        padding: "15px 18px",
+        borderRadius: 18,
+        background: g
+          ? isAct
+            ? "rgba(34,197,94,0.92)"
+            : "linear-gradient(135deg,rgba(34,197,94,0.12),rgba(34,197,94,0.06))"
+          : isAct
+            ? "rgba(59,130,246,0.18)"
+            : "linear-gradient(135deg,rgba(59,130,246,0.09),rgba(59,130,246,0.04))",
+        border: `1.5px solid ${g ? (isAct ? "rgba(34,197,94,0.6)" : "rgba(34,197,94,0.25)") : isAct ? "rgba(59,130,246,0.5)" : "rgba(59,130,246,0.2)"}`,
+        cursor: "pointer",
+        textAlign: "left",
+        opacity: panelVisible ? 1 : 0,
+        transform: panelVisible ? "translateY(0)" : "translateY(12px)",
+        transition: `opacity 0.25s ease ${delay}s, transform 0.3s ease ${delay}s`,
+        boxShadow: isAct
+          ? g
+            ? "0 4px 20px rgba(34,197,94,0.3)"
+            : "0 4px 20px rgba(59,130,246,0.2)"
+          : "none",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: 14,
+            background: g
+              ? isAct
+                ? "rgba(255,255,255,0.22)"
+                : "rgba(34,197,94,0.18)"
+              : isAct
+                ? "rgba(59,130,246,0.15)"
+                : "rgba(59,130,246,0.1)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 24,
+          }}
+        >
+          {emoji}
+        </div>
+        <div>
+          <p
+            style={{
+              margin: 0,
+              fontWeight: 800,
+              fontSize: 15,
+              color: g
+                ? isAct
+                  ? "#fff"
+                  : "#16a34a"
+                : isAct
+                  ? "#1d4ed8"
+                  : "#2563eb",
+              fontFamily: "'Plus Jakarta Sans',sans-serif",
+            }}
+          >
+            {lang === "uz" ? titleUz : titleEn}
+          </p>
+          <p
+            style={{
+              margin: "3px 0 0",
+              fontSize: 12,
+              color: g
+                ? isAct
+                  ? "rgba(255,255,255,0.75)"
+                  : "rgba(0,0,0,0.4)"
+                : isAct
+                  ? "rgba(29,78,216,0.7)"
+                  : "rgba(0,0,0,0.4)",
+            }}
+          >
+            {lang === "uz" ? descUz : descEn}
+          </p>
+        </div>
+      </div>
+      <span
+        style={{
+          fontSize: 22,
+          color: g
+            ? isAct
+              ? "#fff"
+              : "#16a34a"
+            : isAct
+              ? "#2563eb"
+              : "#60a5fa",
+          fontWeight: 300,
+        }}
+      >
+        ›
+      </span>
+    </button>
+  );
+};
+
+// ══════════════════════════════════════════════
+// ── TimeCard (Ertalab / Tushlik / Kechki) ──
+// ══════════════════════════════════════════════
+const TimeCard = ({
+  id,
+  emoji,
+  titleUz,
+  titleEn,
+  descUz,
+  descEn,
+  gradient,
+  borderColor,
+  iconBg,
+  textColor,
+  lang,
+  isAct,
+  panelVisible,
+  onSelect,
+  delay,
 }: any) => (
   <button
-    onClick={() => onSelect(cat.id)}
+    onClick={() => onSelect(id)}
     style={{
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
       width: "100%",
-      padding: "15px 18px",
+      padding: "13px 16px",
       borderRadius: 16,
-      background: isWorld
-        ? isAct
-          ? "rgba(59,130,246,0.15)"
-          : "#f7f7f7"
-        : isAct
-          ? "rgba(34,197,94,0.88)"
-          : "rgba(34,197,94,0.12)",
-      border: isWorld
-        ? isAct
-          ? "1.5px solid rgba(59,130,246,0.4)"
-          : "1.5px solid #ebebeb"
-        : "none",
+      background: isAct ? gradient : "#f9f9f9",
+      border: `1.5px solid ${isAct ? borderColor : "#efefef"}`,
       cursor: "pointer",
       textAlign: "left",
       opacity: panelVisible ? 1 : 0,
-      transform: panelVisible ? "translateY(0)" : "translateY(12px)",
+      transform: panelVisible ? "translateY(0)" : "translateY(10px)",
       transition: `opacity 0.25s ease ${delay}s, transform 0.3s ease ${delay}s`,
     }}
   >
     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
       <div
         style={{
-          width: 44,
-          height: 44,
+          width: 40,
+          height: 40,
           borderRadius: 12,
-          background: isWorld
-            ? "rgba(59,130,246,0.1)"
-            : isAct
-              ? "rgba(255,255,255,0.25)"
-              : "rgba(34,197,94,0.2)",
+          background: isAct ? iconBg : "rgba(0,0,0,0.05)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: 22,
+          fontSize: 20,
         }}
       >
-        {cat.emoji}
+        {emoji}
       </div>
-      <div style={{ textAlign: "left" }}>
+      <div>
         <p
           style={{
             margin: 0,
-            fontWeight: 800,
-            fontSize: 15,
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
-            color: isWorld ? "#111" : isAct ? "#fff" : "#16a34a",
+            fontSize: 14,
+            fontWeight: 700,
+            color: isAct ? textColor : "#222",
+            fontFamily: "'Plus Jakarta Sans',sans-serif",
           }}
         >
-          {cat[lang]}
+          {lang === "uz" ? titleUz : titleEn}
         </p>
         <p
           style={{
             margin: "2px 0 0",
-            fontSize: 12,
-            color: isWorld
-              ? "#999"
-              : isAct
-                ? "rgba(255,255,255,0.7)"
-                : "rgba(0,0,0,0.4)",
+            fontSize: 11,
+            color: isAct ? textColor + "99" : "#aaa",
           }}
         >
-          {cat.desc_uz}
+          {lang === "uz" ? descUz : descEn}
         </p>
       </div>
     </div>
-    <span
-      style={{
-        fontSize: 20,
-        color: isWorld ? "#aaa" : isAct ? "#fff" : "#16a34a",
-      }}
-    >
-      ›
-    </span>
+    <span style={{ fontSize: 20, color: isAct ? textColor : "#ccc" }}>›</span>
   </button>
 );
 
-// ── Kichik karta (grid) ──
+// ══════════════════════════════════════════════
+// ── SmallCard (3×2 grid) ──
+// ══════════════════════════════════════════════
 const SmallCard = ({
   cat,
   lang,
@@ -805,7 +852,7 @@ const SmallCard = ({
         color: isAct ? "#16a34a" : "#333",
         textAlign: "center",
         lineHeight: 1.2,
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
+        fontFamily: "'Plus Jakarta Sans',sans-serif",
       }}
     >
       {cat[lang]}
@@ -813,21 +860,44 @@ const SmallCard = ({
   </button>
 );
 
-// ── Bo'lim sarlavhasi ──
-const SectionLabel = ({ label }: { label: string }) => (
+// ── SectionLabel ──
+const SectionLabel = ({
+  label,
+  panelVisible,
+  delay,
+}: {
+  label: string;
+  panelVisible: boolean;
+  delay: number;
+}) => (
   <p
     style={{
-      margin: "2px 0 0",
-      fontSize: 12,
+      margin: "4px 2px 0",
+      fontSize: 11,
       fontWeight: 700,
-      color: "#aaa",
+      color: "#bbb",
       textTransform: "uppercase",
-      letterSpacing: "0.06em",
-      fontFamily: "'Plus Jakarta Sans', sans-serif",
+      letterSpacing: "0.07em",
+      fontFamily: "'Plus Jakarta Sans',sans-serif",
+      opacity: panelVisible ? 1 : 0,
+      transition: `opacity 0.25s ease ${delay}s`,
     }}
   >
     {label}
   </p>
+);
+
+// ── Divider ──
+const Divider = ({ visible }: { visible: boolean }) => (
+  <div
+    style={{
+      height: 1,
+      background: "linear-gradient(90deg,transparent,#e8e8e8,transparent)",
+      margin: "2px 4px",
+      opacity: visible ? 1 : 0,
+      transition: "opacity 0.3s ease",
+    }}
+  />
 );
 
 export default BottomNav;

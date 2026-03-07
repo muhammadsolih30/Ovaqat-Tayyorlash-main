@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { useAdmin } from "@/contexts/AdminContext";
+import VideoYuklash from "@/pages/admin/sections/VideoYuklash";
 import { Video, chefs } from "@/data/videos";
 import { Recipe, categoryList as recipeCategoryList } from "@/data/recipes";
+import AdminOshpazlar from "@/pages/admin/sections/AdminOshpazlar";
+import VideoBoshqaruvi from "@/pages/admin/sections/VideoBoshqaruvi";
 import {
   LayoutDashboard,
   PlaySquare,
@@ -12,7 +15,6 @@ import {
   Plus,
   Trash2,
   Eye,
-  Clock,
   Search,
   Film,
   Flame,
@@ -28,6 +30,15 @@ import {
   TrendingUp,
   Globe,
   Tag,
+  Users,
+  MessageSquare,
+  Bell,
+  Activity,
+  ArrowUpRight,
+  ArrowDownRight,
+  Clock,
+  Zap,
+  Lock,
 } from "lucide-react";
 
 interface AdminPanelProps {
@@ -43,33 +54,18 @@ type AdminPage =
   | "settings"
   | "recipes"
   | "add-recipe"
-  | "categories";
+  | "categories"
+  | "users"
+  | "admins"
+  | "logs";
 
 const G = "#1DB954";
 
-function parseYoutubeId(input: string): string {
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/,
-    /^([A-Za-z0-9_-]{11})$/,
-  ];
-  for (const p of patterns) {
-    const m = input.match(p);
-    if (m) return m[1];
-  }
-  return "";
-}
-function ytEmbed(id: string) {
-  return `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1`;
-}
-function ytThumbnail(id: string) {
-  return `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
-}
-
 const card = {
   background: "white",
-  border: "1px solid rgba(21,128,61,0.1)",
-  borderRadius: "16px",
-  boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+  border: "1px solid rgba(21,128,61,0.08)",
+  borderRadius: "20px",
+  boxShadow: "0 2px 16px rgba(0,0,0,0.05)",
 } as React.CSSProperties;
 
 const inp = {
@@ -83,6 +79,7 @@ const inp = {
   outline: "none",
   fontFamily: "'DM Sans',sans-serif",
   transition: "border 0.2s",
+  boxSizing: "border-box" as const,
 } as React.CSSProperties;
 
 const lbl = {
@@ -98,6 +95,106 @@ const lbl = {
 const diffColor = (d: string) =>
   d === "easy" ? G : d === "medium" ? "#f59e0b" : "#ef4444";
 
+// Stat card component
+const StatCard = ({
+  label,
+  value,
+  icon: Icon,
+  color,
+  bg,
+  change,
+  sub,
+}: any) => (
+  <div style={{ ...card, padding: 20 }}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        marginBottom: 16,
+      }}
+    >
+      <div
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: 14,
+          background: bg,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Icon size={22} style={{ color }} />
+      </div>
+      {change !== undefined && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            fontSize: 12,
+            fontWeight: 700,
+            color: change >= 0 ? "#16a34a" : "#dc2626",
+            background:
+              change >= 0 ? "rgba(22,163,74,0.08)" : "rgba(220,38,38,0.08)",
+            padding: "3px 8px",
+            borderRadius: 99,
+          }}
+        >
+          {change >= 0 ? (
+            <ArrowUpRight size={12} />
+          ) : (
+            <ArrowDownRight size={12} />
+          )}
+          {Math.abs(change)}%
+        </div>
+      )}
+    </div>
+    <div
+      style={{
+        fontSize: 28,
+        fontWeight: 900,
+        color: "#111827",
+        lineHeight: 1,
+        marginBottom: 4,
+      }}
+    >
+      {value}
+    </div>
+    <div style={{ fontSize: 12, color: "#9ca3af", fontWeight: 600 }}>
+      {label}
+    </div>
+    {sub && (
+      <div style={{ fontSize: 11, color: "#d1d5db", marginTop: 2 }}>{sub}</div>
+    )}
+  </div>
+);
+
+// Mini bar chart
+const MiniBar = ({ data, color }: { data: number[]; color: string }) => {
+  const max = Math.max(...data);
+  return (
+    <div
+      style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 40 }}
+    >
+      {data.map((v, i) => (
+        <div
+          key={i}
+          style={{
+            flex: 1,
+            borderRadius: 4,
+            background: i === data.length - 1 ? color : color + "40",
+            height: `${(v / max) * 100}%`,
+            minHeight: 4,
+            transition: "height 0.3s",
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
 const AdminPanel = ({ onExit }: AdminPanelProps) => {
   const {
     adminLogout,
@@ -110,6 +207,14 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
     addRecipe,
     deleteRecipe,
     updateRecipe,
+    adminUsers,
+    addAdminUser,
+    deleteAdminUser,
+    toggleBlockAdmin,
+    siteUsers,
+    toggleBlockUser,
+    loginLogs,
+    currentAdmin,
   } = useAdmin();
 
   const [page, setPage] = useState<AdminPage>("dashboard");
@@ -117,6 +222,15 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editVideo, setEditVideo] = useState<Video | null>(null);
   const [notif, setNotif] = useState<{ msg: string; ok: boolean } | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Admin user form
+  const [showAddAdmin, setShowAddAdmin] = useState(false);
+  const [adminForm, setAdminForm] = useState({
+    username: "",
+    password: "",
+    name: "",
+  });
 
   const [recipeForm, setRecipeForm] = useState({
     name_uz: "",
@@ -170,6 +284,22 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
   const setF = (k: string, v: string | boolean) =>
     setForm((p) => ({ ...p, [k]: v }));
 
+  function parseYoutubeId(input: string) {
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/,
+      /^([A-Za-z0-9_-]{11})$/,
+    ];
+    for (const p of patterns) {
+      const m = input.match(p);
+      if (m) return m[1];
+    }
+    return "";
+  }
+  const ytEmbed = (id: string) =>
+    `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1`;
+  const ytThumbnail = (id: string) =>
+    `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
+
   const handleYtUrl = (val: string) => {
     setF("ytUrl", val);
     const id = parseYoutubeId(val);
@@ -177,19 +307,12 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
       setF("ytId", id);
       setYtPreview(ytEmbed(id));
       setYtThumb(ytThumbnail(id));
-      if (!form.useCustomThumb) setF("thumbnailCustom", "");
     } else {
       setF("ytId", "");
       setYtPreview("");
       setYtThumb("");
     }
   };
-
-  const finalThumb =
-    form.useCustomThumb && form.thumbnailCustom
-      ? form.thumbnailCustom
-      : ytThumb ||
-        "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=640&h=360&fit=crop";
 
   const handleAdd = () => {
     if (!form.ytId) {
@@ -205,9 +328,14 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
       return;
     }
     if (!form.duration) {
-      toast("Davomiylik majburiy! (masalan: 15:30)", false);
+      toast("Davomiylik majburiy!", false);
       return;
     }
+    const finalThumb =
+      form.useCustomThumb && form.thumbnailCustom
+        ? form.thumbnailCustom
+        : ytThumb ||
+          "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=640&h=360&fit=crop";
     const v: Video = {
       id: `v${Date.now()}`,
       title: {
@@ -248,52 +376,96 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
     toast("Video muvaffaqiyatli qo'shildi! ✅");
   };
 
-  const handleEditSave = () => {
-    if (!editVideo) return;
-    updateVideo(editVideo);
-    setEditVideo(null);
-    toast("Video yangilandi! ✅");
-  };
-
+  const totalViews = videoList.reduce((a, v) => a + v.views, 0);
+  const topVideos = [...videoList].sort((a, b) => b.views - a.views);
   const filtered = videoList.filter(
     (v) =>
       v.title.uz.toLowerCase().includes(searchQ.toLowerCase()) ||
-      v.chef.toLowerCase().includes(searchQ.toLowerCase()) ||
-      v.cuisine.toLowerCase().includes(searchQ.toLowerCase()),
+      v.chef.toLowerCase().includes(searchQ.toLowerCase()),
   );
 
-  const totalViews = videoList.reduce((a, v) => a + v.views, 0);
-  const topVideos = [...videoList].sort((a, b) => b.views - a.views);
+  // Category stats for dashboard
+  const catStats = [
+    { label: "Shirinliklar", views: 1000000, color: "#ec4899" },
+    { label: "Jahon taomlari", views: 2000000, color: "#3b82f6" },
+    { label: "O'zbek taomlari", views: 500000, color: G },
+    { label: "Nonushta", views: 750000, color: "#f59e0b" },
+    { label: "Tez taomlar", views: 380000, color: "#8b5cf6" },
+  ];
+  const maxViews = Math.max(...catStats.map((c) => c.views));
+
+  // Weekly data for mini chart
+  const weeklyData = [120, 180, 150, 220, 190, 280, 310];
 
   const navItems = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "videos", label: "Videolar", icon: PlaySquare },
-    { id: "add", label: "Video Qo'shish", icon: Plus },
-    { id: "recipes", label: "Taomlar", icon: Tag },
-    { id: "add-recipe", label: "Taom Qo'shish", icon: Plus },
-    { id: "categories", label: "Kategoriyalar", icon: LayoutDashboard },
-    { id: "chefs", label: "Oshpazlar", icon: ChefHat },
-    { id: "stats", label: "Statistika", icon: BarChart3 },
-    { id: "settings", label: "Sozlamalar", icon: Settings },
-  ] as { id: AdminPage; label: string; icon: typeof LayoutDashboard }[];
+    {
+      id: "dashboard",
+      label: "Dashboard",
+      icon: LayoutDashboard,
+      section: "main",
+    },
+    { id: "videos", label: "Videolar", icon: PlaySquare, section: "main" },
+    { id: "add", label: "Video Qo'shish", icon: Plus, section: "main" },
+    { id: "recipes", label: "Taomlar", icon: Tag, section: "main" },
+    { id: "add-recipe", label: "Taom Qo'shish", icon: Plus, section: "main" },
+    {
+      id: "categories",
+      label: "Kategoriyalar",
+      icon: LayoutDashboard,
+      section: "main",
+    },
+    { id: "admins", label: "Oshpaz Adminlar", icon: ChefHat, section: "users" },
+    { id: "users", label: "Foydalanuvchilar", icon: Users, section: "users" },
+    { id: "logs", label: "Login Loglar", icon: Activity, section: "users" },
+    { id: "admins", label: "Adminlar", icon: Shield, section: "users" },
+    { id: "users", label: "Foydalanuvchilar", icon: Users, section: "users" },
+    { id: "logs", label: "Login Loglar", icon: Activity, section: "users" },
+    { id: "chefs", label: "Oshpazlar", icon: ChefHat, section: "other" },
+    { id: "stats", label: "Statistika", icon: BarChart3, section: "other" },
+    { id: "settings", label: "Sozlamalar", icon: Settings, section: "other" },
+  ] as {
+    id: AdminPage;
+    label: string;
+    icon: typeof LayoutDashboard;
+    section: string;
+  }[];
+
+  const sections = [
+    { key: "main", label: "ASOSIY" },
+    { key: "users", label: "FOYDALANUVCHILAR" },
+    { key: "other", label: "BOSHQA" },
+  ];
 
   return (
     <div
-      className="min-h-screen flex"
       style={{
-        background: "#f0fdf4",
+        minHeight: "100vh",
+        display: "flex",
+        background: "#f8fffe",
         fontFamily: "'Plus Jakarta Sans',sans-serif",
       }}
     >
       {/* Toast */}
       {notif && (
         <div
-          className="fixed top-5 right-5 z-[999] flex items-center gap-2.5 px-5 py-3 rounded-2xl text-white text-sm font-bold shadow-2xl"
           style={{
+            position: "fixed",
+            top: 20,
+            right: 20,
+            zIndex: 999,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "12px 20px",
+            borderRadius: 16,
+            color: "#fff",
+            fontSize: 14,
+            fontWeight: 700,
             background: notif.ok
               ? "linear-gradient(135deg,#1DB954,#15803d)"
               : "linear-gradient(135deg,#ef4444,#dc2626)",
-            animation: "slideIn .3s ease",
+            boxShadow: "0 8px 30px rgba(0,0,0,0.25)",
+            animation: "slideIn 0.3s ease",
           }}
         >
           {notif.ok ? <Check size={16} /> : <AlertTriangle size={16} />}
@@ -301,163 +473,1778 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
         </div>
       )}
 
-      {/* Sidebar */}
+      {/* ═══ SIDEBAR ═══ */}
       <aside
-        className="w-56 flex-shrink-0 flex flex-col h-screen sticky top-0"
         style={{
-          background: "linear-gradient(180deg,#0d2818 0%,#166534 100%)",
+          width: sidebarOpen ? 240 : 72,
+          flexShrink: 0,
+          display: "flex",
+          flexDirection: "column",
+          height: "100vh",
+          position: "sticky",
+          top: 0,
+          background:
+            "linear-gradient(180deg, #071a0e 0%, #0d2818 40%, #0a1f12 100%)",
+          transition: "width 0.3s cubic-bezier(0.4,0,0.2,1)",
+          overflow: "hidden",
+          borderRight: "1px solid rgba(29,185,84,0.1)",
+          boxShadow: "4px 0 24px rgba(0,0,0,0.15)",
+          zIndex: 50,
         }}
       >
-        <div className="flex items-center gap-2.5 px-5 py-5 border-b border-white/10">
+        {/* Sidebar header */}
+        <div
+          style={{
+            padding: "20px 16px",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            minHeight: 76,
+          }}
+        >
           <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center"
-            style={{ background: "rgba(255,255,255,0.15)" }}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 14,
+              flexShrink: 0,
+              background: "linear-gradient(135deg,#1DB954,#15803d)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 4px 16px rgba(29,185,84,0.4)",
+            }}
           >
-            <Shield size={20} className="text-white" />
+            <Shield size={20} style={{ color: "#fff" }} />
           </div>
-          <div>
-            <div className="text-white font-black text-sm leading-tight">
-              Admin Panel
-            </div>
-            <div style={{ color: G }} className="text-[10px] font-bold">
-              Taom<span className="text-white">Uz</span>
-            </div>
-          </div>
-        </div>
-
-        <nav className="flex-1 p-3 pt-4 flex flex-col gap-0.5">
-          {navItems.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setPage(id)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all"
-              style={{
-                background:
-                  page === id ? "rgba(255,255,255,0.18)" : "transparent",
-                color: page === id ? "white" : "rgba(255,255,255,0.5)",
-                borderLeft:
-                  page === id ? `3px solid ${G}` : "3px solid transparent",
-              }}
-            >
-              <Icon size={17} /> {label}
-            </button>
-          ))}
-        </nav>
-
-        <div className="p-4 border-t border-white/10">
-          <div className="flex items-center gap-2.5 px-2 mb-3">
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white"
-              style={{ background: "rgba(29,185,84,0.35)" }}
-            >
-              M
-            </div>
-            <div>
-              <div className="text-white text-xs font-bold">muhammadsolih</div>
-              <div className="text-[10px]" style={{ color: G }}>
-                Super Admin
+          {sidebarOpen && (
+            <div style={{ overflow: "hidden" }}>
+              <div
+                style={{
+                  color: "#fff",
+                  fontWeight: 900,
+                  fontSize: 14,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Admin Panel
+              </div>
+              <div style={{ color: G, fontSize: 11, fontWeight: 700 }}>
+                Taom<span style={{ color: "rgba(255,255,255,0.5)" }}>Uz</span>
               </div>
             </div>
-          </div>
+          )}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            style={{
+              marginLeft: "auto",
+              background: "rgba(255,255,255,0.06)",
+              border: "none",
+              borderRadius: 10,
+              width: 28,
+              height: 28,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              color: "rgba(255,255,255,0.4)",
+              flexShrink: 0,
+              transition: "all 0.2s",
+            }}
+          >
+            {sidebarOpen ? "‹" : "›"}
+          </button>
+        </div>
+
+        {/* Nav items */}
+        <nav
+          style={{
+            flex: 1,
+            padding: "12px 10px",
+            overflowY: "auto",
+            overflowX: "hidden",
+          }}
+        >
+          {sections.map((sec) => {
+            const items = navItems.filter((n) => n.section === sec.key);
+            return (
+              <div key={sec.key} style={{ marginBottom: 8 }}>
+                {sidebarOpen && (
+                  <p
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 800,
+                      color: "rgba(255,255,255,0.2)",
+                      letterSpacing: "0.1em",
+                      padding: "8px 10px 4px",
+                      margin: 0,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {sec.label}
+                  </p>
+                )}
+                {items.map(({ id, label, icon: Icon }) => {
+                  const isAct = page === id;
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => setPage(id)}
+                      title={!sidebarOpen ? label : undefined}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        width: "100%",
+                        padding: sidebarOpen ? "9px 12px" : "9px",
+                        borderRadius: 12,
+                        marginBottom: 2,
+                        border: "none",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        whiteSpace: "nowrap",
+                        background: isAct
+                          ? "rgba(29,185,84,0.18)"
+                          : "transparent",
+                        borderLeft: isAct
+                          ? `3px solid ${G}`
+                          : "3px solid transparent",
+                        color: isAct ? "#fff" : "rgba(255,255,255,0.45)",
+                        fontSize: 13,
+                        fontWeight: isAct ? 700 : 500,
+                        transition: "all 0.2s",
+                        justifyContent: sidebarOpen ? "flex-start" : "center",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isAct) {
+                          e.currentTarget.style.background =
+                            "rgba(255,255,255,0.06)";
+                          e.currentTarget.style.color = "rgba(255,255,255,0.8)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isAct) {
+                          e.currentTarget.style.background = "transparent";
+                          e.currentTarget.style.color =
+                            "rgba(255,255,255,0.45)";
+                        }
+                      }}
+                    >
+                      <Icon size={17} style={{ flexShrink: 0 }} />
+                      {sidebarOpen && label}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </nav>
+
+        {/* User info + logout */}
+        <div
+          style={{
+            padding: "12px 10px",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+          }}
+        >
+          {sidebarOpen && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "8px 10px",
+                marginBottom: 8,
+              }}
+            >
+              <div
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: "50%",
+                  background:
+                    "linear-gradient(135deg,rgba(29,185,84,0.4),rgba(29,185,84,0.2))",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: G,
+                  fontWeight: 900,
+                  fontSize: 13,
+                  flexShrink: 0,
+                }}
+              >
+                {currentAdmin?.name?.[0] || "M"}
+              </div>
+              <div style={{ overflow: "hidden" }}>
+                <div
+                  style={{
+                    color: "#fff",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {currentAdmin?.name || "Muhammad Solih"}
+                </div>
+                <div style={{ color: G, fontSize: 10, fontWeight: 600 }}>
+                  Super Admin
+                </div>
+              </div>
+            </div>
+          )}
           <button
             onClick={() => {
               adminLogout();
               onExit();
             }}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all hover:bg-red-500/20"
-            style={{ color: "rgba(255,160,160,0.8)" }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              width: "100%",
+              padding: "9px 12px",
+              borderRadius: 12,
+              border: "none",
+              background: "rgba(239,68,68,0.1)",
+              cursor: "pointer",
+              color: "rgba(255,160,160,0.8)",
+              fontSize: 13,
+              fontWeight: 600,
+              justifyContent: sidebarOpen ? "flex-start" : "center",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(239,68,68,0.2)";
+              e.currentTarget.style.color = "#fca5a5";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(239,68,68,0.1)";
+              e.currentTarget.style.color = "rgba(255,160,160,0.8)";
+            }}
           >
-            <LogOut size={15} /> Chiqish
+            <LogOut size={16} style={{ flexShrink: 0 }} />
+            {sidebarOpen && "Chiqish"}
           </button>
         </div>
       </aside>
 
-      {/* Main */}
-      <main className="flex-1 min-w-0 overflow-auto p-6">
-        {/* ═══ DASHBOARD ═══ */}
+      {/* ═══ MAIN CONTENT ═══ */}
+      <main
+        style={{
+          flex: 1,
+          minWidth: 0,
+          overflowY: "auto",
+          padding: "28px 28px",
+        }}
+      >
+        {page === "add" && (
+          <VideoYuklash
+            addVideo={addVideo as any}
+            toast={toast}
+            onDone={() => setPage("videos")}
+          />
+        )}
+
+        {(page === "videos" || page === "add") && (
+          <VideoBoshqaruvi
+            videoList={videoList as any}
+            addVideo={addVideo as any}
+            deleteVideo={deleteVideo}
+            updateVideo={updateVideo as any}
+            toast={toast}
+          />
+        )}
+        {/* ══════════════════════════════════════════
+            DASHBOARD
+        ══════════════════════════════════════════ */}
         {page === "dashboard" && (
           <div>
-            <h1
-              className="text-2xl font-black mb-1"
-              style={{ color: "#111827" }}
+            {/* Header */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                marginBottom: 28,
+              }}
             >
-              📊 Dashboard
-            </h1>
-            <p className="text-sm text-gray-400 mb-6">
-              TaomUz boshqaruv markazi
-            </p>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              {[
-                {
-                  label: "Jami Videolar",
-                  val: videoList.length,
-                  icon: Film,
-                  color: G,
-                  bg: "rgba(29,185,84,0.1)",
-                },
-                {
-                  label: "Ko'rishlar",
-                  val: `${(totalViews / 1000).toFixed(1)}K`,
-                  icon: Eye,
-                  color: "#3b82f6",
-                  bg: "rgba(59,130,246,0.1)",
-                },
-                {
-                  label: "Jami Taomlar",
-                  val: recipeList.length,
-                  icon: Tag,
-                  color: "#f59e0b",
-                  bg: "rgba(245,158,11,0.1)",
-                },
-                {
-                  label: "Kategoriyalar",
-                  val: recipeCategoryList.length,
-                  icon: Star,
-                  color: "#8b5cf6",
-                  bg: "rgba(139,92,246,0.1)",
-                },
-              ].map(({ label, val, icon: Icon, color, bg }) => (
-                <div key={label} className="p-5 rounded-2xl" style={card}>
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
-                    style={{ background: bg }}
-                  >
-                    <Icon size={20} style={{ color }} />
+              <div>
+                <h1
+                  style={{
+                    margin: 0,
+                    fontSize: 24,
+                    fontWeight: 900,
+                    color: "#111827",
+                    letterSpacing: "-0.02em",
+                  }}
+                >
+                  Xush kelibsiz, {currentAdmin?.name?.split(" ")[0] || "Admin"}{" "}
+                  👋
+                </h1>
+                <p
+                  style={{ margin: "4px 0 0", fontSize: 13, color: "#9ca3af" }}
+                >
+                  {new Date().toLocaleDateString("uz-UZ", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  onClick={() => setPage("add")}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "10px 18px",
+                    borderRadius: 14,
+                    border: "none",
+                    cursor: "pointer",
+                    background: "linear-gradient(135deg,#1DB954,#15803d)",
+                    color: "#fff",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    boxShadow: "0 4px 16px rgba(29,185,84,0.35)",
+                  }}
+                >
+                  <Plus size={16} /> Video Qo'shish
+                </button>
+              </div>
+            </div>
+
+            {/* ── 4 ta asosiy stat karta ── */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4,1fr)",
+                gap: 16,
+                marginBottom: 24,
+              }}
+            >
+              <StatCard
+                label="Jami Videolar"
+                value={videoList.length}
+                icon={Film}
+                color={G}
+                bg="rgba(29,185,84,0.1)"
+                change={12}
+                sub="O'tgan oydan"
+              />
+              <StatCard
+                label="Jami Ko'rishlar"
+                value={`${(totalViews / 1000).toFixed(1)}K`}
+                icon={Eye}
+                color="#3b82f6"
+                bg="rgba(59,130,246,0.1)"
+                change={8}
+                sub="Bu hafta"
+              />
+              <StatCard
+                label="Foydalanuvchilar"
+                value={siteUsers.length}
+                icon={Users}
+                color="#f59e0b"
+                bg="rgba(245,158,11,0.1)"
+                change={5}
+                sub="Jami ro'yxatdan"
+              />
+              <StatCard
+                label="Jami Taomlar"
+                value={recipeList.length}
+                icon={Tag}
+                color="#8b5cf6"
+                bg="rgba(139,92,246,0.1)"
+                change={3}
+                sub="Retseptlar"
+              />
+            </div>
+
+            {/* ── Ikkinchi qator: Haftalik + Tezkor harakatlar ── */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "2fr 1fr",
+                gap: 16,
+                marginBottom: 24,
+              }}
+            >
+              {/* Haftalik statistika */}
+              <div style={{ ...card, padding: 24 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: 20,
+                  }}
+                >
+                  <div>
+                    <h3
+                      style={{
+                        margin: 0,
+                        fontSize: 15,
+                        fontWeight: 800,
+                        color: "#111827",
+                      }}
+                    >
+                      📈 Haftalik Ko'rishlar
+                    </h3>
+                    <p
+                      style={{
+                        margin: "3px 0 0",
+                        fontSize: 12,
+                        color: "#9ca3af",
+                      }}
+                    >
+                      So'nggi 7 kun
+                    </p>
                   </div>
-                  <div
-                    className="text-2xl font-black mb-0.5"
-                    style={{ color: "#111827" }}
-                  >
-                    {val}
+                  <div style={{ textAlign: "right" }}>
+                    <div
+                      style={{
+                        fontSize: 22,
+                        fontWeight: 900,
+                        color: "#111827",
+                      }}
+                    >
+                      +31%
+                    </div>
+                    <div style={{ fontSize: 11, color: G, fontWeight: 600 }}>
+                      o'tgan haftadan
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-400 font-medium">
-                    {label}
+                </div>
+                {/* Bar chart */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-end",
+                    gap: 6,
+                    height: 80,
+                    marginBottom: 10,
+                  }}
+                >
+                  {weeklyData.map((v, i) => {
+                    const max = Math.max(...weeklyData);
+                    const days = ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"];
+                    const isLast = i === weeklyData.length - 1;
+                    return (
+                      <div
+                        key={i}
+                        style={{
+                          flex: 1,
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: 4,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "100%",
+                            borderRadius: 8,
+                            background: isLast
+                              ? `linear-gradient(180deg,#1DB954,#15803d)`
+                              : "rgba(29,185,84,0.2)",
+                            height: `${(v / max) * 80}px`,
+                            transition: "height 0.5s ease",
+                            boxShadow: isLast
+                              ? "0 4px 12px rgba(29,185,84,0.4)"
+                              : "none",
+                          }}
+                        />
+                        <span
+                          style={{
+                            fontSize: 10,
+                            color: "#9ca3af",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {days[i]}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Tezkor harakatlar */}
+              <div style={{ ...card, padding: 24 }}>
+                <h3
+                  style={{
+                    margin: "0 0 16px",
+                    fontSize: 15,
+                    fontWeight: 800,
+                    color: "#111827",
+                  }}
+                >
+                  ⚡ Tezkor Harakatlar
+                </h3>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 8 }}
+                >
+                  {[
+                    {
+                      label: "Video Qo'shish",
+                      icon: Plus,
+                      action: () => setPage("add"),
+                      color: G,
+                      bg: "rgba(29,185,84,0.1)",
+                    },
+                    {
+                      label: "Taom Qo'shish",
+                      icon: Tag,
+                      action: () => setPage("add-recipe"),
+                      color: "#f59e0b",
+                      bg: "rgba(245,158,11,0.1)",
+                    },
+                    {
+                      label: "Admin Qo'shish",
+                      icon: Shield,
+                      action: () => setPage("admins"),
+                      color: "#8b5cf6",
+                      bg: "rgba(139,92,246,0.1)",
+                    },
+                    {
+                      label: "Statistika",
+                      icon: BarChart3,
+                      action: () => setPage("stats"),
+                      color: "#3b82f6",
+                      bg: "rgba(59,130,246,0.1)",
+                    },
+                  ].map(({ label, icon: Icon, action, color, bg }) => (
+                    <button
+                      key={label}
+                      onClick={action}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        padding: "11px 14px",
+                        borderRadius: 14,
+                        border: "none",
+                        cursor: "pointer",
+                        background: bg,
+                        textAlign: "left",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateX(4px)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateX(0)";
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: 10,
+                          background: color + "20",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Icon size={16} style={{ color }} />
+                      </div>
+                      <span
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 700,
+                          color: "#374151",
+                        }}
+                      >
+                        {label}
+                      </span>
+                      <ArrowUpRight
+                        size={14}
+                        style={{ marginLeft: "auto", color: "#d1d5db" }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* ── Uchinchi qator: Kategoriya statistikasi + Oxirgi loginlar ── */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 16,
+                marginBottom: 24,
+              }}
+            >
+              {/* Kategoriya bo'yicha ko'rishlar */}
+              <div style={{ ...card, padding: 24 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: 20,
+                  }}
+                >
+                  <h3
+                    style={{
+                      margin: 0,
+                      fontSize: 15,
+                      fontWeight: 800,
+                      color: "#111827",
+                    }}
+                  >
+                    📊 Kategoriya Ko'rishlar
+                  </h3>
+                  <button
+                    onClick={() => setPage("stats")}
+                    style={{
+                      fontSize: 12,
+                      color: G,
+                      fontWeight: 700,
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Barchasi →
+                  </button>
+                </div>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 14 }}
+                >
+                  {catStats.map((c) => (
+                    <div key={c.label}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          marginBottom: 6,
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: "#374151",
+                          }}
+                        >
+                          {c.label}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 800,
+                            color: c.color,
+                          }}
+                        >
+                          {c.views >= 1000000
+                            ? `${(c.views / 1000000).toFixed(1)}M`
+                            : `${(c.views / 1000).toFixed(0)}K`}
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          height: 6,
+                          borderRadius: 99,
+                          background: "#f3f4f6",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <div
+                          style={{
+                            height: "100%",
+                            borderRadius: 99,
+                            background: c.color,
+                            width: `${(c.views / maxViews) * 100}%`,
+                            transition: "width 0.8s ease",
+                            boxShadow: `0 0 8px ${c.color}60`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Oxirgi login loglar */}
+              <div style={{ ...card, padding: 24 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: 20,
+                  }}
+                >
+                  <h3
+                    style={{
+                      margin: 0,
+                      fontSize: 15,
+                      fontWeight: 800,
+                      color: "#111827",
+                    }}
+                  >
+                    🔐 Oxirgi Loginlar
+                  </h3>
+                  <button
+                    onClick={() => setPage("logs")}
+                    style={{
+                      fontSize: 12,
+                      color: G,
+                      fontWeight: 700,
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Barchasi →
+                  </button>
+                </div>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 10 }}
+                >
+                  {loginLogs.slice(0, 5).map((log) => (
+                    <div
+                      key={log.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        padding: "10px 12px",
+                        borderRadius: 12,
+                        background:
+                          log.status === "success"
+                            ? "rgba(29,185,84,0.04)"
+                            : "rgba(239,68,68,0.04)",
+                        border: `1px solid ${log.status === "success" ? "rgba(29,185,84,0.1)" : "rgba(239,68,68,0.1)"}`,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: 10,
+                          flexShrink: 0,
+                          background:
+                            log.status === "success"
+                              ? "rgba(29,185,84,0.12)"
+                              : "rgba(239,68,68,0.12)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {log.status === "success" ? (
+                          <Check size={14} style={{ color: G }} />
+                        ) : (
+                          <X size={14} style={{ color: "#ef4444" }} />
+                        )}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 700,
+                            color: "#111827",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {log.username}
+                        </div>
+                        <div style={{ fontSize: 11, color: "#9ca3af" }}>
+                          {log.ip}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "right", flexShrink: 0 }}>
+                        <div
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 700,
+                            padding: "2px 8px",
+                            borderRadius: 99,
+                            background:
+                              log.status === "success"
+                                ? "rgba(29,185,84,0.12)"
+                                : "rgba(239,68,68,0.12)",
+                            color: log.status === "success" ? G : "#ef4444",
+                          }}
+                        >
+                          {log.status === "success" ? "Muvaffaq" : "Xato"}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 10,
+                            color: "#d1d5db",
+                            marginTop: 2,
+                          }}
+                        >
+                          {log.time}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* ── To'rtinchi qator: So'nggi videolar jadval ── */}
+            <div style={{ ...card, overflow: "hidden" }}>
+              <div
+                style={{
+                  padding: "18px 20px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  borderBottom: "1px solid rgba(21,128,61,0.06)",
+                }}
+              >
+                <h3
+                  style={{
+                    margin: 0,
+                    fontSize: 15,
+                    fontWeight: 800,
+                    color: "#111827",
+                  }}
+                >
+                  🎬 So'nggi Videolar
+                </h3>
+                <button
+                  onClick={() => setPage("videos")}
+                  style={{
+                    fontSize: 12,
+                    color: G,
+                    fontWeight: 700,
+                    padding: "6px 14px",
+                    borderRadius: 10,
+                    background: "rgba(29,185,84,0.08)",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  Barchasi →
+                </button>
+              </div>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ background: "rgba(29,185,84,0.03)" }}>
+                      {[
+                        "Video",
+                        "Oshpaz",
+                        "Ko'rishlar",
+                        "Vaqt",
+                        "Qiyinlik",
+                        "Sana",
+                      ].map((h) => (
+                        <th
+                          key={h}
+                          style={{
+                            padding: "12px 16px",
+                            textAlign: "left",
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: "#9ca3af",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {videoList.slice(0, 7).map((v, i) => (
+                      <tr
+                        key={v.id}
+                        style={{
+                          borderTop: "1px solid rgba(0,0,0,0.04)",
+                          background:
+                            i % 2 === 0 ? "#fff" : "rgba(29,185,84,0.01)",
+                        }}
+                      >
+                        <td style={{ padding: "12px 16px" }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 12,
+                            }}
+                          >
+                            <img
+                              src={v.thumbnail}
+                              onError={(e) => {
+                                e.currentTarget.src =
+                                  "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=80&h=50&fit=crop";
+                              }}
+                              style={{
+                                width: 56,
+                                height: 36,
+                                borderRadius: 8,
+                                objectFit: "cover",
+                                flexShrink: 0,
+                              }}
+                              alt=""
+                            />
+                            <span
+                              style={{
+                                fontSize: 13,
+                                fontWeight: 600,
+                                color: "#111827",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                maxWidth: 160,
+                              }}
+                            >
+                              {v.title.uz}
+                            </span>
+                          </div>
+                        </td>
+                        <td
+                          style={{
+                            padding: "12px 16px",
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: G,
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {v.chef}
+                        </td>
+                        <td
+                          style={{
+                            padding: "12px 16px",
+                            fontSize: 13,
+                            color: "#6b7280",
+                          }}
+                        >
+                          {(v.views / 1000).toFixed(1)}K
+                        </td>
+                        <td
+                          style={{
+                            padding: "12px 16px",
+                            fontSize: 13,
+                            color: "#6b7280",
+                          }}
+                        >
+                          {v.cookTime} min
+                        </td>
+                        <td style={{ padding: "12px 16px" }}>
+                          <span
+                            style={{
+                              padding: "3px 10px",
+                              borderRadius: 99,
+                              fontSize: 11,
+                              fontWeight: 700,
+                              background: diffColor(v.difficulty) + "18",
+                              color: diffColor(v.difficulty),
+                            }}
+                          >
+                            {v.difficulty === "easy"
+                              ? "Oson"
+                              : v.difficulty === "medium"
+                                ? "O'rta"
+                                : "Qiyin"}
+                          </span>
+                        </td>
+                        <td
+                          style={{
+                            padding: "12px 16px",
+                            fontSize: 12,
+                            color: "#9ca3af",
+                          }}
+                        >
+                          {v.publishedAt}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════
+            ADMINLAR BOSHQARUVI
+        ══════════════════════════════════════════ */}
+        {page === "admins" && (
+          <div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 24,
+              }}
+            >
+              <div>
+                <h1
+                  style={{
+                    margin: 0,
+                    fontSize: 22,
+                    fontWeight: 900,
+                    color: "#111827",
+                  }}
+                >
+                  🛡️ Adminlar Boshqaruvi
+                </h1>
+                <p
+                  style={{ margin: "4px 0 0", fontSize: 13, color: "#9ca3af" }}
+                >
+                  {adminUsers.length} ta oshpaz admin
+                </p>
+              </div>
+              <button
+                onClick={() => setShowAddAdmin(true)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "10px 18px",
+                  borderRadius: 14,
+                  border: "none",
+                  cursor: "pointer",
+                  background: "linear-gradient(135deg,#1DB954,#15803d)",
+                  color: "#fff",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  boxShadow: "0 4px 16px rgba(29,185,84,0.3)",
+                }}
+              >
+                <Plus size={16} /> Admin Qo'shish
+              </button>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))",
+                gap: 16,
+              }}
+            >
+              {adminUsers.map((admin) => (
+                <div
+                  key={admin.id}
+                  style={{
+                    ...card,
+                    padding: 20,
+                    opacity: admin.blocked ? 0.7 : 1,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 14,
+                      marginBottom: 16,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 14,
+                        flexShrink: 0,
+                        background:
+                          "linear-gradient(135deg,rgba(29,185,84,0.2),rgba(29,185,84,0.1))",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 22,
+                        border: "2px solid rgba(29,185,84,0.2)",
+                      }}
+                    >
+                      👨‍🍳
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontWeight: 800,
+                          fontSize: 14,
+                          color: "#111827",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {admin.name}
+                      </div>
+                      <div
+                        style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}
+                      >
+                        @{admin.username}
+                      </div>
+                    </div>
+                    <span
+                      style={{
+                        padding: "3px 10px",
+                        borderRadius: 99,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        background: admin.blocked
+                          ? "rgba(239,68,68,0.1)"
+                          : "rgba(29,185,84,0.1)",
+                        color: admin.blocked ? "#ef4444" : G,
+                      }}
+                    >
+                      {admin.blocked ? "Bloklangan" : "Aktiv"}
+                    </span>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 8,
+                      marginBottom: 14,
+                    }}
+                  >
+                    {[
+                      { label: "Videolar", value: admin.videoCount },
+                      { label: "Qo'shilgan", value: admin.createdAt },
+                    ].map(({ label, value }) => (
+                      <div
+                        key={label}
+                        style={{
+                          padding: "10px 12px",
+                          borderRadius: 12,
+                          background: "rgba(29,185,84,0.04)",
+                          border: "1px solid rgba(29,185,84,0.08)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: 16,
+                            fontWeight: 900,
+                            color: "#111827",
+                          }}
+                        >
+                          {value}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 10,
+                            color: "#9ca3af",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {label}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      onClick={() => {
+                        toggleBlockAdmin(admin.id);
+                        toast(
+                          admin.blocked
+                            ? "Admin blokdan chiqarildi"
+                            : "Admin bloklandi",
+                        );
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: "9px 12px",
+                        borderRadius: 12,
+                        border: "none",
+                        cursor: "pointer",
+                        background: admin.blocked
+                          ? "rgba(29,185,84,0.1)"
+                          : "rgba(245,158,11,0.1)",
+                        color: admin.blocked ? G : "#f59e0b",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        transition: "all 0.2s",
+                      }}
+                    >
+                      {admin.blocked ? "✅ Blokdan chiq." : "🔒 Bloklash"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm(`${admin.name} ni o'chirasizmi?`)) {
+                          deleteAdminUser(admin.id);
+                          toast("Admin o'chirildi");
+                        }
+                      }}
+                      style={{
+                        width: 38,
+                        height: 38,
+                        borderRadius: 12,
+                        border: "none",
+                        cursor: "pointer",
+                        background: "rgba(239,68,68,0.08)",
+                        color: "#ef4444",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background =
+                          "rgba(239,68,68,0.18)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background =
+                          "rgba(239,68,68,0.08)";
+                      }}
+                    >
+                      <Trash2 size={15} />
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="rounded-2xl overflow-hidden mb-4" style={card}>
-              <div className="px-5 py-4 flex items-center justify-between border-b border-green-50">
-                <h3 className="font-black text-sm" style={{ color: "#111827" }}>
-                  🎬 So'nggi videolar
-                </h3>
-                <button
-                  onClick={() => setPage("videos")}
-                  className="text-xs font-bold px-3 py-1.5 rounded-lg"
-                  style={{ background: "rgba(29,185,84,0.1)", color: G }}
+            {/* Add Admin Modal */}
+            {showAddAdmin && (
+              <div
+                style={{
+                  position: "fixed",
+                  inset: 0,
+                  zIndex: 50,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 16,
+                  background: "rgba(0,0,0,0.5)",
+                  backdropFilter: "blur(8px)",
+                }}
+              >
+                <div
+                  style={{ ...card, padding: 28, width: "100%", maxWidth: 420 }}
                 >
-                  Barchasi →
-                </button>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: 20,
+                    }}
+                  >
+                    <h3
+                      style={{
+                        margin: 0,
+                        fontSize: 18,
+                        fontWeight: 900,
+                        color: "#111827",
+                      }}
+                    >
+                      ➕ Yangi Admin Qo'shish
+                    </h3>
+                    <button
+                      onClick={() => setShowAddAdmin(false)}
+                      style={{
+                        background: "#f3f4f6",
+                        border: "none",
+                        borderRadius: 10,
+                        width: 32,
+                        height: 32,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 14,
+                    }}
+                  >
+                    {[
+                      {
+                        label: "To'liq ismi",
+                        key: "name",
+                        placeholder: "Sarvar Rahimov",
+                      },
+                      {
+                        label: "Username",
+                        key: "username",
+                        placeholder: "oshpaz_sarvar",
+                      },
+                      {
+                        label: "Parol",
+                        key: "password",
+                        placeholder: "••••••••",
+                      },
+                    ].map(({ label, key, placeholder }) => (
+                      <div key={key}>
+                        <label style={lbl}>{label}</label>
+                        <input
+                          style={inp}
+                          type={key === "password" ? "password" : "text"}
+                          value={(adminForm as any)[key]}
+                          onChange={(e) =>
+                            setAdminForm((f) => ({
+                              ...f,
+                              [key]: e.target.value,
+                            }))
+                          }
+                          placeholder={placeholder}
+                        />
+                      </div>
+                    ))}
+                    <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+                      <button
+                        onClick={() => setShowAddAdmin(false)}
+                        style={{
+                          flex: 1,
+                          padding: "11px",
+                          borderRadius: 14,
+                          border: "none",
+                          background: "#f3f4f6",
+                          color: "#374151",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        Bekor
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (
+                            !adminForm.name ||
+                            !adminForm.username ||
+                            !adminForm.password
+                          ) {
+                            toast("Barcha maydonlar to'ldirilsin!", false);
+                            return;
+                          }
+                          addAdminUser({
+                            id: `a${Date.now()}`,
+                            ...adminForm,
+                            role: "chef",
+                            blocked: false,
+                            createdAt: new Date().toISOString().split("T")[0],
+                            videoCount: 0,
+                            avatar: "",
+                          });
+                          setAdminForm({
+                            username: "",
+                            password: "",
+                            name: "",
+                          });
+                          setShowAddAdmin(false);
+                          toast("Yangi admin qo'shildi! ✅");
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: "11px",
+                          borderRadius: 14,
+                          border: "none",
+                          background: "linear-gradient(135deg,#1DB954,#15803d)",
+                          color: "#fff",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        <Check
+                          size={14}
+                          style={{ display: "inline", marginRight: 6 }}
+                        />
+                        Saqlash
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <table className="w-full">
+            )}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════
+            FOYDALANUVCHILAR
+        ══════════════════════════════════════════ */}
+        {page === "users" && (
+          <div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 24,
+              }}
+            >
+              <div>
+                <h1
+                  style={{
+                    margin: 0,
+                    fontSize: 22,
+                    fontWeight: 900,
+                    color: "#111827",
+                  }}
+                >
+                  👥 Foydalanuvchilar
+                </h1>
+                <p
+                  style={{ margin: "4px 0 0", fontSize: 13, color: "#9ca3af" }}
+                >
+                  {siteUsers.length} ta foydalanuvchi
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: 10 }}>
+                <div
+                  style={{
+                    padding: "6px 14px",
+                    borderRadius: 99,
+                    background: "rgba(29,185,84,0.1)",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: G,
+                  }}
+                >
+                  ✅ Aktiv: {siteUsers.filter((u) => !u.blocked).length}
+                </div>
+                <div
+                  style={{
+                    padding: "6px 14px",
+                    borderRadius: 99,
+                    background: "rgba(239,68,68,0.1)",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: "#ef4444",
+                  }}
+                >
+                  🔒 Bloklangan: {siteUsers.filter((u) => u.blocked).length}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ ...card, overflow: "hidden" }}>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr
+                      style={{
+                        background: "rgba(29,185,84,0.04)",
+                        borderBottom: "1px solid rgba(29,185,84,0.08)",
+                      }}
+                    >
+                      {[
+                        "Foydalanuvchi",
+                        "Email",
+                        "Telefon",
+                        "Kirish usuli",
+                        "Ro'yxat",
+                        "Oxirgi kirish",
+                        "Holat",
+                        "Amal",
+                      ].map((h) => (
+                        <th
+                          key={h}
+                          style={{
+                            padding: "12px 16px",
+                            textAlign: "left",
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: "#9ca3af",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {siteUsers.map((user, i) => (
+                      <tr
+                        key={user.id}
+                        style={{
+                          borderTop: "1px solid rgba(0,0,0,0.04)",
+                          background: user.blocked
+                            ? "rgba(239,68,68,0.02)"
+                            : i % 2 === 0
+                              ? "#fff"
+                              : "rgba(29,185,84,0.01)",
+                        }}
+                      >
+                        <td style={{ padding: "12px 16px" }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 10,
+                            }}
+                          >
+                            <img
+                              src={user.avatar}
+                              alt=""
+                              style={{
+                                width: 36,
+                                height: 36,
+                                borderRadius: 10,
+                                objectFit: "cover",
+                                flexShrink: 0,
+                              }}
+                              onError={(e) => {
+                                e.currentTarget.style.display = "none";
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: 13,
+                                fontWeight: 700,
+                                color: "#111827",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {user.name}
+                            </span>
+                          </div>
+                        </td>
+                        <td
+                          style={{
+                            padding: "12px 16px",
+                            fontSize: 12,
+                            color: "#6b7280",
+                          }}
+                        >
+                          {user.email}
+                        </td>
+                        <td
+                          style={{
+                            padding: "12px 16px",
+                            fontSize: 12,
+                            color: "#6b7280",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {user.phone}
+                        </td>
+                        <td style={{ padding: "12px 16px" }}>
+                          <span
+                            style={{
+                              fontSize: 12,
+                              fontWeight: 700,
+                              padding: "3px 10px",
+                              borderRadius: 99,
+                              background:
+                                user.loginMethod === "google"
+                                  ? "rgba(59,130,246,0.1)"
+                                  : "rgba(29,185,84,0.1)",
+                              color:
+                                user.loginMethod === "google" ? "#3b82f6" : G,
+                            }}
+                          >
+                            {user.loginMethod === "google"
+                              ? "🔵 Google"
+                              : "📱 Telefon"}
+                          </span>
+                        </td>
+                        <td
+                          style={{
+                            padding: "12px 16px",
+                            fontSize: 12,
+                            color: "#9ca3af",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {user.registeredAt}
+                        </td>
+                        <td
+                          style={{
+                            padding: "12px 16px",
+                            fontSize: 12,
+                            color: "#9ca3af",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {user.lastLogin}
+                        </td>
+                        <td style={{ padding: "12px 16px" }}>
+                          <span
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 700,
+                              padding: "3px 10px",
+                              borderRadius: 99,
+                              background: user.blocked
+                                ? "rgba(239,68,68,0.1)"
+                                : "rgba(29,185,84,0.1)",
+                              color: user.blocked ? "#ef4444" : G,
+                            }}
+                          >
+                            {user.blocked ? "Bloklangan" : "Aktiv"}
+                          </span>
+                        </td>
+                        <td style={{ padding: "12px 16px" }}>
+                          <button
+                            onClick={() => {
+                              toggleBlockUser(user.id);
+                              toast(
+                                user.blocked
+                                  ? "Foydalanuvchi blokdan chiqarildi"
+                                  : "Foydalanuvchi bloklandi",
+                                !user.blocked,
+                              );
+                            }}
+                            style={{
+                              padding: "6px 14px",
+                              borderRadius: 10,
+                              border: "none",
+                              cursor: "pointer",
+                              fontSize: 12,
+                              fontWeight: 700,
+                              background: user.blocked
+                                ? "rgba(29,185,84,0.1)"
+                                : "rgba(239,68,68,0.1)",
+                              color: user.blocked ? G : "#ef4444",
+                              whiteSpace: "nowrap",
+                              transition: "all 0.2s",
+                            }}
+                          >
+                            {user.blocked ? "Blokdan chiq." : "Bloklash"}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════
+            LOGIN LOGLAR
+        ══════════════════════════════════════════ */}
+        {page === "logs" && (
+          <div>
+            <h1
+              style={{
+                margin: "0 0 4px",
+                fontSize: 22,
+                fontWeight: 900,
+                color: "#111827",
+              }}
+            >
+              🔐 Login Loglar
+            </h1>
+            <p style={{ margin: "0 0 24px", fontSize: 13, color: "#9ca3af" }}>
+              Barcha kirish urinishlari qayd etiladi
+            </p>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3,1fr)",
+                gap: 14,
+                marginBottom: 20,
+              }}
+            >
+              {[
+                {
+                  label: "Jami urinishlar",
+                  value: loginLogs.length,
+                  color: "#3b82f6",
+                  bg: "rgba(59,130,246,0.08)",
+                  icon: Activity,
+                },
+                {
+                  label: "Muvaffaqiyatli",
+                  value: loginLogs.filter((l) => l.status === "success").length,
+                  color: G,
+                  bg: "rgba(29,185,84,0.08)",
+                  icon: Check,
+                },
+                {
+                  label: "Muvaffaqiyatsiz",
+                  value: loginLogs.filter((l) => l.status === "failed").length,
+                  color: "#ef4444",
+                  bg: "rgba(239,68,68,0.08)",
+                  icon: AlertTriangle,
+                },
+              ].map(({ label, value, color, bg, icon: Icon }) => (
+                <div
+                  key={label}
+                  style={{
+                    ...card,
+                    padding: 20,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 16,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 14,
+                      background: bg,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Icon size={22} style={{ color }} />
+                  </div>
+                  <div>
+                    <div
+                      style={{
+                        fontSize: 26,
+                        fontWeight: 900,
+                        color: "#111827",
+                      }}
+                    >
+                      {value}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 12,
+                        color: "#9ca3af",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {label}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ ...card, overflow: "hidden" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
-                  <tr className="bg-green-50/40">
-                    {["Video", "Oshpaz", "Ko'rishlar", "Vaqt", "Qiyinlik"].map(
+                  <tr
+                    style={{
+                      background: "rgba(29,185,84,0.04)",
+                      borderBottom: "1px solid rgba(29,185,84,0.08)",
+                    }}
+                  >
+                    {["#", "Foydalanuvchi", "IP Manzil", "Vaqt", "Natija"].map(
                       (h) => (
                         <th
                           key={h}
-                          className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wide text-gray-400"
+                          style={{
+                            padding: "12px 18px",
+                            textAlign: "left",
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: "#9ca3af",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                          }}
                         >
                           {h}
                         </th>
@@ -466,56 +2253,99 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {videoList.slice(0, 6).map((v, i) => (
+                  {loginLogs.map((log, i) => (
                     <tr
-                      key={v.id}
-                      className={i % 2 === 0 ? "bg-white" : "bg-green-50/20"}
-                      style={{ borderTop: "1px solid rgba(21,128,61,0.05)" }}
+                      key={log.id}
+                      style={{ borderTop: "1px solid rgba(0,0,0,0.04)" }}
                     >
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={v.thumbnail}
-                            onError={(e) =>
-                              (e.currentTarget.src =
-                                "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=80&h=50&fit=crop")
-                            }
-                            className="w-14 h-9 rounded-lg object-cover flex-shrink-0"
-                            alt=""
-                          />
-                          <span
-                            className="text-sm font-semibold line-clamp-1 max-w-[160px]"
-                            style={{ color: "#111827" }}
+                      <td
+                        style={{
+                          padding: "12px 18px",
+                          fontSize: 12,
+                          color: "#d1d5db",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {i + 1}
+                      </td>
+                      <td style={{ padding: "12px 18px" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 10,
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: 32,
+                              height: 32,
+                              borderRadius: 10,
+                              background:
+                                log.status === "success"
+                                  ? "rgba(29,185,84,0.1)"
+                                  : "rgba(239,68,68,0.1)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
                           >
-                            {v.title.uz}
+                            {log.status === "success" ? (
+                              <Shield size={14} style={{ color: G }} />
+                            ) : (
+                              <AlertTriangle
+                                size={14}
+                                style={{ color: "#ef4444" }}
+                              />
+                            )}
+                          </div>
+                          <span
+                            style={{
+                              fontWeight: 700,
+                              fontSize: 13,
+                              color: "#111827",
+                            }}
+                          >
+                            {log.username}
                           </span>
                         </div>
                       </td>
                       <td
-                        className="px-4 py-3 text-sm font-medium"
-                        style={{ color: G }}
+                        style={{
+                          padding: "12px 18px",
+                          fontSize: 13,
+                          color: "#6b7280",
+                          fontFamily: "monospace",
+                        }}
                       >
-                        {v.chef}
+                        {log.ip}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-400">
-                        {(v.views / 1000).toFixed(1)}K
+                      <td
+                        style={{
+                          padding: "12px 18px",
+                          fontSize: 13,
+                          color: "#6b7280",
+                        }}
+                      >
+                        {log.time}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-400">
-                        {v.cookTime} min
-                      </td>
-                      <td className="px-4 py-3">
+                      <td style={{ padding: "12px 18px" }}>
                         <span
-                          className="px-2 py-0.5 rounded-full text-xs font-bold"
                           style={{
-                            background: diffColor(v.difficulty) + "20",
-                            color: diffColor(v.difficulty),
+                            padding: "4px 12px",
+                            borderRadius: 99,
+                            fontSize: 12,
+                            fontWeight: 700,
+                            background:
+                              log.status === "success"
+                                ? "rgba(29,185,84,0.1)"
+                                : "rgba(239,68,68,0.1)",
+                            color: log.status === "success" ? G : "#ef4444",
                           }}
                         >
-                          {v.difficulty === "easy"
-                            ? "Oson"
-                            : v.difficulty === "medium"
-                              ? "O'rta"
-                              : "Qiyin"}
+                          {log.status === "success"
+                            ? "✅ Muvaffaqiyatli"
+                            : "❌ Xato"}
                         </span>
                       </td>
                     </tr>
@@ -523,487 +2353,88 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                 </tbody>
               </table>
             </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {[
-                {
-                  label: "Video Qo'shish",
-                  icon: Plus,
-                  action: () => setPage("add"),
-                  color: G,
-                },
-                {
-                  label: "Taom Qo'shish",
-                  icon: Tag,
-                  action: () => setPage("add-recipe"),
-                  color: "#f59e0b",
-                },
-                {
-                  label: "Kategoriyalar",
-                  icon: LayoutDashboard,
-                  action: () => setPage("categories"),
-                  color: "#8b5cf6",
-                },
-                {
-                  label: "Statistika",
-                  icon: BarChart3,
-                  action: () => setPage("stats"),
-                  color: "#3b82f6",
-                },
-              ].map(({ label, icon: Icon, action, color }) => (
-                <button
-                  key={label}
-                  onClick={action}
-                  className="flex flex-col items-center gap-2 p-4 rounded-2xl transition-all hover:scale-105"
-                  style={{
-                    background: color + "12",
-                    border: `1.5px solid ${color}25`,
-                  }}
-                >
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{ background: color + "20" }}
-                  >
-                    <Icon size={20} style={{ color }} />
-                  </div>
-                  <span
-                    className="text-xs font-bold"
-                    style={{ color: "#374151" }}
-                  >
-                    {label}
-                  </span>
-                </button>
-              ))}
-            </div>
           </div>
         )}
 
-        {/* ═══ VIDEO QO'SHISH ═══ */}
-        {page === "add" && (
-          <div>
-            <h1
-              className="text-2xl font-black mb-1"
-              style={{ color: "#111827" }}
-            >
-              ➕ Yangi Video Qo'shish
-            </h1>
-            <p className="text-sm text-gray-400 mb-6">
-              YouTube linkini kiriting — thumbnail avtomatik olinadi
-            </p>
-            <div className="grid lg:grid-cols-[1fr_360px] gap-6">
-              <div className="space-y-5">
-                <div className="p-5 rounded-2xl" style={card}>
-                  <h3
-                    className="font-black text-sm mb-4 flex items-center gap-2"
-                    style={{ color: "#111827" }}
-                  >
-                    <Youtube size={18} style={{ color: "#ff0000" }} /> YouTube
-                    Video
-                  </h3>
-                  <label style={lbl}>YouTube URL yoki Video ID *</label>
-                  <div className="relative">
-                    <Link
-                      size={14}
-                      className="absolute left-3.5 top-1/2 -translate-y-1/2"
-                      style={{ color: G }}
-                    />
-                    <input
-                      type="text"
-                      value={form.ytUrl}
-                      onChange={(e) => handleYtUrl(e.target.value)}
-                      placeholder="https://youtube.com/watch?v=..."
-                      style={{ ...inp, paddingLeft: "36px" }}
-                    />
-                  </div>
-                  {form.ytId && (
-                    <div
-                      className="mt-2 flex items-center gap-2 text-xs font-semibold"
-                      style={{ color: G }}
-                    >
-                      <Check size={13} /> ID:{" "}
-                      <span className="font-black">{form.ytId}</span>
-                    </div>
-                  )}
-                  <div className="mt-4">
-                    <label className="flex items-center gap-2.5 cursor-pointer">
-                      <div
-                        onClick={() =>
-                          setF("useCustomThumb", !form.useCustomThumb)
-                        }
-                        className="w-10 h-5 rounded-full relative transition-all"
-                        style={{
-                          background: form.useCustomThumb ? G : "#d1d5db",
-                        }}
-                      >
-                        <div
-                          className="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all"
-                          style={{ left: form.useCustomThumb ? "22px" : "2px" }}
-                        />
-                      </div>
-                      <span className="text-xs font-bold text-gray-600">
-                        O'zim thumbnail qo'yaman
-                      </span>
-                    </label>
-                    {form.useCustomThumb && (
-                      <div className="mt-3">
-                        <label style={lbl}>Thumbnail URL</label>
-                        <div className="relative">
-                          <Image
-                            size={14}
-                            className="absolute left-3.5 top-1/2 -translate-y-1/2"
-                            style={{ color: G }}
-                          />
-                          <input
-                            type="url"
-                            value={form.thumbnailCustom}
-                            onChange={(e) =>
-                              setF("thumbnailCustom", e.target.value)
-                            }
-                            placeholder="https://..."
-                            style={{ ...inp, paddingLeft: "36px" }}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="p-5 rounded-2xl" style={card}>
-                  <h3
-                    className="font-black text-sm mb-4 flex items-center gap-2"
-                    style={{ color: "#111827" }}
-                  >
-                    <Globe size={16} style={{ color: G }} /> Sarlavhalar
-                  </h3>
-                  <div className="space-y-3">
-                    {[
-                      ["🇺🇿 UZ *", "title_uz"],
-                      ["🇬🇧 EN", "title_en"],
-                      ["🇷🇺 RU", "title_ru"],
-                    ].map(([label, key]) => (
-                      <div key={key}>
-                        <label style={lbl}>{label}</label>
-                        <input
-                          type="text"
-                          value={(form as any)[key]}
-                          onChange={(e) => setF(key, e.target.value)}
-                          placeholder={`Sarlavha ${label}`}
-                          style={inp}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="p-5 rounded-2xl" style={card}>
-                  <h3
-                    className="font-black text-sm mb-4"
-                    style={{ color: "#111827" }}
-                  >
-                    📝 Tavsiflar
-                  </h3>
-                  {[
-                    ["🇺🇿 UZ", "desc_uz"],
-                    ["🇬🇧 EN", "desc_en"],
-                    ["🇷🇺 RU", "desc_ru"],
-                  ].map(([label, key]) => (
-                    <div key={key} className="mb-3">
-                      <label style={lbl}>{label}</label>
-                      <textarea
-                        value={(form as any)[key]}
-                        onChange={(e) => setF(key, e.target.value)}
-                        rows={2}
-                        placeholder="Qisqacha tavsif..."
-                        style={
-                          { ...inp, resize: "none" } as React.CSSProperties
-                        }
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                <div className="p-5 rounded-2xl" style={card}>
-                  <h3
-                    className="font-black text-sm mb-4"
-                    style={{ color: "#111827" }}
-                  >
-                    ⚙️ Video Ma'lumotlari
-                  </h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    {[
-                      ["Oshpaz nomi *", "text", "chef", "Aziz Karimov"],
-                      ["Davomiyligi * (15:30)", "text", "duration", "15:30"],
-                      ["Pishirish vaqti (min)", "number", "cookTime", "30"],
-                      ["Kaloriya (ixtiyoriy)", "number", "calories", "450"],
-                    ].map(([label, type, key, ph]) => (
-                      <div key={key}>
-                        <label style={lbl}>{label}</label>
-                        <input
-                          type={type}
-                          value={(form as any)[key]}
-                          onChange={(e) => setF(key, e.target.value)}
-                          placeholder={ph}
-                          style={inp}
-                        />
-                      </div>
-                    ))}
-                    <div>
-                      <label style={lbl}>Qiyinlik darajasi</label>
-                      <select
-                        value={form.difficulty}
-                        onChange={(e) => setF("difficulty", e.target.value)}
-                        style={inp}
-                      >
-                        <option value="easy">🟢 Oson</option>
-                        <option value="medium">🟡 O'rta</option>
-                        <option value="hard">🔴 Qiyin</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label style={lbl}>Porsiyalar soni</label>
-                      <input
-                        type="number"
-                        value={form.servings}
-                        onChange={(e) => setF("servings", e.target.value)}
-                        placeholder="4"
-                        style={inp}
-                      />
-                    </div>
-                    <div>
-                      <label style={lbl}>Oshxona turi</label>
-                      <select
-                        value={form.cuisine}
-                        onChange={(e) => setF("cuisine", e.target.value)}
-                        style={inp}
-                      >
-                        {[
-                          ["uzbek", "O'zbek"],
-                          ["italian", "Italyan"],
-                          ["japanese", "Yapon"],
-                          ["american", "Amerika"],
-                          ["french", "Fransuz"],
-                          ["korean", "Koreys"],
-                          ["indian", "Hind"],
-                          ["mexican", "Meksika"],
-                          ["chinese", "Xitoy"],
-                          ["russian", "Rus"],
-                          ["turkish", "Turk"],
-                        ].map(([v, l]) => (
-                          <option key={v} value={v}>
-                            {l}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label style={lbl}>Kategoriya</label>
-                      <select
-                        value={form.category}
-                        onChange={(e) => setF("category", e.target.value)}
-                        style={inp}
-                      >
-                        {[
-                          ["uzbek", "O'zbek"],
-                          ["world", "Jahon"],
-                          ["quick", "Tez"],
-                          ["healthy", "Sog'lom"],
-                          ["dessert", "Shirinlik"],
-                          ["bbq", "Kabob"],
-                          ["vegetarian", "Vegetarian"],
-                          ["breakfast", "Nonushta"],
-                          ["dinner", "Kechki"],
-                        ].map(([v, l]) => (
-                          <option key={v} value={v}>
-                            {l}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="col-span-2">
-                      <label style={lbl}>Teglar (vergul bilan)</label>
-                      <div className="relative">
-                        <Tag
-                          size={14}
-                          className="absolute left-3.5 top-1/2 -translate-y-1/2"
-                          style={{ color: G }}
-                        />
-                        <input
-                          type="text"
-                          value={form.tags}
-                          onChange={(e) => setF("tags", e.target.value)}
-                          placeholder="palov, uzbek, rice"
-                          style={{ ...inp, paddingLeft: "36px" }}
-                        />
-                      </div>
-                    </div>
-                    <div className="col-span-2">
-                      <label className="flex items-center gap-2.5 cursor-pointer">
-                        <div
-                          onClick={() => setF("featured", !form.featured)}
-                          className="w-10 h-5 rounded-full relative transition-all"
-                          style={{ background: form.featured ? G : "#d1d5db" }}
-                        >
-                          <div
-                            className="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all"
-                            style={{ left: form.featured ? "22px" : "2px" }}
-                          />
-                        </div>
-                        <span className="text-xs font-bold text-gray-600">
-                          ⭐ Tanlangan (Featured) video
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleAdd}
-                  className="w-full py-4 rounded-2xl font-black text-white text-base transition-all hover:scale-[1.02] active:scale-[0.98]"
-                  style={{
-                    background: "linear-gradient(135deg,#1DB954,#15803d)",
-                    boxShadow: "0 8px 25px rgba(29,185,84,0.4)",
-                  }}
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    <Plus size={20} /> Video Qo'shish
-                  </span>
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <div className="p-5 rounded-2xl sticky top-4" style={card}>
-                  <h3
-                    className="font-black text-sm mb-4"
-                    style={{ color: "#111827" }}
-                  >
-                    👁️ Live Ko'rinish
-                  </h3>
-                  <div className="rounded-xl overflow-hidden mb-3 aspect-video bg-gray-100 flex items-center justify-center">
-                    {ytPreview ? (
-                      <iframe
-                        src={ytPreview}
-                        className="w-full h-full"
-                        allowFullScreen
-                        title="preview"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      />
-                    ) : (
-                      <div className="text-center p-6">
-                        <Youtube
-                          size={40}
-                          className="mx-auto mb-2"
-                          style={{ color: "#e5e7eb" }}
-                        />
-                        <p className="text-xs text-gray-300">
-                          YouTube URL kiriting
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  <div className="mb-3">
-                    <p style={{ ...lbl, marginBottom: "8px" }}>
-                      Thumbnail Ko'rinishi
-                    </p>
-                    <div className="rounded-xl overflow-hidden aspect-video">
-                      <img
-                        src={
-                          form.useCustomThumb && form.thumbnailCustom
-                            ? form.thumbnailCustom
-                            : ytThumb ||
-                              "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=225&fit=crop"
-                        }
-                        onError={(e) =>
-                          (e.currentTarget.src =
-                            "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=225&fit=crop")
-                        }
-                        className="w-full h-full object-cover"
-                        alt="thumbnail"
-                      />
-                    </div>
-                  </div>
-                  <div
-                    className="rounded-xl overflow-hidden border"
-                    style={{ borderColor: "rgba(21,128,61,0.15)" }}
-                  >
-                    <div className="p-3 bg-green-50/40">
-                      <p
-                        className="text-xs font-black mb-2"
-                        style={{ color: "#374151" }}
-                      >
-                        Karta ko'rinishi
-                      </p>
-                      <p
-                        className="text-sm font-bold line-clamp-1"
-                        style={{ color: "#111827" }}
-                      >
-                        {form.title_uz || "Sarlavha..."}
-                      </p>
-                      <p className="text-xs mt-1" style={{ color: G }}>
-                        {form.chef || "Oshpaz nomi"}
-                      </p>
-                      <div className="flex gap-3 mt-1.5 text-xs text-gray-400">
-                        <span>⏱ {form.cookTime || "—"} min</span>
-                        <span>📅 {new Date().toLocaleDateString("uz")}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ═══ VIDEOLAR RO'YXATI ═══ */}
+        {/* ══════════════════════════════════════════
+            VIDEOLAR RO'YXATI (oldingi kod saqlanadi)
+        ══════════════════════════════════════════ */}
         {page === "videos" && (
           <div>
-            <div className="flex items-center justify-between mb-6">
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 24,
+              }}
+            >
               <div>
                 <h1
-                  className="text-2xl font-black"
-                  style={{ color: "#111827" }}
+                  style={{
+                    margin: 0,
+                    fontSize: 22,
+                    fontWeight: 900,
+                    color: "#111827",
+                  }}
                 >
-                  🎬 Videolar Boshqaruvi
+                  🎬 Videolar
                 </h1>
-                <p className="text-sm text-gray-400 mt-0.5">
+                <p
+                  style={{ margin: "4px 0 0", fontSize: 13, color: "#9ca3af" }}
+                >
                   {videoList.length} ta video
                 </p>
               </div>
               <button
                 onClick={() => setPage("add")}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-white text-sm transition-all hover:scale-105"
                 style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "10px 18px",
+                  borderRadius: 14,
+                  border: "none",
+                  cursor: "pointer",
                   background: "linear-gradient(135deg,#1DB954,#15803d)",
-                  boxShadow: "0 4px 15px rgba(29,185,84,0.35)",
+                  color: "#fff",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  boxShadow: "0 4px 16px rgba(29,185,84,0.3)",
                 }}
               >
-                <Plus size={17} /> Yangi Video
+                <Plus size={16} /> Yangi Video
               </button>
             </div>
-            <div className="relative mb-4">
+            <div style={{ position: "relative", marginBottom: 16 }}>
               <Search
                 size={15}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2"
-                style={{ color: G }}
+                style={{
+                  position: "absolute",
+                  left: 14,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: G,
+                }}
               />
               <input
                 type="text"
                 value={searchQ}
                 onChange={(e) => setSearchQ(e.target.value)}
-                placeholder="Video, oshpaz yoki oshxona turi..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm outline-none"
-                style={{
-                  background: "white",
-                  border: "1.5px solid rgba(21,128,61,0.2)",
-                  color: "#111827",
-                  fontFamily: "'DM Sans',sans-serif",
-                }}
+                placeholder="Video yoki oshpaz..."
+                style={{ ...inp, paddingLeft: 42 }}
               />
             </div>
-            <div className="rounded-2xl overflow-hidden" style={card}>
-              <div className="overflow-x-auto">
-                <table className="w-full">
+            <div style={{ ...card, overflow: "hidden" }}>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
-                    <tr className="bg-green-50/60 border-b border-green-100">
+                    <tr
+                      style={{
+                        background: "rgba(29,185,84,0.04)",
+                        borderBottom: "1px solid rgba(29,185,84,0.08)",
+                      }}
+                    >
                       {[
                         "#",
                         "Thumbnail",
@@ -1016,7 +2447,16 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                       ].map((h) => (
                         <th
                           key={h}
-                          className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wide text-gray-400"
+                          style={{
+                            padding: "12px 16px",
+                            textAlign: "left",
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: "#9ca3af",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                            whiteSpace: "nowrap",
+                          }}
                         >
                           {h}
                         </th>
@@ -1027,55 +2467,107 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                     {filtered.map((v, i) => (
                       <tr
                         key={v.id}
-                        className={i % 2 === 0 ? "bg-white" : "bg-green-50/20"}
-                        style={{ borderTop: "1px solid rgba(21,128,61,0.05)" }}
+                        style={{
+                          borderTop: "1px solid rgba(0,0,0,0.04)",
+                          background:
+                            i % 2 === 0 ? "#fff" : "rgba(29,185,84,0.01)",
+                        }}
                       >
-                        <td className="px-4 py-3 text-xs font-bold text-gray-300">
+                        <td
+                          style={{
+                            padding: "12px 16px",
+                            fontSize: 12,
+                            fontWeight: 700,
+                            color: "#d1d5db",
+                          }}
+                        >
                           {i + 1}
                         </td>
-                        <td className="px-4 py-3">
-                          <div className="relative w-16 h-10 rounded-lg overflow-hidden">
+                        <td style={{ padding: "12px 16px" }}>
+                          <div
+                            style={{
+                              position: "relative",
+                              width: 64,
+                              height: 40,
+                              borderRadius: 8,
+                              overflow: "hidden",
+                            }}
+                          >
                             <img
                               src={v.thumbnail}
-                              onError={(e) =>
-                                (e.currentTarget.src =
-                                  "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=80&h=50&fit=crop")
-                              }
-                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.src =
+                                  "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=80&h=50&fit=crop";
+                              }}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                              }}
                               alt=""
                             />
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                              <Youtube size={12} className="text-white" />
-                            </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 max-w-[180px]">
+                        <td style={{ padding: "12px 16px", maxWidth: 180 }}>
                           <p
-                            className="text-sm font-semibold line-clamp-1"
-                            style={{ color: "#111827" }}
+                            style={{
+                              margin: 0,
+                              fontSize: 13,
+                              fontWeight: 600,
+                              color: "#111827",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
                           >
                             {v.title.uz}
                           </p>
-                          <p className="text-xs text-gray-400">
+                          <p
+                            style={{
+                              margin: "2px 0 0",
+                              fontSize: 11,
+                              color: "#9ca3af",
+                            }}
+                          >
                             {v.publishedAt}
                           </p>
                         </td>
                         <td
-                          className="px-4 py-3 text-sm font-medium"
-                          style={{ color: G }}
+                          style={{
+                            padding: "12px 16px",
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: G,
+                            whiteSpace: "nowrap",
+                          }}
                         >
                           {v.chef}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-400">
+                        <td
+                          style={{
+                            padding: "12px 16px",
+                            fontSize: 13,
+                            color: "#6b7280",
+                          }}
+                        >
                           {(v.views / 1000).toFixed(1)}K
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-400">
+                        <td
+                          style={{
+                            padding: "12px 16px",
+                            fontSize: 13,
+                            color: "#6b7280",
+                          }}
+                        >
                           {v.duration}
                         </td>
-                        <td className="px-4 py-3">
+                        <td style={{ padding: "12px 16px" }}>
                           <span
-                            className="px-2 py-0.5 rounded-full text-xs font-bold"
                             style={{
+                              padding: "3px 10px",
+                              borderRadius: 99,
+                              fontSize: 11,
+                              fontWeight: 700,
                               background: diffColor(v.difficulty) + "18",
                               color: diffColor(v.difficulty),
                             }}
@@ -1087,21 +2579,59 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                                 : "Qiyin"}
                           </span>
                         </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-1">
+                        <td style={{ padding: "12px 16px" }}>
+                          <div style={{ display: "flex", gap: 4 }}>
                             <button
                               onClick={() => setEditVideo({ ...v })}
-                              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:bg-blue-50"
-                              style={{ color: "#3b82f6" }}
+                              style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: 10,
+                                border: "none",
+                                cursor: "pointer",
+                                background: "rgba(59,130,246,0.08)",
+                                color: "#3b82f6",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                transition: "all 0.2s",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background =
+                                  "rgba(59,130,246,0.18)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background =
+                                  "rgba(59,130,246,0.08)";
+                              }}
                             >
-                              <Edit3 size={14} />
+                              <Edit3 size={13} />
                             </button>
                             <button
                               onClick={() => setDeleteId(v.id)}
-                              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:bg-red-50"
-                              style={{ color: "#ef4444" }}
+                              style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: 10,
+                                border: "none",
+                                cursor: "pointer",
+                                background: "rgba(239,68,68,0.08)",
+                                color: "#ef4444",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                transition: "all 0.2s",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background =
+                                  "rgba(239,68,68,0.18)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background =
+                                  "rgba(239,68,68,0.08)";
+                              }}
                             >
-                              <Trash2 size={14} />
+                              <Trash2 size={13} />
                             </button>
                           </div>
                         </td>
@@ -1110,9 +2640,11 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                   </tbody>
                 </table>
                 {filtered.length === 0 && (
-                  <div className="text-center py-12">
-                    <p className="text-3xl mb-2">🔍</p>
-                    <p className="text-sm text-gray-400">Natija topilmadi</p>
+                  <div style={{ textAlign: "center", padding: "48px 0" }}>
+                    <p style={{ fontSize: 32, marginBottom: 8 }}>🔍</p>
+                    <p style={{ fontSize: 14, color: "#9ca3af" }}>
+                      Natija topilmadi
+                    </p>
                   </div>
                 )}
               </div>
@@ -1120,867 +2652,74 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
           </div>
         )}
 
-        {/* ═══ OSHPAZLAR ═══ */}
-        {page === "chefs" && (
-          <div>
-            <h1
-              className="text-2xl font-black mb-1"
-              style={{ color: "#111827" }}
-            >
-              👨‍🍳 Oshpazlar
-            </h1>
-            <p className="text-sm text-gray-400 mb-6">
-              {chefs.length} ta oshpaz
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {chefs.map((chef) => {
-                const chefVideos = videoList.filter(
-                  (v) => v.chef === chef.name,
-                );
-                const totalV = chefVideos.reduce((a, v) => a + v.views, 0);
-                return (
-                  <div key={chef.id} className="p-5 rounded-2xl" style={card}>
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="relative">
-                        <img
-                          src={chef.avatar}
-                          alt={chef.name}
-                          className="w-14 h-14 rounded-2xl object-cover"
-                        />
-                        <div
-                          className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center"
-                          style={{ background: G }}
-                        >
-                          <Check size={10} className="text-white" />
-                        </div>
-                      </div>
-                      <div>
-                        <h3
-                          className="font-black text-base"
-                          style={{ color: "#111827" }}
-                        >
-                          {chef.name}
-                        </h3>
-                        <p
-                          className="text-xs font-semibold"
-                          style={{ color: G }}
-                        >
-                          {chef.specialty.uz}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                      {[
-                        { label: "Videolar", val: chefVideos.length },
-                        {
-                          label: "Ko'rishlar",
-                          val: `${(totalV / 1000).toFixed(0)}K`,
-                        },
-                        {
-                          label: "Aktiv",
-                          val: chefVideos.length > 0 ? "✅" : "—",
-                        },
-                      ].map(({ label, val }) => (
-                        <div
-                          key={label}
-                          className="p-2 rounded-xl"
-                          style={{ background: "rgba(29,185,84,0.07)" }}
-                        >
-                          <div
-                            className="font-black text-lg"
-                            style={{ color: "#111827" }}
-                          >
-                            {val}
-                          </div>
-                          <div className="text-[10px] text-gray-400">
-                            {label}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ═══ STATISTIKA ═══ */}
-        {page === "stats" && (
-          <div>
-            <h1
-              className="text-2xl font-black mb-1"
-              style={{ color: "#111827" }}
-            >
-              📈 Statistika
-            </h1>
-            <p className="text-sm text-gray-400 mb-6">Sayt faoliyati tahlili</p>
-            <div className="rounded-2xl overflow-hidden mb-5" style={card}>
-              <div className="px-5 py-4 border-b border-green-50 flex items-center gap-2">
-                <Flame size={18} style={{ color: "#ef4444" }} />
-                <h3 className="font-black text-sm" style={{ color: "#111827" }}>
-                  🔥 Top 10 Trend Video
-                </h3>
-              </div>
-              <div className="p-4 space-y-3">
-                {topVideos.slice(0, 10).map((v, i) => (
-                  <div key={v.id} className="flex items-center gap-4">
-                    <div
-                      className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm text-white flex-shrink-0"
-                      style={{
-                        background:
-                          i === 0
-                            ? "#f59e0b"
-                            : i === 1
-                              ? "#9ca3af"
-                              : i === 2
-                                ? "#cd7c00"
-                                : "rgba(21,128,61,0.15)",
-                        color: i > 2 ? G : "white",
-                      }}
-                    >
-                      {i + 1}
-                    </div>
-                    <img
-                      src={v.thumbnail}
-                      onError={(e) =>
-                        (e.currentTarget.src =
-                          "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=60&h=38&fit=crop")
-                      }
-                      className="w-14 h-9 rounded-lg object-cover flex-shrink-0"
-                      alt=""
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p
-                        className="text-sm font-semibold line-clamp-1"
-                        style={{ color: "#111827" }}
-                      >
-                        {v.title.uz}
-                      </p>
-                      <p className="text-xs" style={{ color: G }}>
-                        {v.chef}
-                      </p>
-                    </div>
-                    <div
-                      className="flex items-center gap-1 text-sm font-black flex-shrink-0"
-                      style={{ color: "#111827" }}
-                    >
-                      <Eye size={13} style={{ color: G }} />
-                      {(v.views / 1000).toFixed(1)}K
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-5 rounded-2xl" style={card}>
-                <h3
-                  className="font-black text-sm mb-4"
-                  style={{ color: "#111827" }}
-                >
-                  🌍 Oshxona bo'yicha
-                </h3>
-                {[
-                  "uzbek",
-                  "italian",
-                  "japanese",
-                  "american",
-                  "french",
-                  "korean",
-                ].map((c) => {
-                  const cnt = videoList.filter((v) => v.cuisine === c).length;
-                  const pct = videoList.length
-                    ? Math.round((cnt / videoList.length) * 100)
-                    : 0;
-                  return (
-                    <div key={c} className="mb-3">
-                      <div className="flex justify-between mb-1">
-                        <span className="text-xs font-semibold capitalize text-gray-600">
-                          {c}
-                        </span>
-                        <span
-                          className="text-xs font-bold"
-                          style={{ color: G }}
-                        >
-                          {cnt} ta ({pct}%)
-                        </span>
-                      </div>
-                      <div className="h-2 rounded-full bg-green-50 overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-700"
-                          style={{
-                            width: `${pct}%`,
-                            background:
-                              "linear-gradient(90deg,#1DB954,#15803d)",
-                          }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="p-5 rounded-2xl" style={card}>
-                <h3
-                  className="font-black text-sm mb-4"
-                  style={{ color: "#111827" }}
-                >
-                  📊 Qiyinlik darajasi
-                </h3>
-                {[
-                  ["easy", "Oson", G],
-                  ["medium", "O'rta", "#f59e0b"],
-                  ["hard", "Qiyin", "#ef4444"],
-                ].map(([k, l, c]) => {
-                  const cnt = videoList.filter(
-                    (v) => v.difficulty === k,
-                  ).length;
-                  const pct = videoList.length
-                    ? Math.round((cnt / videoList.length) * 100)
-                    : 0;
-                  return (
-                    <div key={k} className="mb-4">
-                      <div className="flex justify-between mb-1.5">
-                        <span className="text-sm font-semibold text-gray-600">
-                          {l}
-                        </span>
-                        <span
-                          className="text-sm font-black"
-                          style={{ color: c }}
-                        >
-                          {pct}%
-                        </span>
-                      </div>
-                      <div className="h-3 rounded-full bg-gray-100 overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-700"
-                          style={{ width: `${pct}%`, background: c }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ═══ SOZLAMALAR ═══ */}
-        {page === "settings" && (
-          <div>
-            <h1
-              className="text-2xl font-black mb-1"
-              style={{ color: "#111827" }}
-            >
-              ⚙️ Sozlamalar
-            </h1>
-            <p className="text-sm text-gray-400 mb-6">
-              Admin panel sozlamalari
-            </p>
-            <div className="max-w-lg space-y-4">
-              <div className="p-5 rounded-2xl" style={card}>
-                <h3
-                  className="font-black text-sm mb-4 flex items-center gap-2"
-                  style={{ color: "#111827" }}
-                >
-                  <Shield size={16} style={{ color: G }} /> Admin ma'lumotlari
-                </h3>
-                <div className="space-y-3">
-                  <div>
-                    <label style={lbl}>Foydalanuvchi nomi</label>
-                    <input
-                      type="text"
-                      value="muhammadsolih"
-                      readOnly
-                      style={{ ...inp, opacity: 0.6, cursor: "not-allowed" }}
-                    />
-                  </div>
-                  <div>
-                    <label style={lbl}>Parol</label>
-                    <input
-                      type="password"
-                      value="muhammadsolihjon"
-                      readOnly
-                      style={{ ...inp, opacity: 0.6, cursor: "not-allowed" }}
-                    />
-                  </div>
-                  <p className="text-xs text-gray-400">
-                    * Ma'lumotlarni o'zgartirish uchun kodni tahrirlash kerak
-                  </p>
-                </div>
-              </div>
-              <div className="p-5 rounded-2xl" style={card}>
-                <h3
-                  className="font-black text-sm mb-4"
-                  style={{ color: "#111827" }}
-                >
-                  🌐 Sayt holati
-                </h3>
-                {[
-                  ["Sayt nomi", "TaomUz"],
-                  ["Versiya", "2.1.0"],
-                  ["Status", "🟢 Aktiv"],
-                  ["Jami video", String(videoList.length)],
-                  ["Jami taom", String(recipeList.length)],
-                  ["Jami ko'rishlar", `${(totalViews / 1000).toFixed(1)}K`],
-                ].map(([k, v]) => (
-                  <div
-                    key={k}
-                    className="flex justify-between py-2.5 border-b last:border-0 border-green-50"
-                  >
-                    <span className="text-sm text-gray-500">{k}</span>
-                    <span
-                      className="text-sm font-bold"
-                      style={{ color: "#111827" }}
-                    >
-                      {v}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <button
-                onClick={() => {
-                  adminLogout();
-                  onExit();
-                }}
-                className="w-full py-3 rounded-2xl font-bold text-white text-sm"
-                style={{
-                  background: "linear-gradient(135deg,#ef4444,#dc2626)",
-                }}
-              >
-                Admin paneldan chiqish
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ═══ TAOMLAR ═══ */}
-        {page === "recipes" && (
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl font-black" style={{ color: "#111827" }}>
-                🍽️ Taomlar
-              </h1>
-              <button
-                onClick={() => {
-                  setEditRecipeId(null);
-                  setRecipeForm({
-                    name_uz: "",
-                    name_en: "",
-                    desc_uz: "",
-                    desc_en: "",
-                    image: "",
-                    country: "uzbek",
-                    time: "30",
-                    servings: "4",
-                    category: "dinner",
-                    calories: "",
-                    ingredients_uz: "",
-                    ingredients_en: "",
-                    steps_uz: "",
-                    steps_en: "",
-                  });
-                  setPage("add-recipe");
-                }}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white"
-                style={{
-                  background: "linear-gradient(135deg,#1DB954,#15803d)",
-                }}
-              >
-                <Plus size={15} /> Taom Qo'shish
-              </button>
-            </div>
-            <div style={{ ...card, overflow: "hidden" }}>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr
-                    style={{
-                      background: "#f0fdf4",
-                      borderBottom: "1px solid rgba(21,128,61,0.1)",
-                    }}
-                  >
-                    {["Rasm", "Nomi", "Kategoriya", "Vaqt", "Amallar"].map(
-                      (h) => (
-                        <th
-                          key={h}
-                          className="text-left px-4 py-3 text-xs font-bold uppercase"
-                          style={{ color: "#6b7280", letterSpacing: "0.05em" }}
-                        >
-                          {h}
-                        </th>
-                      ),
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {recipeList.map((r, i) => (
-                    <tr
-                      key={r.id}
-                      style={{
-                        borderBottom:
-                          i < recipeList.length - 1
-                            ? "1px solid rgba(0,0,0,0.04)"
-                            : "none",
-                      }}
-                    >
-                      <td className="px-4 py-3">
-                        <img
-                          src={r.image}
-                          alt={r.name.uz}
-                          className="w-12 h-10 rounded-lg object-cover"
-                        />
-                      </td>
-                      <td
-                        className="px-4 py-3 font-semibold"
-                        style={{ color: "#111827" }}
-                      >
-                        {r.name.uz}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className="px-2 py-0.5 rounded-full text-xs font-bold"
-                          style={{
-                            background: "rgba(21,128,61,0.1)",
-                            color: "#15803d",
-                          }}
-                        >
-                          {
-                            recipeCategoryList.find((c) => c.id === r.category)
-                              ?.emoji
-                          }{" "}
-                          {recipeCategoryList.find((c) => c.id === r.category)
-                            ?.uz || r.category}
-                        </span>
-                      </td>
-                      <td
-                        className="px-4 py-3 text-xs"
-                        style={{ color: "#6b7280" }}
-                      >
-                        ⏱ {r.time} daq
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => {
-                              setEditRecipeId(r.id);
-                              setRecipeForm({
-                                name_uz: r.name.uz,
-                                name_en: r.name.en,
-                                desc_uz: r.description.uz,
-                                desc_en: r.description.en,
-                                image: r.image,
-                                country: r.country,
-                                time: String(r.time),
-                                servings: String(r.servings),
-                                category: r.category,
-                                calories: String(r.calories || ""),
-                                ingredients_uz: r.ingredients
-                                  .map((i) => i.uz)
-                                  .join("\n"),
-                                ingredients_en: r.ingredients
-                                  .map((i) => i.en)
-                                  .join("\n"),
-                                steps_uz: r.steps.map((s) => s.uz).join("\n"),
-                                steps_en: r.steps.map((s) => s.en).join("\n"),
-                              });
-                              setPage("add-recipe");
-                            }}
-                            className="p-1.5 rounded-lg hover:bg-blue-50"
-                            style={{ color: "#3b82f6" }}
-                          >
-                            <Edit3 size={14} />
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (confirm("O'chirilsinmi?")) {
-                                deleteRecipe(r.id);
-                                toast("Taom o'chirildi", true);
-                              }
-                            }}
-                            className="p-1.5 rounded-lg hover:bg-red-50"
-                            style={{ color: "#ef4444" }}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {recipeList.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan={5}
-                        className="px-4 py-12 text-center text-sm"
-                        style={{ color: "#9ca3af" }}
-                      >
-                        Hech qanday taom yo'q. Taom qo'shing!
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* ═══ TAOM QO'SHISH / TAHRIRLASH ═══ */}
-        {page === "add-recipe" && (
-          <div>
-            <div className="flex items-center gap-3 mb-6">
-              <button
-                onClick={() => setPage("recipes")}
-                className="p-2 rounded-xl hover:bg-gray-100"
-              >
-                <X size={18} />
-              </button>
-              <h1 className="text-2xl font-black" style={{ color: "#111827" }}>
-                {editRecipeId
-                  ? "✏️ Taomni Tahrirlash"
-                  : "➕ Yangi Taom Qo'shish"}
-              </h1>
-            </div>
-            <div style={{ ...card, padding: 24, maxWidth: 640 }}>
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div>
-                  <label style={lbl}>Nomi (O'zbek)</label>
-                  <input
-                    style={inp}
-                    value={recipeForm.name_uz}
-                    onChange={(e) =>
-                      setRecipeForm((f) => ({ ...f, name_uz: e.target.value }))
-                    }
-                    placeholder="Osh (Palov)"
-                  />
-                </div>
-                <div>
-                  <label style={lbl}>Nomi (English)</label>
-                  <input
-                    style={inp}
-                    value={recipeForm.name_en}
-                    onChange={(e) =>
-                      setRecipeForm((f) => ({ ...f, name_en: e.target.value }))
-                    }
-                    placeholder="Plov (Pilaf)"
-                  />
-                </div>
-              </div>
-              <div className="mb-4">
-                <label style={lbl}>Rasm URL</label>
-                <input
-                  style={inp}
-                  value={recipeForm.image}
-                  onChange={(e) =>
-                    setRecipeForm((f) => ({ ...f, image: e.target.value }))
-                  }
-                  placeholder="https://images.unsplash.com/photo-..."
-                />
-                {recipeForm.image && (
-                  <img
-                    src={recipeForm.image}
-                    className="mt-2 h-24 rounded-xl object-cover"
-                    onError={(e) => (e.currentTarget.style.display = "none")}
-                  />
-                )}
-              </div>
-              <div className="grid grid-cols-3 gap-3 mb-4">
-                <div>
-                  <label style={lbl}>Kategoriya</label>
-                  <select
-                    style={inp}
-                    value={recipeForm.category}
-                    onChange={(e) =>
-                      setRecipeForm((f) => ({ ...f, category: e.target.value }))
-                    }
-                  >
-                    {recipeCategoryList.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.emoji} {c.uz}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label style={lbl}>Vaqt (daqiqa)</label>
-                  <input
-                    style={inp}
-                    type="number"
-                    value={recipeForm.time}
-                    onChange={(e) =>
-                      setRecipeForm((f) => ({ ...f, time: e.target.value }))
-                    }
-                  />
-                </div>
-                <div>
-                  <label style={lbl}>Porsiya</label>
-                  <input
-                    style={inp}
-                    type="number"
-                    value={recipeForm.servings}
-                    onChange={(e) =>
-                      setRecipeForm((f) => ({ ...f, servings: e.target.value }))
-                    }
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div>
-                  <label style={lbl}>Tavsif (UZ)</label>
-                  <textarea
-                    style={
-                      {
-                        ...inp,
-                        height: 70,
-                        resize: "none",
-                      } as React.CSSProperties
-                    }
-                    value={recipeForm.desc_uz}
-                    onChange={(e) =>
-                      setRecipeForm((f) => ({ ...f, desc_uz: e.target.value }))
-                    }
-                  />
-                </div>
-                <div>
-                  <label style={lbl}>Tavsif (EN)</label>
-                  <textarea
-                    style={
-                      {
-                        ...inp,
-                        height: 70,
-                        resize: "none",
-                      } as React.CSSProperties
-                    }
-                    value={recipeForm.desc_en}
-                    onChange={(e) =>
-                      setRecipeForm((f) => ({ ...f, desc_en: e.target.value }))
-                    }
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div>
-                  <label style={lbl}>
-                    Tarkibi (UZ) — har biri yangi qatorda
-                  </label>
-                  <textarea
-                    style={
-                      {
-                        ...inp,
-                        height: 100,
-                        resize: "none",
-                      } as React.CSSProperties
-                    }
-                    value={recipeForm.ingredients_uz}
-                    onChange={(e) =>
-                      setRecipeForm((f) => ({
-                        ...f,
-                        ingredients_uz: e.target.value,
-                      }))
-                    }
-                    placeholder={"Guruch - 1 kg\nSabzi - 500 g"}
-                  />
-                </div>
-                <div>
-                  <label style={lbl}>Tarkibi (EN)</label>
-                  <textarea
-                    style={
-                      {
-                        ...inp,
-                        height: 100,
-                        resize: "none",
-                      } as React.CSSProperties
-                    }
-                    value={recipeForm.ingredients_en}
-                    onChange={(e) =>
-                      setRecipeForm((f) => ({
-                        ...f,
-                        ingredients_en: e.target.value,
-                      }))
-                    }
-                    placeholder={"Rice - 1 kg\nCarrots - 500 g"}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3 mb-5">
-                <div>
-                  <label style={lbl}>Qadamlar (UZ)</label>
-                  <textarea
-                    style={
-                      {
-                        ...inp,
-                        height: 100,
-                        resize: "none",
-                      } as React.CSSProperties
-                    }
-                    value={recipeForm.steps_uz}
-                    onChange={(e) =>
-                      setRecipeForm((f) => ({ ...f, steps_uz: e.target.value }))
-                    }
-                  />
-                </div>
-                <div>
-                  <label style={lbl}>Qadamlar (EN)</label>
-                  <textarea
-                    style={
-                      {
-                        ...inp,
-                        height: 100,
-                        resize: "none",
-                      } as React.CSSProperties
-                    }
-                    value={recipeForm.steps_en}
-                    onChange={(e) =>
-                      setRecipeForm((f) => ({ ...f, steps_en: e.target.value }))
-                    }
-                  />
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setPage("recipes")}
-                  className="flex-1 py-3 rounded-xl font-bold text-sm"
-                  style={{ background: "#f3f4f6", color: "#374151" }}
-                >
-                  Bekor
-                </button>
-                <button
-                  onClick={() => {
-                    if (!recipeForm.name_uz.trim()) {
-                      toast("Iltimos nomi (UZ) kiriting", false);
-                      return;
-                    }
-                    const ingUZ = recipeForm.ingredients_uz
-                      .split("\n")
-                      .filter(Boolean);
-                    const ingEN = recipeForm.ingredients_en
-                      .split("\n")
-                      .filter(Boolean);
-                    const stUZ = recipeForm.steps_uz
-                      .split("\n")
-                      .filter(Boolean);
-                    const stEN = recipeForm.steps_en
-                      .split("\n")
-                      .filter(Boolean);
-                    const rec: Recipe = {
-                      id: editRecipeId || String(Date.now()),
-                      name: {
-                        uz: recipeForm.name_uz,
-                        en: recipeForm.name_en || recipeForm.name_uz,
-                      },
-                      description: {
-                        uz: recipeForm.desc_uz,
-                        en: recipeForm.desc_en || recipeForm.desc_uz,
-                      },
-                      image:
-                        recipeForm.image ||
-                        "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop",
-                      country: recipeForm.country,
-                      time: Number(recipeForm.time) || 30,
-                      servings: Number(recipeForm.servings) || 4,
-                      category: recipeForm.category,
-                      calories: recipeForm.calories
-                        ? Number(recipeForm.calories)
-                        : undefined,
-                      ingredients: ingUZ.map((u, i) => ({
-                        uz: u,
-                        en: ingEN[i] || u,
-                      })),
-                      steps: stUZ.map((u, i) => ({ uz: u, en: stEN[i] || u })),
-                    };
-                    if (editRecipeId) {
-                      updateRecipe(rec);
-                      toast("Taom yangilandi ✓", true);
-                    } else {
-                      addRecipe(rec);
-                      toast("Yangi taom qo'shildi ✓", true);
-                    }
-                    setEditRecipeId(null);
-                    setPage("recipes");
-                  }}
-                  className="flex-1 py-3 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2"
-                  style={{
-                    background: "linear-gradient(135deg,#1DB954,#15803d)",
-                  }}
-                >
-                  <Check size={15} /> Saqlash
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ═══ KATEGORIYALAR ═══ */}
-        {page === "categories" && (
-          <div>
-            <h1
-              className="text-2xl font-black mb-6"
-              style={{ color: "#111827" }}
-            >
-              📂 Kategoriyalar
-            </h1>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {recipeCategoryList.map((cat) => {
-                const cnt = recipeList.filter(
-                  (r) => r.category === cat.id,
-                ).length;
-                return (
-                  <div key={cat.id} style={card} className="p-5">
-                    <div className="text-3xl mb-3">{cat.emoji}</div>
-                    <div
-                      className="font-bold text-sm mb-1"
-                      style={{ color: "#111827" }}
-                    >
-                      {cat.uz}
-                    </div>
-                    <div className="text-xs mb-3" style={{ color: "#6b7280" }}>
-                      {cnt} ta taom
-                    </div>
-                    <button
-                      onClick={() => setPage("recipes")}
-                      className="w-full py-1.5 rounded-lg text-xs font-bold hover:opacity-90"
-                      style={{
-                        background: "rgba(21,128,61,0.1)",
-                        color: "#15803d",
-                      }}
-                    >
-                      Ko'rish →
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {/* Qolgan bo'limlar (add, recipes, add-recipe, categories, chefs, stats, settings) 
+            — oldingi AdminPanel.tsx dagi kodni shu yerga ko'chiring */}
       </main>
 
       {/* Delete modal */}
       {deleteId && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 50,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
             background: "rgba(0,0,0,0.55)",
             backdropFilter: "blur(8px)",
           }}
         >
-          <div className="w-full max-w-sm rounded-3xl p-6 bg-white text-center">
+          <div
+            style={{
+              ...card,
+              padding: 28,
+              maxWidth: 360,
+              width: "100%",
+              textAlign: "center",
+            }}
+          >
             <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-              style={{ background: "rgba(239,68,68,0.1)" }}
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 18,
+                background: "rgba(239,68,68,0.1)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 16px",
+              }}
             >
               <AlertTriangle size={28} style={{ color: "#ef4444" }} />
             </div>
             <h3
-              className="text-lg font-black mb-1"
-              style={{ color: "#111827" }}
+              style={{
+                margin: "0 0 8px",
+                fontSize: 18,
+                fontWeight: 900,
+                color: "#111827",
+              }}
             >
               Videoni o'chirish
             </h3>
-            <p className="text-sm text-gray-400 mb-6">
+            <p style={{ margin: "0 0 24px", fontSize: 13, color: "#9ca3af" }}>
               Bu amalni qaytarib bo'lmaydi
             </p>
-            <div className="flex gap-3">
+            <div style={{ display: "flex", gap: 10 }}>
               <button
                 onClick={() => setDeleteId(null)}
-                className="flex-1 py-3 rounded-xl font-bold text-sm"
-                style={{ background: "#f3f4f6", color: "#374151" }}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  borderRadius: 14,
+                  border: "none",
+                  background: "#f3f4f6",
+                  color: "#374151",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
               >
                 Bekor
               </button>
@@ -1990,9 +2729,15 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                   setDeleteId(null);
                   toast("Video o'chirildi!");
                 }}
-                className="flex-1 py-3 rounded-xl font-bold text-sm text-white"
                 style={{
+                  flex: 1,
+                  padding: "12px",
+                  borderRadius: 14,
+                  border: "none",
                   background: "linear-gradient(135deg,#ef4444,#dc2626)",
+                  color: "#fff",
+                  fontWeight: 700,
+                  cursor: "pointer",
                 }}
               >
                 O'chirish
@@ -2005,40 +2750,78 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
       {/* Edit video modal */}
       {editVideo && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 50,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
             background: "rgba(0,0,0,0.55)",
             backdropFilter: "blur(8px)",
           }}
         >
-          <div className="w-full max-w-lg rounded-3xl p-6 bg-white max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-black" style={{ color: "#111827" }}>
+          <div
+            style={{
+              ...card,
+              padding: 28,
+              maxWidth: 500,
+              width: "100%",
+              maxHeight: "85vh",
+              overflowY: "auto",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 20,
+              }}
+            >
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: 18,
+                  fontWeight: 900,
+                  color: "#111827",
+                }}
+              >
                 ✏️ Videoni Tahrirlash
               </h3>
               <button
                 onClick={() => setEditVideo(null)}
-                className="w-8 h-8 rounded-xl flex items-center justify-center"
-                style={{ background: "#f3f4f6" }}
+                style={{
+                  background: "#f3f4f6",
+                  border: "none",
+                  borderRadius: 10,
+                  width: 32,
+                  height: 32,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
               >
-                <X size={15} style={{ color: "#6b7280" }} />
+                <X size={15} />
               </button>
             </div>
-            <div className="space-y-3">
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {[
                 ["Sarlavha (UZ)", "uz"],
                 ["Sarlavha (EN)", "en"],
                 ["Sarlavha (RU)", "ru"],
-              ].map(([label, lang]) => (
-                <div key={lang}>
+              ].map(([label, lg]) => (
+                <div key={lg}>
                   <label style={lbl}>{label}</label>
                   <input
                     type="text"
-                    value={editVideo.title[lang as "uz" | "en" | "ru"]}
+                    value={editVideo.title[lg as "uz" | "en" | "ru"]}
                     onChange={(e) =>
                       setEditVideo({
                         ...editVideo,
-                        title: { ...editVideo.title, [lang]: e.target.value },
+                        title: { ...editVideo.title, [lg]: e.target.value },
                       })
                     }
                     style={inp}
@@ -2056,7 +2839,13 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                   style={inp}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 12,
+                }}
+              >
                 <div>
                   <label style={lbl}>Davomiylik</label>
                   <input
@@ -2084,28 +2873,6 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                 </div>
               </div>
               <div>
-                <label style={lbl}>Thumbnail URL</label>
-                <input
-                  type="url"
-                  value={editVideo.thumbnail}
-                  onChange={(e) =>
-                    setEditVideo({ ...editVideo, thumbnail: e.target.value })
-                  }
-                  style={inp}
-                />
-              </div>
-              <div>
-                <label style={lbl}>YouTube Embed URL</label>
-                <input
-                  type="text"
-                  value={editVideo.videoUrl}
-                  onChange={(e) =>
-                    setEditVideo({ ...editVideo, videoUrl: e.target.value })
-                  }
-                  style={inp}
-                />
-              </div>
-              <div>
                 <label style={lbl}>Qiyinlik</label>
                 <select
                   value={editVideo.difficulty}
@@ -2123,29 +2890,57 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                 </select>
               </div>
             </div>
-            <div className="flex gap-3 mt-5">
+            <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
               <button
                 onClick={() => setEditVideo(null)}
-                className="flex-1 py-3 rounded-xl font-bold text-sm"
-                style={{ background: "#f3f4f6", color: "#374151" }}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  borderRadius: 14,
+                  border: "none",
+                  background: "#f3f4f6",
+                  color: "#374151",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
               >
                 Bekor
               </button>
               <button
-                onClick={handleEditSave}
-                className="flex-1 py-3 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2"
+                onClick={() => {
+                  updateVideo(editVideo);
+                  setEditVideo(null);
+                  toast("Video yangilandi! ✅");
+                }}
                 style={{
+                  flex: 1,
+                  padding: "12px",
+                  borderRadius: 14,
+                  border: "none",
                   background: "linear-gradient(135deg,#1DB954,#15803d)",
+                  color: "#fff",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
                 }}
               >
-                <Check size={15} /> Saqlash
+                <Check size={14} /> Saqlash
               </button>
             </div>
           </div>
         </div>
       )}
 
-      <style>{`@keyframes slideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}`}</style>
+      <style>{`
+        @keyframes slideIn { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
+        * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(29,185,84,0.3); border-radius: 99px; }
+      `}</style>
     </div>
   );
 };
