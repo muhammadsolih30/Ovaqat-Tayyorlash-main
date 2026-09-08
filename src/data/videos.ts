@@ -66,7 +66,7 @@ export const categories = [
   { id: 'trending', label: { uz: 'Trend', en: 'Trending', ru: 'В тренде' }, icon: '📈' },
 ];
 
-export const videos: Video[] = [
+const videos: Video[] = [
   // ===== UZBEK CUISINE =====
   {
     id: 'v1',
