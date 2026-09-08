@@ -75,6 +75,7 @@ const PremiumModal = () => {
               onClick={closePremiumModal}
               className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110"
               style={{ background: "rgba(255,255,255,0.15)", color: "white" }}
+              aria-label={lang === "uz" ? "Yopish" : "Close"}
             >
               <X size={16} />
             </button>
