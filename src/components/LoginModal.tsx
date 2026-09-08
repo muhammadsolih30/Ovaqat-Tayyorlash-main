@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLang } from "@/contexts/LangContext";
 import { X, ChefHat, LogIn, Sparkles, User, Mail, Lock } from "lucide-react";
 
 export const LoginModal: React.FC = () => {
   const { isLoginModalOpen, closeLoginModal, login } = useAuth();
+  const { lang } = useLang();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -40,6 +42,7 @@ export const LoginModal: React.FC = () => {
         <button
           onClick={closeLoginModal}
           className="absolute top-5 right-5 w-9 h-9 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800/60 transition-colors"
+          aria-label={lang === "uz" ? "Yopish" : "Close"}
         >
           <X size={18} />
         </button>
