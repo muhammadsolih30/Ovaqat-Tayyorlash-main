@@ -1,79 +1,114 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Video, formatViews } from "@/data/videos";
 import { useVideoLang } from "@/contexts/VideoLangContext";
 import { useAdmin } from "@/contexts/AdminContext";
-import VideoCard from "@/components/video/VideoCard";
+import { useAuth } from "@/contexts/AuthContext";
+import VideoCardYT from "@/components/VideoCardYT";
+import CommentSection from "@/components/CommentSection";
 import {
-  ArrowLeft,
   ThumbsUp,
+  ThumbsDown,
   Bookmark,
   Share2,
   Clock,
   Users,
-  Flame,
-  ChefHat,
+  CheckCircle2,
+  Play,
   CheckSquare,
   Square,
   Timer,
+  ChefHat,
+  ChevronDown,
+  ChevronUp,
+  Flame,
+  UserCheck,
+  UserPlus,
 } from "lucide-react";
 
 interface VideoWatchProps {
   video: Video;
   onBack: () => void;
   onSelectVideo: (id: string) => void;
+  onNavigate?: (page: string, data?: string) => void;
   savedIds: string[];
   onToggleSave: (id: string) => void;
 }
 
-const VideoWatch = ({
+const countryMeta: Record<string, { flag: string; nameUz: string }> = {
+  uzbek: { flag: "🇺🇿", nameUz: "O'zbekiston" },
+  russian: { flag: "🇷🇺", nameUz: "Rossiya" },
+  turkish: { flag: "🇹🇷", nameUz: "Turkiya" },
+  japanese: { flag: "🇯🇵", nameUz: "Yaponiya" },
+  korean: { flag: "🇰🇷", nameUz: "Koreya" },
+  chinese: { flag: "🇨🇳", nameUz: "Xitoy" },
+  italian: { flag: "🇮🇹", nameUz: "Italiya" },
+  french: { flag: "🇫🇷", nameUz: "Fransiya" },
+  american: { flag: "🇺🇸", nameUz: "AQSh" },
+  indian: { flag: "🇮🇳", nameUz: "Hindiston" },
+  mexican: { flag: "🇲🇽", nameUz: "Meksika" },
+};
+
+export const VideoWatch = ({
   video,
   onBack,
   onSelectVideo,
+  onNavigate,
   savedIds,
   onToggleSave,
 }: VideoWatchProps) => {
-  const { lang, t, dark } = useVideoLang();
+  const { lang, t } = useVideoLang();
   const { videoList } = useAdmin();
+  const { isLoggedIn, openLoginModal, subscribedChefIds, toggleSubscribe } = useAuth();
+
   const [liked, setLiked] = useState(false);
+  const [disliked, setDisliked] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [descExpanded, setDescExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState<"recipe" | "steps" | "timer">("recipe");
   const [checkedIngredients, setCheckedIngredients] = useState<number[]>([]);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
-  const [timerInterval, setTimerInterval] = useState<ReturnType<
-    typeof setInterval
-  > | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isSticky, setIsSticky] = useState(false);
-  const videoWrapRef = useRef<HTMLDivElement>(null);
-  const saved = savedIds.includes(video.id);
+  const [timerInterval, setTimerInterval] = useState<ReturnType<typeof setInterval> | null>(null);
 
-  // Faqat mobilda: video tepasi header ostiga tekkanda sticky qilish
-  useEffect(() => {
-    const isMobile = () => window.innerWidth < 768;
-    const onScroll = () => {
-      if (!isMobile() || !videoWrapRef.current) {
-        setIsSticky(false);
-        return;
-      }
-      const rect = videoWrapRef.current.getBoundingClientRect();
-      // rect.top <= 70 — ya'ni video header (70px) ga tekkanda
-      setIsSticky(rect.top <= 70);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  const isSaved = savedIds.includes(video.id);
+  const isSubscribed = subscribedChefIds.includes(video.chef);
+  const country = countryMeta[video.cuisine] || { flag: "🌍", nameUz: video.cuisine };
 
   const related = videoList
-    .filter(
-      (v) =>
-        v.id !== video.id &&
-        (v.cuisine === video.cuisine || v.category === video.category),
-    )
-    .slice(0, 8);
+    .filter((v) => v.id !== video.id)
+    .slice(0, 10);
 
-  const toggleIngredient = (i: number) =>
+  const handleLike = () => {
+    if (!isLoggedIn) {
+      openLoginModal();
+      return;
+    }
+    setLiked(!liked);
+    if (disliked) setDisliked(false);
+  };
+
+  const handleDislike = () => {
+    if (!isLoggedIn) {
+      openLoginModal();
+      return;
+    }
+    setDisliked(!disliked);
+    if (liked) setLiked(false);
+  };
+
+  const handleSave = () => {
+    if (!isLoggedIn) {
+      openLoginModal();
+      return;
+    }
+    onToggleSave(video.id);
+  };
+
+  const toggleIngredient = (idx: number) => {
     setCheckedIngredients((prev) =>
-      prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i],
+      prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx]
     );
+  };
 
   const startTimer = (minutes: number) => {
     if (timerInterval) clearInterval(timerInterval);
@@ -98,482 +133,342 @@ const VideoWatch = ({
     setTimerSeconds(0);
   };
 
-  const fmt = (s: number) =>
+  useEffect(() => {
+    return () => {
+      if (timerInterval) clearInterval(timerInterval);
+    };
+  }, [timerInterval]);
+
+  const fmtTimer = (s: number) =>
     `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
-  const cardBg = dark ? "#1e293b" : "#ffffff";
-  const border = dark ? "rgba(255,255,255,0.07)" : "rgba(21,128,61,0.1)";
-  const muted = dark ? "#94a3b8" : "#6b7280";
-  const G = "#1DB954";
+  const baseLikes = Math.max(120, Math.floor(video.views / 38));
+  const displayLikes = liked ? baseLikes + 1 : baseLikes;
 
   return (
-    <div className="pb-24 md:pb-8 animate-fade-in">
-      {/* Back — mobile */}
-      <div className="md:hidden flex items-center gap-3 pb-3">
-        <button
-          onClick={onBack}
-          className="w-9 h-9 rounded-xl flex items-center justify-center"
-          style={{
-            background: dark
-              ? "rgba(255,255,255,0.08)"
-              : "rgba(21,128,61,0.08)",
-            color: dark ? "#f1f5f9" : "#15803d",
-          }}
-        >
-          <ArrowLeft size={18} />
-        </button>
-        <span
-          className="font-bold text-sm line-clamp-1"
-          style={{
-            color: dark ? "#f1f5f9" : "#111827",
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
-          }}
-        >
-          {video.title[lang]}
-        </span>
-      </div>
-
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* ── LEFT ── */}
-        <div className="flex-1 min-w-0">
-          {/* ── STICKY VIDEO PLAYER ── */}
-          {/* ref shu div ga — pozitsiyasini scroll da o'lchaymiz */}
-          <div ref={videoWrapRef}>
-            <div
-              style={
-                isSticky
-                  ? {
-                      position: "fixed",
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      zIndex: 90,
-                      padding: "0",
-                    }
-                  : { position: "relative" }
-              }
-            >
+    <div className="w-full max-w-[1780px] mx-auto pb-16 animate-fade-in">
+      {/* 2-Column YouTube Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] xl:grid-cols-[1fr_420px] gap-6">
+        
+        {/* LEFT COLUMN (70%): Player + Info + Recipe breakdown + Comments */}
+        <div className="min-w-0">
+          {/* 1. Video Player */}
+          <div className="relative w-full aspect-video rounded-3xl overflow-hidden bg-black shadow-2xl border border-zinc-800/80">
+            {isPlaying ? (
+              <iframe
+                src={`${video.videoUrl}?autoplay=1`}
+                title={video.title[lang] || video.title.uz}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
               <div
-                className="rounded-2xl overflow-hidden mb-4"
-                style={{
-                  background: "#000",
-                  boxShadow: "0 8px 40px rgba(0,0,0,0.3)",
-                  borderRadius: isSticky ? 0 : undefined,
-                }}
+                onClick={() => setIsPlaying(true)}
+                className="relative w-full h-full cursor-pointer group"
               >
-                {isPlaying ? (
-                  <div
-                    style={{ position: "relative", paddingBottom: "56.25%" }}
-                  >
-                    <iframe
-                      src={`${video.videoUrl}&autoplay=1`}
-                      title={video.title[lang]}
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        width: "100%",
-                        height: "100%",
-                        border: "none",
-                      }}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
+                <img
+                  src={video.thumbnail}
+                  alt={video.title[lang] || video.title.uz}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/30 transition-colors">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-emerald-600/90 hover:bg-emerald-500 text-white flex items-center justify-center shadow-2xl shadow-emerald-600/50 group-hover:scale-110 transition-transform">
+                    <Play size={28} fill="white" className="ml-1" />
                   </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 2. Video Title */}
+          <h1 className="text-xl sm:text-2xl font-bold text-white mt-4 leading-snug">
+            {video.title[lang] || video.title.uz}
+          </h1>
+
+          {/* 3. Chef Channel + Action Buttons Row (YouTube 1:1) */}
+          <div className="flex flex-wrap items-center justify-between gap-4 py-3.5 border-b border-zinc-800/80 mt-1">
+            {/* Chef info & subscribe button */}
+            <div className="flex items-center gap-3">
+              <img
+                src={video.chefAvatar}
+                alt={video.chef}
+                className="w-11 h-11 rounded-full object-cover border border-zinc-700 cursor-pointer"
+                onClick={() => onNavigate && onNavigate("chefs")}
+              />
+              <div>
+                <div className="flex items-center gap-1 font-semibold text-sm text-zinc-100">
+                  <span>{video.chef}</span>
+                  <CheckCircle2 size={14} className="text-emerald-500" />
+                </div>
+                <p className="text-xs text-zinc-400">45.2K obunachi</p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => toggleSubscribe(video.chef)}
+                className={`ml-2 px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                  isSubscribed
+                    ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border border-zinc-700"
+                    : "bg-white hover:bg-zinc-200 text-zinc-950 shadow-md font-bold"
+                }`}
+              >
+                {isSubscribed ? (
+                  <>
+                    <UserCheck size={14} className="text-emerald-500" />
+                    <span>Obuna bo'lindi</span>
+                  </>
                 ) : (
-                  <div
-                    className="relative cursor-pointer"
-                    style={{ paddingBottom: "56.25%" }}
-                    onClick={() => setIsPlaying(true)}
-                  >
-                    <img
-                      src={video.thumbnail}
-                      onError={(e) =>
-                        (e.currentTarget.src =
-                          "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=900&h=506&fit=crop")
-                      }
-                      alt={video.title[lang]}
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                    <div
-                      className="absolute inset-0 flex flex-col items-center justify-center gap-3"
-                      style={{ background: "rgba(0,0,0,0.35)" }}
-                    >
-                      <div
-                        className="w-20 h-20 rounded-full flex items-center justify-center transition-transform hover:scale-110"
-                        style={{
-                          background: "rgba(29,185,84,0.92)",
-                          backdropFilter: "blur(8px)",
-                          boxShadow: "0 0 40px rgba(29,185,84,0.5)",
-                        }}
-                      >
-                        <svg
-                          width="32"
-                          height="32"
-                          viewBox="0 0 24 24"
-                          fill="white"
-                        >
-                          <path d="M8 5v14l11-7z" />
-                        </svg>
-                      </div>
-                      <span
-                        className="text-white text-sm font-bold px-4 py-1.5 rounded-full"
-                        style={{
-                          background: "rgba(0,0,0,0.5)",
-                          backdropFilter: "blur(8px)",
-                        }}
-                      >
-                        ▶ {t("watchNow")}
-                      </span>
-                    </div>
-                    <div
-                      className="absolute bottom-3 right-3 px-2.5 py-1 rounded-lg text-white text-xs font-bold"
-                      style={{ background: "rgba(0,0,0,0.78)" }}
-                    >
-                      {video.duration}
-                    </div>
-                  </div>
+                  <>
+                    <UserPlus size={14} />
+                    <span>Obuna bo'lish</span>
+                  </>
                 )}
-              </div>
+              </button>
             </div>
-          </div>
 
-          {/* Sticky paytda video o'rnini bo'sh qoldirmaslik uchun */}
-          {isSticky && (
-            <div style={{ paddingBottom: "56.25%", marginBottom: 16 }} />
-          )}
-
-          {/* ── TITLE & ACTIONS ── */}
-          <div
-            className="rounded-2xl p-5 mb-4"
-            style={{ background: cardBg, border: `1px solid ${border}` }}
-          >
-            <h1
-              className="text-xl font-black mb-2 leading-tight"
-              style={{
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-                color: dark ? "#f1f5f9" : "#111827",
-              }}
-            >
-              {video.title[lang]}
-            </h1>
-            <div className="flex items-center gap-3 flex-wrap mb-4">
-              <span className="text-sm" style={{ color: muted }}>
-                {formatViews(video.views)} {t("views")}
-              </span>
-              {video.featured && (
-                <span
-                  className="text-xs px-2 py-0.5 rounded-full font-bold text-white"
-                  style={{
-                    background: "linear-gradient(135deg,#f59e0b,#d97706)",
-                  }}
-                >
-                  ⭐ Featured
-                </span>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {[
-                {
-                  label: liked ? "Yoqdi! 👍" : "Like",
-                  active: liked,
-                  onClick: () => setLiked(!liked),
-                  icon: ThumbsUp,
-                },
-                {
-                  label: t("favorites"),
-                  active: saved,
-                  onClick: () => onToggleSave(video.id),
-                  icon: Bookmark,
-                },
-                {
-                  label: t("share"),
-                  active: false,
-                  onClick: () =>
-                    navigator.clipboard?.writeText(window.location.href),
-                  icon: Share2,
-                },
-              ].map(({ label, active, onClick, icon: Icon }) => (
+            {/* Action buttons (Like, Dislike, Share, Save) */}
+            <div className="flex items-center gap-2">
+              {/* Like / Dislike pill */}
+              <div className="flex items-center bg-zinc-800/80 rounded-full border border-zinc-700/60 overflow-hidden">
                 <button
-                  key={label}
-                  onClick={onClick}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all"
-                  style={{
-                    background: active
-                      ? "linear-gradient(135deg,#1DB954,#15803d)"
-                      : dark
-                        ? "rgba(255,255,255,0.06)"
-                        : "rgba(21,128,61,0.08)",
-                    color: active ? "white" : dark ? "#94a3b8" : G,
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  }}
+                  onClick={handleLike}
+                  className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold hover:bg-zinc-700/80 transition-colors ${
+                    liked ? "text-emerald-400" : "text-zinc-200"
+                  }`}
                 >
-                  <Icon size={15} fill={active ? "white" : "none"} /> {label}
+                  <ThumbsUp size={15} fill={liked ? "currentColor" : "none"} />
+                  <span>{formatViews(displayLikes)}</span>
                 </button>
-              ))}
+                <div className="w-[1px] h-4 bg-zinc-700" />
+                <button
+                  onClick={handleDislike}
+                  className={`px-3 py-2 text-xs hover:bg-zinc-700/80 transition-colors ${
+                    disliked ? "text-red-400" : "text-zinc-300"
+                  }`}
+                  title="Yoqmadi"
+                >
+                  <ThumbsDown size={15} fill={disliked ? "currentColor" : "none"} />
+                </button>
+              </div>
+
+              {/* Share button */}
+              <button
+                onClick={() => {
+                  if (navigator.clipboard) {
+                    navigator.clipboard.writeText(window.location.href);
+                    alert("Retsept havolasi nusxalandi!");
+                  }
+                }}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-zinc-800/80 hover:bg-zinc-700/80 border border-zinc-700/60 text-xs font-semibold text-zinc-200 transition-colors"
+              >
+                <Share2 size={14} />
+                <span>Ulashish</span>
+              </button>
+
+              {/* Save / Bookmark button */}
+              <button
+                onClick={handleSave}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full border text-xs font-semibold transition-all ${
+                  isSaved
+                    ? "bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-600/30"
+                    : "bg-zinc-800/80 hover:bg-zinc-700/80 border-zinc-700/60 text-zinc-200"
+                }`}
+              >
+                <Bookmark size={14} fill={isSaved ? "currentColor" : "none"} />
+                <span>{isSaved ? "Saqlandi" : "Saqlash"}</span>
+              </button>
             </div>
           </div>
 
-          {/* ── STATS ── */}
-          <div className="grid grid-cols-3 gap-3 mb-4">
-            {[
-              {
-                icon: Clock,
-                label: t("cookTime"),
-                value: `${video.cookTime} ${t("minutes")}`,
-              },
-              {
-                icon: Users,
-                label: t("servings"),
-                value: `${video.servings || 4}`,
-              },
-              {
-                icon: Flame,
-                label: t("calories"),
-                value: video.calories ? `${video.calories} kcal` : "—",
-              },
-            ].map(({ icon: Icon, label, value }) => (
-              <div
-                key={label}
-                className="rounded-2xl p-3 text-center"
-                style={{
-                  background: dark
-                    ? "rgba(29,185,84,0.1)"
-                    : "rgba(209,250,229,0.6)",
-                  border: `1px solid ${dark ? "rgba(29,185,84,0.2)" : "rgba(21,128,61,0.15)"}`,
-                }}
-              >
-                <Icon size={18} className="mx-auto mb-1" style={{ color: G }} />
-                <p className="text-[10px] mb-0.5" style={{ color: muted }}>
-                  {label}
-                </p>
-                <p
-                  className="text-sm font-bold"
-                  style={{
-                    color: dark ? "#f1f5f9" : "#111827",
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  }}
-                >
-                  {value}
-                </p>
-              </div>
-            ))}
+          {/* 4. Description Box (YouTube collapsible) */}
+          <div
+            onClick={() => setDescExpanded(!descExpanded)}
+            className="mt-4 p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-900 border border-zinc-800 cursor-pointer transition-colors"
+          >
+            <div className="flex items-center gap-3 text-xs font-bold text-zinc-300 mb-1.5">
+              <span>{formatViews(video.views)} marta ko'rildi</span>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <span>{country.flag}</span>
+                <span>{country.nameUz} taomi</span>
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <Clock size={12} className="text-emerald-400" />
+                {video.cookTime} daqiqa
+              </span>
+              <span>•</span>
+              <span className="text-emerald-400 capitalize">{video.difficulty}</span>
+            </div>
+
+            <p className={`text-xs sm:text-sm text-zinc-300 leading-relaxed ${descExpanded ? "" : "line-clamp-2"}`}>
+              {video.description[lang] || video.description.uz}
+            </p>
+
+            <button className="text-xs font-semibold text-emerald-400 mt-2 flex items-center gap-1">
+              {descExpanded ? (
+                <>
+                  <span>Kamroq ko'rsatish</span>
+                  <ChevronUp size={14} />
+                </>
+              ) : (
+                <>
+                  <span>Ko'proq o'qish...</span>
+                  <ChevronDown size={14} />
+                </>
+              )}
+            </button>
           </div>
 
-          {/* ── TIMER ── */}
-          <div
-            className="rounded-2xl p-4 mb-4"
-            style={{ background: cardBg, border: `1px solid ${border}` }}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Timer size={18} style={{ color: G }} />
-                <h3
-                  className="font-bold text-sm"
-                  style={{
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    color: dark ? "#f1f5f9" : "#111827",
-                  }}
-                >
-                  Cooking Timer
-                </h3>
-              </div>
-              {timerSeconds > 0 && (
-                <div className="flex items-center gap-3">
-                  <span
-                    className="text-2xl font-black"
-                    style={{
-                      color: timerSeconds < 60 ? "#ef4444" : G,
-                      fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    }}
-                  >
-                    {fmt(timerSeconds)}
-                  </span>
+          {/* 5. Recipe Interactive Panel (Ingredients + Steps + Timer) */}
+          <div className="mt-6 rounded-2xl bg-zinc-900/60 border border-zinc-800 overflow-hidden">
+            {/* Tabs */}
+            <div className="flex border-b border-zinc-800 text-xs sm:text-sm font-semibold">
+              <button
+                onClick={() => setActiveTab("recipe")}
+                className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 transition-colors ${
+                  activeTab === "recipe"
+                    ? "bg-zinc-800/80 text-emerald-400 border-b-2 border-emerald-500"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                <ChefHat size={16} />
+                <span>Masalliqlar ({video.ingredients.length})</span>
+              </button>
+              <button
+                onClick={() => setActiveTab("steps")}
+                className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 transition-colors ${
+                  activeTab === "steps"
+                    ? "bg-zinc-800/80 text-emerald-400 border-b-2 border-emerald-500"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                <CheckSquare size={16} />
+                <span>Qadam-baqadam ({video.steps.length})</span>
+              </button>
+              <button
+                onClick={() => setActiveTab("timer")}
+                className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 transition-colors ${
+                  activeTab === "timer"
+                    ? "bg-zinc-800/80 text-emerald-400 border-b-2 border-emerald-500"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                <Timer size={16} />
+                <span>Oshxona Taymeri</span>
+              </button>
+            </div>
+
+            <div className="p-4 sm:p-5">
+              {/* Tab 1: Ingredients Checklist */}
+              {activeTab === "recipe" && (
+                <div className="space-y-2">
+                  <p className="text-xs text-zinc-400 mb-3">
+                    Tayyorlagan masalliqlar ustiga bosing (tekshirish uchun):
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {video.ingredients.map((ing, idx) => {
+                      const checked = checkedIngredients.includes(idx);
+                      const text = ing[lang] || ing.uz;
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => toggleIngredient(idx)}
+                          className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer select-none transition-all ${
+                            checked
+                              ? "bg-emerald-950/30 border-emerald-500/40 text-zinc-400 line-through"
+                              : "bg-zinc-800/40 border-zinc-700/50 text-zinc-200 hover:border-emerald-500/30"
+                          }`}
+                        >
+                          {checked ? (
+                            <CheckSquare size={17} className="text-emerald-500 flex-shrink-0" />
+                          ) : (
+                            <Square size={17} className="text-zinc-500 flex-shrink-0" />
+                          )}
+                          <span className="text-xs sm:text-sm">{text}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 2: Steps list */}
+              {activeTab === "steps" && (
+                <div className="space-y-3">
+                  {video.steps.map((st, idx) => (
+                    <div
+                      key={idx}
+                      className="flex gap-3.5 p-3.5 rounded-xl bg-zinc-800/30 border border-zinc-700/40"
+                    >
+                      <span className="w-6 h-6 rounded-full bg-emerald-600/20 text-emerald-400 text-xs font-bold flex items-center justify-center flex-shrink-0 border border-emerald-500/30">
+                        {idx + 1}
+                      </span>
+                      <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed">
+                        {st[lang] || st.uz}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Tab 3: Cooking Timer */}
+              {activeTab === "timer" && (
+                <div className="flex flex-col items-center justify-center py-6 text-center">
+                  <div className="w-32 h-32 rounded-full border-4 border-emerald-500/40 flex items-center justify-center mb-4 bg-zinc-950">
+                    <span className="text-3xl font-mono font-bold text-white tracking-widest">
+                      {fmtTimer(timerSeconds)}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 justify-center mb-5">
+                    {[5, 10, 15, 20, 30, 45].map((m) => (
+                      <button
+                        key={m}
+                        onClick={() => startTimer(m)}
+                        className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-emerald-600 text-white text-xs font-semibold transition-colors"
+                      >
+                        +{m} daq
+                      </button>
+                    ))}
+                  </div>
                   <button
                     onClick={stopTimer}
-                    className="text-xs font-bold px-2 py-1 rounded-lg"
-                    style={{
-                      background: "rgba(239,68,68,0.1)",
-                      color: "#ef4444",
-                    }}
+                    className="px-6 py-2 rounded-full bg-red-600/80 hover:bg-red-500 text-white text-xs font-bold transition-colors"
                   >
-                    To'xtat
+                    Taymerni to'xtatish
                   </button>
                 </div>
               )}
             </div>
-            <div className="flex gap-2 flex-wrap">
-              {[5, 10, 15, 20, 30, 45, 60].map((m) => (
-                <button
-                  key={m}
-                  onClick={() => startTimer(m)}
-                  className="px-3 py-1.5 rounded-xl text-sm font-semibold transition-all hover:scale-105"
-                  style={{
-                    background:
-                      "linear-gradient(135deg,rgba(29,185,84,0.15),rgba(21,128,61,0.1))",
-                    color: G,
-                    border: "1px solid rgba(29,185,84,0.2)",
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  }}
-                >
-                  {m}m
-                </button>
-              ))}
-            </div>
           </div>
 
-          {/* ── INGREDIENTS ── */}
-          {video.ingredients.length > 0 && (
-            <div
-              className="rounded-2xl p-5 mb-4"
-              style={{ background: cardBg, border: `1px solid ${border}` }}
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <ChefHat size={18} style={{ color: G }} />
-                <h3
-                  className="font-bold text-base"
-                  style={{
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    color: dark ? "#f1f5f9" : "#111827",
-                  }}
-                >
-                  {t("ingredients")}
-                </h3>
-                <span
-                  className="text-xs px-2 py-0.5 rounded-full font-bold"
-                  style={{ background: "rgba(29,185,84,0.12)", color: G }}
-                >
-                  {checkedIngredients.length}/{video.ingredients.length}
-                </span>
-              </div>
-              <div className="space-y-2">
-                {video.ingredients.map((ing, i) => (
-                  <button
-                    key={i}
-                    onClick={() => toggleIngredient(i)}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all"
-                    style={{
-                      background: checkedIngredients.includes(i)
-                        ? dark
-                          ? "rgba(29,185,84,0.12)"
-                          : "rgba(209,250,229,0.5)"
-                        : "transparent",
-                      border: `1px solid ${checkedIngredients.includes(i) ? "rgba(29,185,84,0.25)" : border}`,
-                    }}
-                  >
-                    {checkedIngredients.includes(i) ? (
-                      <CheckSquare
-                        size={16}
-                        style={{ color: G, flexShrink: 0 }}
-                      />
-                    ) : (
-                      <Square
-                        size={16}
-                        style={{ color: muted, flexShrink: 0 }}
-                      />
-                    )}
-                    <span
-                      className="text-sm"
-                      style={{
-                        color: checkedIngredients.includes(i)
-                          ? G
-                          : dark
-                            ? "#f1f5f9"
-                            : "#374151",
-                        textDecoration: checkedIngredients.includes(i)
-                          ? "line-through"
-                          : "none",
-                        fontFamily: "'DM Sans', sans-serif",
-                      }}
-                    >
-                      {ing[lang]}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ── STEPS ── */}
-          {video.steps.length > 0 && (
-            <div
-              className="rounded-2xl p-5"
-              style={{ background: cardBg, border: `1px solid ${border}` }}
-            >
-              <h3
-                className="font-bold text-base mb-4"
-                style={{
-                  fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  color: dark ? "#f1f5f9" : "#111827",
-                }}
-              >
-                {t("steps")}
-              </h3>
-              <div className="space-y-3">
-                {video.steps.map((step, i) => (
-                  <div
-                    key={i}
-                    className="flex gap-3 p-3 rounded-xl"
-                    style={{
-                      background: dark
-                        ? "rgba(255,255,255,0.03)"
-                        : "rgba(240,253,244,0.5)",
-                      border: `1px solid ${border}`,
-                    }}
-                  >
-                    <div
-                      className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black text-white"
-                      style={{
-                        background: "linear-gradient(135deg,#1DB954,#15803d)",
-                      }}
-                    >
-                      {i + 1}
-                    </div>
-                    <p
-                      className="text-sm leading-relaxed pt-1"
-                      style={{
-                        color: dark ? "#cbd5e1" : "#374151",
-                        fontFamily: "'DM Sans', sans-serif",
-                      }}
-                    >
-                      {step[lang]}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* 6. Comment Section */}
+          <CommentSection videoId={video.id} />
         </div>
 
-        {/* ── RIGHT: Related ── */}
-        <aside className="lg:w-80 xl:w-96 flex-shrink-0">
-          <h3
-            className="font-bold text-base mb-4"
-            style={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              color: dark ? "#f1f5f9" : "#111827",
-            }}
-          >
-            {t("recommended")}
+        {/* RIGHT COLUMN (30%): Recommended Videos (YouTube Up Next) */}
+        <div className="space-y-3">
+          <h3 className="text-base font-bold text-white mb-2 px-1">
+            Tavsiya etilgan videolar
           </h3>
-          {related.length === 0 ? (
-            <p className="text-sm" style={{ color: muted }}>
-              Tavsiya yo'q
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {related.map((v) => (
-                <VideoCard
-                  key={v.id}
-                  video={v}
-                  onClick={() => onSelectVideo(v.id)}
-                  savedIds={savedIds}
-                  onToggleSave={onToggleSave}
-                  size="horizontal"
-                />
-              ))}
-            </div>
-          )}
-        </aside>
+          <div className="space-y-3">
+            {related.map((v) => (
+              <VideoCardYT
+                key={v.id}
+                video={v}
+                onClick={() => {
+                  onSelectVideo(v.id);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                savedIds={savedIds}
+                onToggleSave={onToggleSave}
+                layout="horizontal"
+              />
+            ))}
+          </div>
+        </div>
+
       </div>
     </div>
   );

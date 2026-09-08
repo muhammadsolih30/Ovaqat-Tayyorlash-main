@@ -1,6 +1,6 @@
 import { useVideoLang } from "@/contexts/VideoLangContext";
 import { useAdmin } from "@/contexts/AdminContext";
-import VideoCard from "@/components/video/VideoCard";
+import VideoCardYT from "@/components/VideoCardYT";
 
 interface VideoGridProps {
   category: string;
@@ -8,6 +8,8 @@ interface VideoGridProps {
   savedIds: string[];
   onToggleSave: (id: string) => void;
 }
+
+const GOLD = "#F5A623";
 
 const categoryTitles: Record<
   string,
@@ -65,66 +67,16 @@ const categoryTitles: Record<
     icon: "🌮",
   },
   favorites: { uz: "Sevimlilar", en: "Favorites", ru: "Избранное", icon: "❤️" },
-  italian: {
-    uz: "Italya taomlari",
-    en: "Italian Cuisine",
-    ru: "Итальянская кухня",
-    icon: "🇮🇹",
-  },
-  japanese: {
-    uz: "Yaponiya taomlari",
-    en: "Japanese Cuisine",
-    ru: "Японская кухня",
-    icon: "🇯🇵",
-  },
-  american: {
-    uz: "Amerika taomlari",
-    en: "American Cuisine",
-    ru: "Американская кухня",
-    icon: "🇺🇸",
-  },
-  french: {
-    uz: "Fransiya taomlari",
-    en: "French Cuisine",
-    ru: "Французская кухня",
-    icon: "🇫🇷",
-  },
-  korean: {
-    uz: "Koreya taomlari",
-    en: "Korean Cuisine",
-    ru: "Корейская кухня",
-    icon: "🇰🇷",
-  },
-  indian: {
-    uz: "Hindiston taomlari",
-    en: "Indian Cuisine",
-    ru: "Индийская кухня",
-    icon: "🇮🇳",
-  },
-  mexican: {
-    uz: "Meksika taomlari",
-    en: "Mexican Cuisine",
-    ru: "Мексиканская кухня",
-    icon: "🇲🇽",
-  },
-  chinese: {
-    uz: "Xitoy taomlari",
-    en: "Chinese Cuisine",
-    ru: "Китайская кухня",
-    icon: "🇨🇳",
-  },
-  turkish: {
-    uz: "Turkiya taomlari",
-    en: "Turkish Cuisine",
-    ru: "Турецкая кухня",
-    icon: "🇹🇷",
-  },
-  russian: {
-    uz: "Rossiya taomlari",
-    en: "Russian Cuisine",
-    ru: "Русская кухня",
-    icon: "🇷🇺",
-  },
+  italian: { uz: "Italya taomlari", en: "Italian Cuisine", ru: "Итальянская кухня", icon: "🇮🇹" },
+  japanese: { uz: "Yaponiya taomlari", en: "Japanese Cuisine", ru: "Японская кухня", icon: "🇯🇵" },
+  american: { uz: "Amerika taomlari", en: "American Cuisine", ru: "Американская кухня", icon: "🇺🇸" },
+  french: { uz: "Fransiya taomlari", en: "French Cuisine", ru: "Французская кухня", icon: "🇫🇷" },
+  korean: { uz: "Koreya taomlari", en: "Korean Cuisine", ru: "Корейская кухня", icon: "🇰🇷" },
+  indian: { uz: "Hindiston taomlari", en: "Indian Cuisine", ru: "Индийская кухня", icon: "🇮🇳" },
+  mexican: { uz: "Meksika taomlari", en: "Mexican Cuisine", ru: "Мексиканская кухня", icon: "🇲🇽" },
+  chinese: { uz: "Xitoy taomlari", en: "Chinese Cuisine", ru: "Китайская кухня", icon: "🇨🇳" },
+  turkish: { uz: "Turkiya taomlari", en: "Turkish Cuisine", ru: "Турецкая кухня", icon: "🇹🇷" },
+  russian: { uz: "Rossiya taomlari", en: "Russian Cuisine", ru: "Русская кухня", icon: "🇷🇺" },
 };
 
 const VideoGrid = ({
@@ -133,7 +85,7 @@ const VideoGrid = ({
   savedIds,
   onToggleSave,
 }: VideoGridProps) => {
-  const { lang, t, dark } = useVideoLang();
+  const { lang, t } = useVideoLang();
   const { videoList } = useAdmin();
 
   // Filter videos by category
@@ -144,24 +96,13 @@ const VideoGrid = ({
     if (category === "favorites") {
       return videoList.filter((v) => savedIds.includes(v.id));
     }
-    // country cuisines
     const countryCuisines = [
-      "italian",
-      "japanese",
-      "american",
-      "french",
-      "korean",
-      "indian",
-      "mexican",
-      "chinese",
-      "turkish",
-      "russian",
-      "uzbek",
+      "italian", "japanese", "american", "french", "korean",
+      "indian", "mexican", "chinese", "turkish", "russian", "uzbek",
     ];
     if (countryCuisines.includes(category)) {
       return videoList.filter((v) => v.cuisine === category);
     }
-    // other categories (quick, healthy, dessert, bbq, vegetarian, breakfast, dinner, street, world)
     if (category === "world") {
       return videoList.filter((v) => v.cuisine !== "uzbek");
     }
@@ -174,18 +115,16 @@ const VideoGrid = ({
   const icon = info?.icon ?? "🍽️";
   const title = info?.[lang] ?? category;
 
-  const textMain = dark ? "#f1f5f9" : "#111827";
-  const textMuted = dark ? "#94a3b8" : "#6b7280";
-
   return (
     <div className="pb-24 md:pb-8 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6 px-1">
+      <div className="flex items-center gap-4 mb-8 px-1">
         <div
-          className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
+          className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
           style={{
-            background: dark ? "rgba(29,185,84,0.15)" : "rgba(209,250,229,0.8)",
-            border: "1.5px solid rgba(29,185,84,0.2)",
+            background: "rgba(245,166,35,0.1)",
+            border: "1.5px solid rgba(245,166,35,0.2)",
+            boxShadow: "0 4px 16px rgba(245,166,35,0.1)",
           }}
         >
           {icon}
@@ -194,13 +133,13 @@ const VideoGrid = ({
           <h1
             className="font-black text-2xl leading-tight"
             style={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              color: textMain,
+              fontFamily: "var(--font-display)",
+              color: "var(--text-primary)",
             }}
           >
             {title}
           </h1>
-          <p className="text-sm mt-0.5" style={{ color: textMuted }}>
+          <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
             {filtered.length} ta video
           </p>
         </div>
@@ -208,31 +147,32 @@ const VideoGrid = ({
 
       {/* Empty state */}
       {filtered.length === 0 ? (
-        <div className="text-center py-24">
-          <p className="text-5xl mb-4">🎬</p>
+        <div className="text-center py-24 animate-fade-in">
+          <p className="text-6xl mb-4">🎬</p>
           <p
-            className="font-bold text-lg mb-2"
+            className="font-bold text-xl mb-2"
             style={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              color: textMain,
+              fontFamily: "var(--font-display)",
+              color: "var(--text-primary)",
             }}
           >
             {t("noResults")}
           </p>
-          <p className="text-sm" style={{ color: textMuted }}>
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
             Bu kategoriyada hali video yo'q
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-          {filtered.map((video) => (
-            <VideoCard
-              key={video.id}
-              video={video}
-              onClick={() => onSelectVideo(video.id)}
-              savedIds={savedIds}
-              onToggleSave={onToggleSave}
-            />
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {filtered.map((video, i) => (
+            <div key={video.id} className={`animate-card-in stagger-${Math.min(i + 1, 8)}`}>
+              <VideoCardYT
+                video={video}
+                onClick={() => onSelectVideo(video.id)}
+                savedIds={savedIds}
+                onToggleSave={onToggleSave}
+              />
+            </div>
           ))}
         </div>
       )}

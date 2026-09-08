@@ -1,16 +1,20 @@
 import { useState } from "react";
 import { useVideoLang } from "@/contexts/VideoLangContext";
 import { useAdmin } from "@/contexts/AdminContext";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Search,
   Moon,
   Sun,
-  Bookmark,
   Menu,
   X,
-  Leaf,
-  Globe,
-  ArrowLeft,
+  ChefHat,
+  Bell,
+  LogIn,
+  User,
+  LogOut,
+  Bookmark,
+  CheckCircle2,
 } from "lucide-react";
 
 interface VideoHeaderProps {
@@ -21,7 +25,7 @@ interface VideoHeaderProps {
   setSidebarOpen: (v: boolean) => void;
 }
 
-const VideoHeader = ({
+export const VideoHeader = ({
   onSearch,
   onNavigate,
   currentPage,
@@ -30,10 +34,11 @@ const VideoHeader = ({
 }: VideoHeaderProps) => {
   const { lang, setLang, t, dark, toggleDark } = useVideoLang();
   const { videoList } = useAdmin();
+  const { user, isLoggedIn, logout, openLoginModal } = useAuth();
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<typeof videoList>([]);
   const [searchFocused, setSearchFocused] = useState(false);
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   const handleInput = (val: string) => {
     setQuery(val);
@@ -42,334 +47,210 @@ const VideoHeader = ({
         videoList
           .filter(
             (v) =>
-              v.title[lang].toLowerCase().includes(val.toLowerCase()) ||
-              v.chef.toLowerCase().includes(val.toLowerCase()),
+              v.title[lang]?.toLowerCase().includes(val.toLowerCase()) ||
+              v.chef.toLowerCase().includes(val.toLowerCase())
           )
-          .slice(0, 5),
+          .slice(0, 6)
       );
     } else {
       setSuggestions([]);
     }
   };
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
       onSearch(query.trim());
       setSuggestions([]);
       setSearchFocused(false);
-      setMobileSearchOpen(false);
-      setQuery("");
     }
   };
 
   const langs: { code: "uz" | "en" | "ru"; label: string }[] = [
     { code: "uz", label: "UZ" },
-    { code: "en", label: "EN" },
-    { code: "ru", label: "RU" },
+    { code: "en", label: "RU" },
+    { code: "ru", label: "EN" },
   ];
 
-  const headerBg = dark ? "rgba(15,23,42,0.97)" : "rgba(255,255,255,0.97)";
-  const borderColor = dark ? "rgba(255,255,255,0.08)" : "rgba(21,128,61,0.10)";
-  const iconColor = dark ? "#94a3b8" : "#15803d";
-  const iconBg = dark ? "rgba(255,255,255,0.05)" : "rgba(21,128,61,0.06)";
-  const G = "#1DB954";
-
-  /* ── Mobile full-screen search overlay ── */
-  if (mobileSearchOpen) {
-    return (
-      <header
-        className="fixed top-0 left-0 right-0 z-50 h-[70px] flex items-center px-4 gap-3 md:hidden"
-        style={{
-          background: headerBg,
-          backdropFilter: "blur(20px)",
-          borderBottom: `1px solid ${borderColor}`,
-          boxShadow: `0 2px 20px ${dark ? "rgba(0,0,0,0.4)" : "rgba(21,128,61,0.08)"}`,
-        }}
-      >
-        {/* Back arrow */}
+  return (
+    <header className="sticky top-0 z-50 h-14 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/80 px-4 flex items-center justify-between gap-4 select-none">
+      {/* LEFT: Menu button & Logo */}
+      <div className="flex items-center gap-3.5 flex-shrink-0">
         <button
-          onClick={() => {
-            setMobileSearchOpen(false);
-            setQuery("");
-            setSuggestions([]);
-          }}
-          className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-          style={{ color: iconColor, background: iconBg }}
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="p-2 rounded-full hover:bg-zinc-800/80 text-zinc-300 hover:text-white transition-colors"
+          title="Menyu"
         >
-          <ArrowLeft size={18} />
+          <Menu size={20} />
         </button>
 
-        {/* Search input — full width */}
-        <div className="flex-1 relative">
-          <form onSubmit={handleSearch} className="relative">
-            <Search
-              size={15}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-              style={{ color: G }}
-            />
+        <div
+          onClick={() => onNavigate("home")}
+          className="flex items-center gap-2 cursor-pointer group"
+        >
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-green-500 flex items-center justify-center shadow-md shadow-emerald-600/30 group-hover:scale-105 transition-transform">
+            <ChefHat size={18} className="text-white" />
+          </div>
+          <span className="text-lg font-black tracking-tight text-white flex items-center">
+            Taom<span className="text-emerald-500">.uz</span>
+          </span>
+        </div>
+      </div>
+
+      {/* CENTER: YouTube-like Search bar */}
+      <div className="flex-1 max-w-2xl mx-auto relative hidden md:block">
+        <form onSubmit={handleSearchSubmit} className="flex items-center w-full">
+          <div className="relative flex-1">
             <input
               type="text"
               value={query}
               onChange={(e) => handleInput(e.target.value)}
               onFocus={() => setSearchFocused(true)}
-              onBlur={() => setTimeout(() => setSearchFocused(false), 150)}
-              placeholder={t("search")}
-              autoFocus
-              className="w-full pl-10 pr-4 py-2.5 rounded-2xl text-sm outline-none"
-              style={{
-                background: dark
-                  ? "rgba(30,41,59,0.9)"
-                  : "rgba(240,253,244,0.9)",
-                border: `1.5px solid ${searchFocused ? G : borderColor}`,
-                color: dark ? "#f1f5f9" : "#111827",
-                fontFamily: "'DM Sans', sans-serif",
-                boxShadow: searchFocused
-                  ? "0 0 0 3px rgba(29,185,84,0.15)"
-                  : "none",
-              }}
+              onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+              placeholder="Retseptlar, taomlar va oshpazlarni qidirish..."
+              className="w-full h-10 pl-4 pr-10 rounded-l-full bg-zinc-900 border border-zinc-700/80 focus:border-emerald-500 text-sm text-zinc-100 placeholder-zinc-500 outline-none transition-all shadow-inner"
             />
-          </form>
-
-          {/* Suggestions */}
-          {searchFocused && suggestions.length > 0 && (
-            <div
-              className="absolute top-full mt-2 left-0 right-0 rounded-2xl overflow-hidden z-50"
-              style={{
-                background: dark ? "#1e293b" : "white",
-                boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
-                border: `1px solid ${borderColor}`,
-              }}
-            >
-              {suggestions.map((v) => (
-                <button
-                  key={v.id}
-                  onMouseDown={() => {
-                    onNavigate("video", v.id);
-                    setMobileSearchOpen(false);
-                    setQuery("");
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:opacity-80"
-                  style={{
-                    borderBottom: `1px solid ${dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"}`,
-                  }}
-                >
-                  <img
-                    src={v.thumbnail}
-                    alt=""
-                    className="w-10 h-7 rounded-lg object-cover flex-shrink-0"
-                  />
-                  <div className="min-w-0">
-                    <p
-                      className="text-sm font-semibold truncate"
-                      style={{
-                        color: dark ? "#f1f5f9" : "#111827",
-                        fontFamily: "'Plus Jakarta Sans', sans-serif",
-                      }}
-                    >
-                      {v.title[lang]}
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </header>
-    );
-  }
-
-  return (
-    <header
-      className="fixed md:sticky top-0 left-0 right-0 z-50 h-[70px] flex items-center px-4 md:px-6 gap-3 md:gap-6"
-      style={{
-        background: headerBg,
-        backdropFilter: "blur(20px)",
-        borderBottom: `1px solid ${borderColor}`,
-        boxShadow: `0 2px 20px ${dark ? "rgba(0,0,0,0.4)" : "rgba(21,128,61,0.08)"}`,
-      }}
-    >
-      {/* ── LEFT: hamburger (desktop) + logo ── */}
-      <div className="flex items-center gap-3 flex-shrink-0">
-        {/* Hamburger — faqat desktop */}
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="w-9 h-9 rounded-xl items-center justify-center transition-colors hidden md:flex"
-          style={{ color: iconColor, background: iconBg }}
-        >
-          {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
-        </button>
-
-        {/* Logo */}
-        <button
-          onClick={() => onNavigate("home")}
-          className="flex items-center gap-2 flex-shrink-0"
-        >
-          <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center"
-            style={{
-              background: "linear-gradient(135deg, #15803d 0%, #166534 100%)",
-            }}
-          >
-            <Leaf size={16} className="text-white" />
+            {query && (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setSuggestions([]);
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+              >
+                <X size={15} />
+              </button>
+            )}
           </div>
-          <span
-            className="text-lg font-black tracking-tight"
-            style={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              color: dark ? "#f8fafc" : "#15803d",
-            }}
+          <button
+            type="submit"
+            className="h-10 px-6 rounded-r-full bg-zinc-800 hover:bg-zinc-700/80 border border-l-0 border-zinc-700/80 text-zinc-300 hover:text-white transition-colors flex items-center justify-center"
+            title="Qidirish"
           >
-            Taom<span style={{ color: G }}>Uz</span>
-          </span>
-        </button>
-      </div>
-
-      {/* ── CENTER: Search — faqat desktop ── */}
-      <div className="flex-1 max-w-xl relative hidden md:block">
-        <form onSubmit={handleSearch} className="relative">
-          <Search
-            size={16}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-            style={{ color: dark ? "#64748b" : "#15803d" }}
-          />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => handleInput(e.target.value)}
-            onFocus={() => setSearchFocused(true)}
-            onBlur={() => setTimeout(() => setSearchFocused(false), 150)}
-            placeholder={t("search")}
-            className="w-full pl-10 pr-4 py-2.5 rounded-2xl text-sm outline-none transition-all"
-            style={{
-              background: dark ? "rgba(30,41,59,0.9)" : "rgba(240,253,244,0.9)",
-              border: `1.5px solid ${searchFocused ? G : dark ? "rgba(255,255,255,0.1)" : "rgba(21,128,61,0.2)"}`,
-              color: dark ? "#f1f5f9" : "#111827",
-              fontFamily: "'DM Sans', sans-serif",
-              boxShadow: searchFocused
-                ? "0 0 0 3px rgba(29,185,84,0.15)"
-                : "none",
-            }}
-          />
+            <Search size={18} />
+          </button>
         </form>
 
-        {/* Desktop suggestions */}
+        {/* Suggestions dropdown */}
         {searchFocused && suggestions.length > 0 && (
-          <div
-            className="absolute top-full mt-2 left-0 right-0 rounded-2xl overflow-hidden z-50"
-            style={{
-              background: dark ? "#1e293b" : "white",
-              boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
-              border: `1px solid ${borderColor}`,
-            }}
-          >
+          <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-900/95 backdrop-blur-md rounded-2xl border border-zinc-800 shadow-2xl overflow-hidden z-50">
             {suggestions.map((v) => (
-              <button
+              <div
                 key={v.id}
                 onMouseDown={() => {
                   onNavigate("video", v.id);
                   setQuery("");
                 }}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:opacity-80 transition-opacity"
-                style={{
-                  borderBottom: `1px solid ${dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"}`,
-                }}
+                className="flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-800/80 cursor-pointer transition-colors border-b border-zinc-800/40 last:border-0"
               >
                 <img
                   src={v.thumbnail}
                   alt=""
                   className="w-10 h-7 rounded-lg object-cover flex-shrink-0"
                 />
-                <div className="min-w-0">
-                  <p
-                    className="text-sm font-semibold truncate"
-                    style={{
-                      color: dark ? "#f1f5f9" : "#111827",
-                      fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    }}
-                  >
-                    {v.title[lang]}
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-zinc-200 truncate">
+                    {v.title[lang] || v.title.uz}
                   </p>
+                  <p className="text-[11px] text-zinc-400 truncate">{v.chef}</p>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* ── RIGHT ── */}
-      <div className="flex items-center gap-1.5 flex-shrink-0 ml-auto">
-        {/* 🔍 Search icon — faqat MOBILE, search panel ochadi */}
-        <button
-          onClick={() => setMobileSearchOpen(true)}
-          className="md:hidden w-9 h-9 rounded-xl flex items-center justify-center"
-          style={{ color: iconColor, background: iconBg }}
-        >
-          <Search size={17} />
-        </button>
-
-        {/* Language switcher — desktop */}
-        <div
-          className="hidden sm:flex items-center rounded-xl overflow-hidden"
-          style={{
-            background: dark
-              ? "rgba(255,255,255,0.06)"
-              : "rgba(21,128,61,0.06)",
-            border: `1px solid ${dark ? "rgba(255,255,255,0.08)" : "rgba(21,128,61,0.15)"}`,
-          }}
-        >
-          {langs.map((l) => (
+      {/* RIGHT: Language, Theme, Notifications & User Auth */}
+      <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+        {/* Language selector */}
+        <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-full p-0.5 text-xs font-semibold text-zinc-400">
+          {(["uz", "ru", "en"] as const).map((l) => (
             <button
-              key={l.code}
-              onClick={() => setLang(l.code)}
-              className="px-2.5 py-1.5 text-xs font-bold transition-all"
-              style={{
-                background:
-                  lang === l.code
-                    ? "linear-gradient(135deg, #15803d, #166534)"
-                    : "transparent",
-                color: lang === l.code ? "white" : iconColor,
-              }}
+              key={l}
+              onClick={() => setLang(l)}
+              className={`px-2 py-0.5 rounded-full uppercase transition-all ${
+                lang === l
+                  ? "bg-emerald-600 text-white shadow-xs"
+                  : "hover:text-zinc-200"
+              }`}
             >
-              {l.label}
+              {l}
             </button>
           ))}
         </div>
 
-        {/* Globe — mobile til almashtirish */}
-        <button
-          className="sm:hidden w-9 h-9 rounded-xl flex items-center justify-center"
-          style={{ color: iconColor, background: iconBg }}
-          onClick={() =>
-            setLang(lang === "uz" ? "en" : lang === "en" ? "ru" : "uz")
-          }
-        >
-          <Globe size={16} />
-        </button>
-
-        {/* Dark mode */}
+        {/* Dark/Light mode toggle */}
         <button
           onClick={toggleDark}
-          className="w-9 h-9 rounded-xl flex items-center justify-center transition-colors"
-          style={{ color: dark ? "#f59e0b" : iconColor, background: iconBg }}
+          className="p-2 rounded-full hover:bg-zinc-800/80 text-zinc-300 hover:text-white transition-colors"
+          title={dark ? "Yorug' rejim" : "Qorong'u rejim"}
         >
-          {dark ? <Sun size={16} /> : <Moon size={16} />}
+          {dark ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} />}
         </button>
 
-        {/* Bookmark */}
-        <button
-          onClick={() => onNavigate("favorites")}
-          className="w-9 h-9 rounded-xl flex items-center justify-center transition-colors"
-          style={{
-            color: currentPage === "favorites" ? "white" : iconColor,
-            background:
-              currentPage === "favorites"
-                ? "linear-gradient(135deg, #15803d, #166534)"
-                : iconBg,
-          }}
-        >
-          <Bookmark size={16} />
-        </button>
+        {/* Auth profile or Login button */}
+        {isLoggedIn ? (
+          <div className="relative">
+            <button
+              onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+              className="flex items-center gap-2 p-1 rounded-full hover:bg-zinc-800/80 transition-colors"
+            >
+              <img
+                src={
+                  user?.avatar ||
+                  "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop"
+                }
+                alt={user?.name}
+                className="w-8 h-8 rounded-full object-cover border border-emerald-500"
+              />
+            </button>
+
+            {/* Profile Dropdown */}
+            {profileDropdownOpen && (
+              <div className="absolute right-0 top-full mt-2 w-56 bg-zinc-900 rounded-2xl border border-zinc-800 shadow-2xl p-2 z-50 animate-fade-in">
+                <div className="px-3 py-2 border-b border-zinc-800 mb-1">
+                  <p className="text-xs font-semibold text-white truncate">
+                    {user?.name}
+                  </p>
+                  <p className="text-[11px] text-zinc-400 truncate">
+                    {user?.email}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => {
+                    onNavigate("favorites");
+                    setProfileDropdownOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-300 hover:text-white hover:bg-zinc-800 rounded-xl transition-colors text-left"
+                >
+                  <Bookmark size={15} className="text-emerald-400" />
+                  <span>Saqlangan retseptlar</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    logout();
+                    setProfileDropdownOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-red-400 hover:text-red-300 hover:bg-zinc-800 rounded-xl transition-colors text-left mt-1"
+                >
+                  <LogOut size={15} />
+                  <span>Chiqish</span>
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <button
+            onClick={openLoginModal}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md shadow-emerald-600/20 active:scale-95"
+          >
+            <LogIn size={15} />
+            <span>Kirish</span>
+          </button>
+        )}
       </div>
     </header>
   );

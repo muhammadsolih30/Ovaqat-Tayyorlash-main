@@ -1,9 +1,8 @@
 import { useMemo, useState } from "react";
 import { useVideoLang } from "@/contexts/VideoLangContext";
 import { useAdmin } from "@/contexts/AdminContext";
-import { formatViews } from "@/data/videos";
-import VideoCard from "@/components/video/VideoCard";
-import { SlidersHorizontal } from "lucide-react";
+import VideoCardYT from "@/components/VideoCardYT";
+import { SlidersHorizontal, Search } from "lucide-react";
 
 interface VideoSearchProps {
   query: string;
@@ -12,14 +11,16 @@ interface VideoSearchProps {
   onToggleSave: (id: string) => void;
 }
 
+const GOLD = "#F5A623";
+
 const VideoSearch = ({
   query,
   onSelectVideo,
   savedIds,
   onToggleSave,
 }: VideoSearchProps) => {
-  const { lang, t, dark } = useVideoLang();
-  const { videoList } = useAdmin(); // ← global ro'yxat
+  const { lang, t } = useVideoLang();
+  const { videoList } = useAdmin();
   const [filterTime, setFilterTime] = useState("all");
   const [filterDifficulty, setFilterDifficulty] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
@@ -42,57 +43,50 @@ const VideoSearch = ({
     });
   }, [query, filterTime, filterDifficulty, lang, videoList]);
 
-  const borderColor = dark ? "rgba(255,255,255,0.07)" : "rgba(21,128,61,0.1)";
-  const cardBg = dark ? "#1e293b" : "white";
-  const textMuted = dark ? "#94a3b8" : "#6b7280";
-  const G = "#1DB954";
-
-  const filterBtn = (active: boolean) =>
-    ({
-      padding: "6px 14px",
-      borderRadius: "10px",
-      fontSize: "12px",
-      fontWeight: "600",
-      cursor: "pointer",
-      transition: "all 0.2s",
-      fontFamily: "'Plus Jakarta Sans', sans-serif",
-      background: active
-        ? "linear-gradient(135deg, #1DB954, #15803d)"
-        : dark
-          ? "rgba(255,255,255,0.06)"
-          : "rgba(21,128,61,0.06)",
-      color: active ? "white" : dark ? "#94a3b8" : G,
-      border: `1px solid ${active ? "transparent" : borderColor}`,
-    }) as React.CSSProperties;
+  const filterBtn = (active: boolean): React.CSSProperties => ({
+    padding: "8px 16px",
+    borderRadius: "14px",
+    fontSize: "12px",
+    fontWeight: 700,
+    cursor: "pointer",
+    transition: "all 0.25s",
+    fontFamily: "var(--font-display)",
+    background: active
+      ? "linear-gradient(135deg, #F5A623, #E8960F)"
+      : "rgba(255,255,255,0.04)",
+    color: active ? "#0a0a0f" : "var(--text-muted)",
+    border: `1px solid ${active ? "transparent" : "rgba(255,255,255,0.06)"}`,
+    boxShadow: active ? "0 4px 12px rgba(245,166,35,0.2)" : "none",
+  });
 
   return (
     <div className="pb-24 md:pb-8 animate-fade-in">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h2
-            className="font-black text-xl"
+            className="font-black text-xl mb-1"
             style={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              color: dark ? "#f1f5f9" : "#111827",
+              fontFamily: "var(--font-display)",
+              color: "var(--text-primary)",
             }}
           >
             {t("searchResults")}
           </h2>
-          <p className="text-sm" style={{ color: G }}>
+          <p className="text-sm flex items-center gap-2" style={{ color: GOLD }}>
+            <Search size={13} />
             "{query}" — {results.length} ta natija
           </p>
         </div>
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all"
           style={{
             background: showFilters
-              ? "linear-gradient(135deg,#1DB954,#15803d)"
-              : dark
-                ? "rgba(255,255,255,0.06)"
-                : "rgba(21,128,61,0.06)",
-            color: showFilters ? "white" : dark ? "#94a3b8" : G,
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
+              ? "linear-gradient(135deg, #F5A623, #E8960F)"
+              : "rgba(255,255,255,0.04)",
+            color: showFilters ? "#0a0a0f" : "var(--text-muted)",
+            fontFamily: "var(--font-display)",
+            border: `1px solid ${showFilters ? "transparent" : "rgba(255,255,255,0.06)"}`,
           }}
         >
           <SlidersHorizontal size={15} /> {t("filters")}
@@ -101,14 +95,18 @@ const VideoSearch = ({
 
       {showFilters && (
         <div
-          className="rounded-2xl p-4 mb-6"
-          style={{ background: cardBg, border: `1px solid ${borderColor}` }}
+          className="rounded-3xl p-5 mb-6 animate-scale-in"
+          style={{
+            background: "rgba(255,255,255,0.03)",
+            border: "1px solid rgba(255,255,255,0.06)",
+            backdropFilter: "blur(12px)",
+          }}
         >
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div>
               <p
-                className="text-xs font-bold mb-2 uppercase tracking-wider"
-                style={{ color: textMuted }}
+                className="text-xs font-bold mb-3 uppercase tracking-widest"
+                style={{ color: "var(--text-muted)" }}
               >
                 {t("cookTime")}
               </p>
@@ -129,10 +127,16 @@ const VideoSearch = ({
                 ))}
               </div>
             </div>
+            <div
+              style={{
+                height: 1,
+                background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)",
+              }}
+            />
             <div>
               <p
-                className="text-xs font-bold mb-2 uppercase tracking-wider"
-                style={{ color: textMuted }}
+                className="text-xs font-bold mb-3 uppercase tracking-widest"
+                style={{ color: "var(--text-muted)" }}
               >
                 {t("difficulty")}
               </p>
@@ -158,31 +162,32 @@ const VideoSearch = ({
       )}
 
       {results.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-5xl mb-4">🔍</p>
+        <div className="text-center py-20 animate-fade-in">
+          <p className="text-6xl mb-4">🔍</p>
           <p
-            className="font-bold text-lg mb-2"
+            className="font-bold text-xl mb-2"
             style={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              color: dark ? "#f1f5f9" : "#111827",
+              fontFamily: "var(--font-display)",
+              color: "var(--text-primary)",
             }}
           >
             {t("noResults")}
           </p>
-          <p className="text-sm" style={{ color: textMuted }}>
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
             Boshqa so'z bilan qidiring
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-          {results.map((v) => (
-            <VideoCard
-              key={v.id}
-              video={v}
-              onClick={() => onSelectVideo(v.id)}
-              savedIds={savedIds}
-              onToggleSave={onToggleSave}
-            />
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {results.map((v, i) => (
+            <div key={v.id} className={`animate-card-in stagger-${Math.min(i + 1, 8)}`}>
+              <VideoCardYT
+                video={v}
+                onClick={() => onSelectVideo(v.id)}
+                savedIds={savedIds}
+                onToggleSave={onToggleSave}
+              />
+            </div>
           ))}
         </div>
       )}

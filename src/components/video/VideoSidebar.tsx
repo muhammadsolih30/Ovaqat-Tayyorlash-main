@@ -1,147 +1,226 @@
 import { useVideoLang } from "@/contexts/VideoLangContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { chefs } from "@/data/videos";
 import {
   Home,
-  TrendingUp,
-  Flag,
-  Globe,
-  Zap,
-  Salad,
-  ShoppingBag,
-  Cake,
   Flame,
-  Leaf,
-  Coffee,
-  Moon,
-  Shield,
+  Bookmark,
+  Clock,
+  ThumbsUp,
+  FolderHeart,
+  Globe2,
+  ChevronRight,
+  Compass,
 } from "lucide-react";
 
 interface VideoSidebarProps {
   active: string;
-  onNavigate: (page: string) => void;
+  onNavigate: (page: string, data?: string) => void;
   open: boolean;
 }
 
-const VideoSidebar = ({ active, onNavigate, open }: VideoSidebarProps) => {
-  const { t, lang, dark } = useVideoLang();
+export const VideoSidebar = ({ active, onNavigate, open }: VideoSidebarProps) => {
+  const { t } = useVideoLang();
+  const { isLoggedIn, openLoginModal, subscribedChefIds } = useAuth();
 
-  const navItems = [
-    { id: "home", label: t("home"), icon: Home },
-    { id: "trending", label: t("trending"), icon: TrendingUp },
-    { id: "sep1", label: "", icon: null },
-    { id: "uzbek", label: t("uzbekCuisine"), icon: Flag },
-    { id: "world", label: t("worldCuisine"), icon: Globe },
-    { id: "quick", label: t("quickMeals"), icon: Zap },
-    { id: "healthy", label: t("healthyFood"), icon: Salad },
-    { id: "street", label: t("streetFood"), icon: ShoppingBag },
-    { id: "sep2", label: "", icon: null },
-    { id: "dessert", label: t("desserts"), icon: Cake },
-    { id: "bbq", label: t("bbq"), icon: Flame },
-    { id: "vegetarian", label: t("vegetarian"), icon: Leaf },
-    { id: "breakfast", label: t("breakfast"), icon: Coffee },
-    { id: "dinner", label: t("dinner"), icon: Moon },
-  ];
+  const handleAuthNav = (id: string) => {
+    if (!isLoggedIn) {
+      openLoginModal();
+      return;
+    }
+    onNavigate(id);
+  };
 
-  const bg = dark ? "#0f172a" : "#fff";
-  const borderColor = dark ? "rgba(255,255,255,0.07)" : "rgba(21,128,61,0.1)";
-  const activeColor = "#1DB954";
-  const textColor = dark ? "#94a3b8" : "#6b7280";
+  const subscribedChefs = chefs.filter((c) => subscribedChefIds.includes(c.id));
 
-  if (!open)
+  // Collapsed Sidebar (Mini YouTube style - 72px)
+  if (!open) {
     return (
-      <aside
-        className="hidden md:flex flex-col w-16 h-screen sticky top-[70px] pt-4 pb-4 gap-1 items-center"
-        style={{ background: bg, borderRight: `1px solid ${borderColor}` }}
-      >
-        {navItems
-          .filter((i) => i.icon)
-          .map(({ id, icon: Icon }) =>
-            Icon ? (
-              <button
-                key={id}
-                onClick={() => onNavigate(id)}
-                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all"
-                style={{
-                  background:
-                    active === id ? "rgba(29,185,84,0.12)" : "transparent",
-                  color: active === id ? activeColor : textColor,
-                }}
-              >
-                <Icon size={18} />
-              </button>
-            ) : null,
-          )}
-        {/* Admin icon at bottom */}
-        <div className="mt-auto mb-2">
-          <button
-            onClick={() => onNavigate("admin")}
-            className="w-10 h-10 rounded-xl flex items-center justify-center transition-all"
-            title="Admin Panel"
-            style={{ background: "rgba(29,185,84,0.08)", color: activeColor }}
-          >
-            <Shield size={16} />
-          </button>
-        </div>
+      <aside className="hidden md:flex flex-col w-[72px] h-[calc(100vh-56px)] sticky top-14 bg-zinc-950 border-r border-zinc-800/80 py-3 items-center gap-1 select-none z-30">
+        <button
+          onClick={() => onNavigate("home")}
+          className={`w-16 py-3 rounded-xl flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${
+            active === "home"
+              ? "text-emerald-500 bg-zinc-900"
+              : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/60"
+          }`}
+        >
+          <Home size={20} />
+          <span>Bosh</span>
+        </button>
+
+        <button
+          onClick={() => onNavigate("trending")}
+          className={`w-16 py-3 rounded-xl flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${
+            active === "trending"
+              ? "text-emerald-500 bg-zinc-900"
+              : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/60"
+          }`}
+        >
+          <Flame size={20} />
+          <span>Trend</span>
+        </button>
+
+        <button
+          onClick={() => handleAuthNav("favorites")}
+          className={`w-16 py-3 rounded-xl flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${
+            active === "favorites"
+              ? "text-emerald-500 bg-zinc-900"
+              : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/60"
+          }`}
+        >
+          <Bookmark size={20} />
+          <span>Saqlangan</span>
+        </button>
+
+        <button
+          onClick={() => onNavigate("chefs")}
+          className={`w-16 py-3 rounded-xl flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${
+            active === "chefs"
+              ? "text-emerald-500 bg-zinc-900"
+              : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/60"
+          }`}
+        >
+          <Compass size={20} />
+          <span>Oshpazlar</span>
+        </button>
       </aside>
     );
+  }
 
+  // Expanded Sidebar (Full YouTube style - 240px)
   return (
     <aside
-      className="hidden md:flex flex-col w-[240px] h-screen sticky top-[70px] overflow-y-auto pb-8"
-      style={{ background: bg, borderRight: `1px solid ${borderColor}` }}
+      className="hidden md:flex flex-col w-60 h-[calc(100vh-56px)] sticky top-14 bg-zinc-950 border-r border-zinc-800/80 px-3 py-3 overflow-y-auto custom-scrollbar select-none z-30"
+      style={{ scrollbarWidth: "thin" }}
     >
-      <div className="p-3 pt-4">
-        {navItems.map(({ id, label, icon: Icon }) => {
-          if (!Icon)
-            return (
-              <div
-                key={id}
-                className="my-2 mx-2"
-                style={{ height: "1px", background: borderColor }}
-              />
-            );
-          return (
-            <button
-              key={id}
-              onClick={() => onNavigate(id)}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm font-semibold mb-0.5"
-              style={{
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-                background:
-                  active === id
-                    ? "linear-gradient(135deg, rgba(29,185,84,0.15), rgba(21,128,61,0.1))"
-                    : "transparent",
-                color: active === id ? activeColor : textColor,
-                borderLeft:
-                  active === id
-                    ? `3px solid ${activeColor}`
-                    : "3px solid transparent",
-              }}
-            >
-              <Icon size={17} />
-              <span>{label}</span>
-            </button>
-          );
-        })}
-
-        {/* Admin access section */}
-        <div
-          className="mt-4 pt-4 mx-1"
-          style={{ borderTop: `1px solid ${borderColor}` }}
+      {/* Primary Section */}
+      <div className="space-y-0.5 pb-3 border-b border-zinc-800/80">
+        <button
+          onClick={() => onNavigate("home")}
+          className={`w-full flex items-center gap-4 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+            active === "home"
+              ? "bg-zinc-900 text-emerald-400 font-semibold"
+              : "text-zinc-300 hover:bg-zinc-900/80 hover:text-white"
+          }`}
         >
-          <button
-            onClick={() => onNavigate("admin")}
-            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all text-sm font-bold"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(21,128,61,0.12), rgba(15,92,43,0.08))",
-              color: activeColor,
-              border: `1px solid rgba(29,185,84,0.2)`,
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-            }}
-          >
-            <Shield size={16} />
-            <span>Admin Panel</span>
-          </button>
+          <Home size={19} className={active === "home" ? "text-emerald-500" : "text-zinc-400"} />
+          <span>Bosh sahifa</span>
+        </button>
+
+        <button
+          onClick={() => onNavigate("trending")}
+          className={`w-full flex items-center gap-4 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+            active === "trending"
+              ? "bg-zinc-900 text-emerald-400 font-semibold"
+              : "text-zinc-300 hover:bg-zinc-900/80 hover:text-white"
+          }`}
+        >
+          <Flame size={19} className={active === "trending" ? "text-emerald-500" : "text-zinc-400"} />
+          <span>Trenddagi taomlar</span>
+        </button>
+
+        <button
+          onClick={() => onNavigate("chefs")}
+          className={`w-full flex items-center gap-4 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+            active === "chefs"
+              ? "bg-zinc-900 text-emerald-400 font-semibold"
+              : "text-zinc-300 hover:bg-zinc-900/80 hover:text-white"
+          }`}
+        >
+          <Compass size={19} className={active === "chefs" ? "text-emerald-500" : "text-zinc-400"} />
+          <span>Oshpazlar</span>
+        </button>
+      </div>
+
+      {/* Library / User section */}
+      <div className="py-3 border-b border-zinc-800/80 space-y-0.5">
+        <div className="px-3 pb-1 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+          Siz
+        </div>
+
+        <button
+          onClick={() => handleAuthNav("favorites")}
+          className={`w-full flex items-center gap-4 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+            active === "favorites"
+              ? "bg-zinc-900 text-emerald-400 font-semibold"
+              : "text-zinc-300 hover:bg-zinc-900/80 hover:text-white"
+          }`}
+        >
+          <Bookmark size={19} className={active === "favorites" ? "text-emerald-500" : "text-zinc-400"} />
+          <span>Saqlangan retseptlar</span>
+        </button>
+
+        <button
+          onClick={() => handleAuthNav("history")}
+          className="w-full flex items-center gap-4 px-3 py-2.5 rounded-xl text-sm font-medium text-zinc-300 hover:bg-zinc-900/80 hover:text-white transition-all"
+        >
+          <Clock size={19} className="text-zinc-400" />
+          <span>Ko'rishlar tarixi</span>
+        </button>
+
+        <button
+          onClick={() => handleAuthNav("liked")}
+          className="w-full flex items-center gap-4 px-3 py-2.5 rounded-xl text-sm font-medium text-zinc-300 hover:bg-zinc-900/80 hover:text-white transition-all"
+        >
+          <ThumbsUp size={19} className="text-zinc-400" />
+          <span>Yoqqan videolar</span>
+        </button>
+      </div>
+
+      {/* Subscriptions / Chefs section */}
+      <div className="py-3 border-b border-zinc-800/80">
+        <div className="px-3 pb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider flex items-center justify-between">
+          <span>Obunalar</span>
+          <span className="text-[10px] text-emerald-500">{subscribedChefs.length}</span>
+        </div>
+
+        {subscribedChefs.length > 0 ? (
+          <div className="space-y-0.5">
+            {subscribedChefs.map((chef) => (
+              <button
+                key={chef.id}
+                onClick={() => onNavigate("chef", chef.id)}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-zinc-300 hover:bg-zinc-900/80 hover:text-white transition-all group"
+              >
+                <img
+                  src={chef.avatar}
+                  alt={chef.name}
+                  className="w-6 h-6 rounded-full object-cover border border-zinc-700"
+                />
+                <span className="truncate text-xs font-medium group-hover:text-emerald-400">
+                  {chef.name}
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="px-3 text-xs text-zinc-500 py-1">Hali hech kimga obuna bo'lmagansiz</p>
+        )}
+      </div>
+
+      {/* Cuisines by countries quick list */}
+      <div className="py-3">
+        <div className="px-3 pb-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+          Milliy Taomlar
+        </div>
+        <div className="space-y-0.5">
+          {[
+            { id: "uzbek", name: "O'zbek oshi va taomlari", flag: "🇺🇿" },
+            { id: "turkish", name: "Turk taomlari", flag: "🇹🇷" },
+            { id: "italian", name: "Italiya pitsa & pasta", flag: "🇮🇹" },
+            { id: "russian", name: "Rus milliy oshxonasi", flag: "🇷🇺" },
+            { id: "japanese", name: "Yapon sushi & ramen", flag: "🇯🇵" },
+          ].map((c) => (
+            <button
+              key={c.id}
+              onClick={() => onNavigate("country", c.id)}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/80 transition-colors"
+            >
+              <span className="text-base leading-none">{c.flag}</span>
+              <span className="truncate">{c.name}</span>
+            </button>
+          ))}
         </div>
       </div>
     </aside>

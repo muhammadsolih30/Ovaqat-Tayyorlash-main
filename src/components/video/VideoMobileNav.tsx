@@ -1,19 +1,12 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useVideoLang } from "@/contexts/VideoLangContext";
 import {
   Home,
   TrendingUp,
   Bookmark,
   Grid3X3,
-  Zap,
-  Salad,
-  Cake,
-  Leaf,
-  Coffee,
-  Sun,
+  Search,
   X,
-  ChevronRight,
-  Globe,
 } from "lucide-react";
 
 interface VideoMobileNavProps {
@@ -22,616 +15,437 @@ interface VideoMobileNavProps {
   onSearchOpen: () => void;
 }
 
-// ─── Davlat taomlari ma'lumotlari ─────────────────────────────────────────
-const countries = [
-  {
-    id: "italian",
-    flag: "🇮🇹",
-    name: "Italiya",
-    dish: "Pizza & Pasta",
-    img: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300&h=200&fit=crop",
-    gradient: "from-green-700 via-white to-red-600",
-    color: "#009246",
-  },
-  {
-    id: "japanese",
-    flag: "🇯🇵",
-    name: "Yaponiya",
-    dish: "Sushi & Ramen",
-    img: "https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=300&h=200&fit=crop",
-    gradient: "from-white to-red-500",
-    color: "#BC002D",
-  },
-  {
-    id: "american",
-    flag: "🇺🇸",
-    name: "Amerika",
-    dish: "Burger & BBQ",
-    img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&h=200&fit=crop",
-    gradient: "from-blue-700 via-white to-red-600",
-    color: "#3C3B6E",
-  },
-  {
-    id: "french",
-    flag: "🇫🇷",
-    name: "Fransiya",
-    dish: "Crêpe & Soufflé",
-    img: "https://images.unsplash.com/photo-1608855238293-a8853e7f7c98?w=300&h=200&fit=crop",
-    gradient: "from-blue-700 via-white to-red-600",
-    color: "#002395",
-  },
-  {
-    id: "korean",
-    flag: "🇰🇷",
-    name: "Koreya",
-    dish: "Bibimbap & Kimchi",
-    img: "https://images.unsplash.com/photo-1553163147-622ab57be1c7?w=300&h=200&fit=crop",
-    gradient: "from-white to-red-600",
-    color: "#CD2E3A",
-  },
-  {
-    id: "indian",
-    flag: "🇮🇳",
-    name: "Hindiston",
-    dish: "Curry & Biryani",
-    img: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=300&h=200&fit=crop",
-    gradient: "from-orange-500 via-white to-green-600",
-    color: "#FF9933",
-  },
-  {
-    id: "mexican",
-    flag: "🇲🇽",
-    name: "Meksika",
-    dish: "Tacos & Guacamole",
-    img: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=300&h=200&fit=crop",
-    gradient: "from-green-600 via-white to-red-600",
-    color: "#006847",
-  },
-  {
-    id: "chinese",
-    flag: "🇨🇳",
-    name: "Xitoy",
-    dish: "Dim Sum & Noodles",
-    img: "https://images.unsplash.com/photo-1563245372-f21724e3856d?w=300&h=200&fit=crop",
-    gradient: "from-red-600 to-yellow-500",
-    color: "#DE2910",
-  },
-  {
-    id: "turkish",
-    flag: "🇹🇷",
-    name: "Turkiya",
-    dish: "Kebab & Baklava",
-    img: "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=300&h=200&fit=crop",
-    gradient: "from-red-600 to-red-700",
-    color: "#E30A17",
-  },
-  {
-    id: "russian",
-    flag: "🇷🇺",
-    name: "Rossiya",
-    dish: "Borsch & Pelmeni",
-    img: "https://images.unsplash.com/photo-1546549032-9571cd6b27df?w=300&h=200&fit=crop",
-    gradient: "from-white via-blue-600 to-red-600",
-    color: "#003580",
-  },
-];
+const GOLD = "#F5A623";
 
 const VideoMobileNav = ({
   active,
   onNavigate,
   onSearchOpen,
 }: VideoMobileNavProps) => {
-  const { t, dark } = useVideoLang();
+  const { t } = useVideoLang();
   const [showCategories, setShowCategories] = useState(false);
-  const [showCountries, setShowCountries] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const dragStartY = useRef<number | null>(null);
+  const dragDelta = useRef(0);
+  const dragging = useRef(false);
 
   const tabs = [
-    { id: "home", label: t("home"), icon: Home },
-    { id: "trending", label: t("trending"), icon: TrendingUp },
-    {
-      id: "categories",
-      label: t("categories"),
-      icon: Grid3X3,
-      action: () => {
-        setShowCountries(false);
-        setShowCategories(true);
-      },
-    },
-    { id: "favorites", label: t("favorites"), icon: Bookmark },
-    { id: "world", label: "Dunyo", icon: Globe },
+    { id: "home", icon: Home, label: t("home") },
+    { id: "trending", icon: TrendingUp, label: t("trending") },
+    { id: "categories", icon: Grid3X3, label: t("categories") || "Bo'limlar", isCategory: true },
+    { id: "search", icon: Search, label: t("search").split(" ")[0] || "Qidiruv", isSearch: true },
+    { id: "favorites", icon: Bookmark, label: t("saved") || "Saqlangan" },
   ];
 
-  const cats = [
-    {
-      id: "quick",
-      label: t("quickMeals"),
-      emoji: "⚡",
-      icon: Zap,
-      color: "#f59e0b",
-    },
-    {
-      id: "healthy",
-      label: t("healthyFood"),
-      emoji: "🥗",
-      icon: Salad,
-      color: "#10b981",
-    },
-    {
-      id: "dessert",
-      label: t("desserts"),
-      emoji: "🍰",
-      icon: Cake,
-      color: "#ec4899",
-    },
-    {
-      id: "vegetarian",
-      label: t("vegetarian"),
-      emoji: "🥦",
-      icon: Leaf,
-      color: "#22c55e",
-    },
-    {
-      id: "breakfast",
-      label: t("breakfast"),
-      emoji: "☀️",
-      icon: Sun,
-      color: "#f97316",
-    },
-    { id: "bbq", label: t("bbq"), emoji: "🔥", icon: Coffee, color: "#ef4444" },
+  const categoryItems = [
+    { id: "uzbek", emoji: "🇺🇿", label: t("uzbekCuisine") },
+    { id: "world", emoji: "🌍", label: t("worldCuisine") },
+    { id: "quick", emoji: "⚡", label: t("quickMeals") },
+    { id: "healthy", emoji: "🥗", label: t("healthyFood") },
+    { id: "dessert", emoji: "🍰", label: t("desserts") },
+    { id: "bbq", emoji: "🔥", label: t("bbq") },
+    { id: "vegetarian", emoji: "🥦", label: t("vegetarian") },
+    { id: "breakfast", emoji: "☀️", label: t("breakfast") },
+    { id: "dinner", emoji: "🌙", label: t("dinner") },
   ];
 
-  const G = "#1DB954";
-  const navBg = dark ? "rgba(15,23,42,0.98)" : "rgba(21,128,61,0.97)";
-  const sheetBg = dark ? "#0f172a" : "#ffffff";
-  const textMain = dark ? "#f1f5f9" : "#111827";
-  const textMut = dark ? "#64748b" : "#9ca3af";
-  const cardBg = dark ? "rgba(255,255,255,0.04)" : "rgba(240,253,244,0.8)";
-  const cardBd = dark ? "rgba(255,255,255,0.06)" : "rgba(21,128,61,0.12)";
+  const handleTabClick = (tab: typeof tabs[0]) => {
+    if (tab.isCategory) {
+      setShowCategories((prev) => !prev);
+      setDragOffset(0);
+      return;
+    }
+    if (tab.isSearch) {
+      onSearchOpen();
+      return;
+    }
+    setShowCategories(false);
+    setDragOffset(0);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    onNavigate(tab.id);
+  };
+
+  const handleCategorySelect = (catId: string) => {
+    onNavigate(catId);
+    setShowCategories(false);
+  };
+
+  const closePanel = () => {
+    setShowCategories(false);
+    setDragOffset(0);
+  };
+
+  // Drag handlers
+  const startDrag = (y: number) => {
+    dragStartY.current = y;
+    dragDelta.current = 0;
+    dragging.current = true;
+  };
+  const moveDrag = (y: number) => {
+    if (!dragging.current || dragStartY.current === null) return;
+    const delta = y - dragStartY.current;
+    dragDelta.current = delta;
+    if (delta > 0) setDragOffset(Math.min(delta, 400));
+  };
+  const endDrag = () => {
+    if (dragDelta.current > 80) closePanel();
+    else setDragOffset(0);
+    dragging.current = false;
+    dragStartY.current = null;
+    dragDelta.current = 0;
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => startDrag(e.touches[0].clientY);
+  const onTouchMove = (e: React.TouchEvent) => moveDrag(e.touches[0].clientY);
+  const onTouchEnd = () => endDrag();
+  const onMouseDown = (e: React.MouseEvent) => {
+    startDrag(e.clientY);
+    const mv = (ev: MouseEvent) => moveDrag(ev.clientY);
+    const up = () => {
+      endDrag();
+      window.removeEventListener("mousemove", mv);
+      window.removeEventListener("mouseup", up);
+    };
+    window.addEventListener("mousemove", mv);
+    window.addEventListener("mouseup", up);
+  };
+
+  const activeId = showCategories ? "categories" : active;
+  const panelVisible = showCategories && dragOffset < 350;
+  const NAV_HEIGHT = 80;
 
   return (
     <>
-      {/* ══════════════════════════════════════════
-          KATEGORIYALAR BOTTOM SHEET
-      ══════════════════════════════════════════ */}
+      {/* Backdrop */}
       {showCategories && (
-        <>
-          <div
-            className="fixed inset-0 z-[60]"
-            style={{
-              background: "rgba(0,0,0,0.5)",
-              backdropFilter: "blur(6px)",
-            }}
-            onClick={() => setShowCategories(false)}
-          />
+        <div
+          onClick={closePanel}
+          className="md:hidden"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 48,
+            background: "rgba(0,0,0,0.6)",
+            backdropFilter: "blur(8px)",
+          }}
+        />
+      )}
 
+      {/* Categories Panel */}
+      <div
+        className="md:hidden"
+        style={{
+          position: "fixed",
+          left: 0,
+          right: 0,
+          bottom: NAV_HEIGHT,
+          zIndex: 49,
+          maxHeight: "70vh",
+          transform: showCategories
+            ? `translateY(${dragOffset}px)`
+            : "translateY(110%)",
+          transition: dragging.current
+            ? "none"
+            : showCategories
+              ? "transform 0.44s cubic-bezier(0.34,1.3,0.64,1)"
+              : "transform 0.28s cubic-bezier(0.55,0,0.45,1)",
+          pointerEvents: showCategories ? "auto" : "none",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            maxHeight: "70vh",
+            background: "rgba(15, 15, 22, 0.95)",
+            backdropFilter: "blur(30px)",
+            borderRadius: "28px 28px 0 0",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderBottom: "none",
+            boxShadow: "0 -8px 40px rgba(0,0,0,0.4)",
+            overflow: "hidden",
+          }}
+        >
+          {/* Header with drag handle */}
           <div
-            className="fixed bottom-0 left-0 right-0 z-[70] rounded-t-[28px]"
-            style={{
-              background: sheetBg,
-              boxShadow: "0 -12px 60px rgba(0,0,0,0.3)",
-              animation: "slideUp .28s cubic-bezier(.32,1.2,.4,1)",
-              paddingBottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
-            }}
+            style={{ flexShrink: 0, cursor: "grab", userSelect: "none" }}
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+            onMouseDown={onMouseDown}
           >
-            {/* Handle */}
-            <div className="flex justify-center pt-3 pb-2">
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                padding: "12px 0 0",
+              }}
+            >
               <div
-                className="w-12 h-1.5 rounded-full"
                 style={{
-                  background: dark
-                    ? "rgba(255,255,255,0.12)"
-                    : "rgba(0,0,0,0.1)",
+                  width: 40,
+                  height: 4,
+                  borderRadius: 99,
+                  background: "rgba(255,255,255,0.15)",
                 }}
               />
             </div>
-
-            {/* Sarlavha */}
-            <div className="flex items-center justify-between px-5 pb-4">
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "10px 20px 12px",
+              }}
+            >
               <div>
-                <h3
-                  className="font-black text-lg leading-tight"
+                <p
                   style={{
-                    fontFamily: "'Plus Jakarta Sans',sans-serif",
-                    color: textMain,
+                    margin: 0,
+                    fontSize: 18,
+                    fontWeight: 800,
+                    color: "var(--text-primary)",
+                    fontFamily: "var(--font-display)",
                   }}
                 >
-                  {t("categories")}
-                </h3>
-                <p className="text-xs mt-0.5" style={{ color: textMut }}>
+                  {t("categories") || "Kategoriyalar"}
+                </p>
+                <p
+                  style={{
+                    margin: "3px 0 0",
+                    fontSize: 12,
+                    color: "var(--text-muted)",
+                  }}
+                >
                   Taom turini tanlang
                 </p>
               </div>
               <button
-                onClick={() => setShowCategories(false)}
-                className="w-9 h-9 rounded-2xl flex items-center justify-center"
+                onClick={closePanel}
                 style={{
-                  background: dark
-                    ? "rgba(255,255,255,0.08)"
-                    : "rgba(21,128,61,0.08)",
-                  color: dark ? "#94a3b8" : "#15803d",
+                  width: 32,
+                  height: 32,
+                  borderRadius: 12,
+                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  color: "var(--text-muted)",
                 }}
               >
-                <X size={18} />
+                <X size={14} />
               </button>
             </div>
-
-            {/* O'zbek taomlari — keng banner */}
-            <div className="px-4 mb-3">
-              <button
-                onClick={() => {
-                  onNavigate("uzbek");
-                  setShowCategories(false);
-                }}
-                className="w-full relative rounded-2xl overflow-hidden flex items-center gap-4 p-4 text-left active:scale-[0.98] transition-all"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #15803d 0%, #166534 40%, #1DB954 100%)",
-                  boxShadow: "0 6px 25px rgba(21,128,61,0.45)",
-                  minHeight: "80px",
-                }}
-              >
-                {/* bg pattern */}
-                <div
-                  className="absolute inset-0 opacity-10"
-                  style={{
-                    background:
-                      "radial-gradient(circle at 80% 50%, white 0%, transparent 60%)",
-                  }}
-                />
-                <div
-                  className="relative w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0"
-                  style={{
-                    background: "rgba(255,255,255,0.18)",
-                    backdropFilter: "blur(8px)",
-                  }}
-                >
-                  🇺🇿
-                </div>
-                <div className="relative">
-                  <p
-                    className="font-black text-base text-white"
-                    style={{ fontFamily: "'Plus Jakarta Sans',sans-serif" }}
-                  >
-                    {t("uzbekCuisine")}
-                  </p>
-                  <p className="text-white/70 text-xs mt-0.5">
-                    Palov, Lagman, Somsa...
-                  </p>
-                </div>
-                <div className="relative ml-auto">
-                  <ChevronRight size={20} className="text-white/70" />
-                </div>
-              </button>
-            </div>
-
-            {/* 6 ta kategoriya — 2x3 grid */}
-            <div className="grid grid-cols-3 gap-2.5 px-4 mb-3">
-              {cats.map(({ id, label, emoji, color }) => (
-                <button
-                  key={id}
-                  onClick={() => {
-                    onNavigate(id);
-                    setShowCategories(false);
-                  }}
-                  className="flex flex-col items-center gap-2 p-3 rounded-2xl text-center active:scale-95 transition-all"
-                  style={{
-                    background: active === id ? color + "18" : cardBg,
-                    border: `1.5px solid ${active === id ? color + "50" : cardBd}`,
-                  }}
-                >
-                  <div
-                    className="w-11 h-11 rounded-2xl flex items-center justify-center text-2xl"
-                    style={{
-                      background: color + "15",
-                      border: `1px solid ${color}25`,
-                    }}
-                  >
-                    {emoji}
-                  </div>
-                  <span
-                    className="text-[11px] font-bold leading-tight"
-                    style={{
-                      fontFamily: "'Plus Jakarta Sans',sans-serif",
-                      color: active === id ? color : textMain,
-                    }}
-                  >
-                    {label}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            {/* Davlat taomlari tugmasi */}
-            <div className="px-4">
-              <button
-                onClick={() => {
-                  setShowCategories(false);
-                  setTimeout(() => setShowCountries(true), 50);
-                }}
-                className="w-full flex items-center gap-4 p-4 rounded-2xl text-left active:scale-[0.98] transition-all"
-                style={{
-                  background: dark
-                    ? "linear-gradient(135deg,rgba(59,130,246,0.15),rgba(139,92,246,0.12))"
-                    : "linear-gradient(135deg,rgba(59,130,246,0.08),rgba(139,92,246,0.06))",
-                  border: "1.5px solid rgba(99,102,241,0.25)",
-                }}
-              >
-                <div
-                  className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
-                  style={{
-                    background:
-                      "linear-gradient(135deg,rgba(59,130,246,0.2),rgba(139,92,246,0.2))",
-                  }}
-                >
-                  🌍
-                </div>
-                <div className="flex-1">
-                  <p
-                    className="font-black text-sm"
-                    style={{
-                      fontFamily: "'Plus Jakarta Sans',sans-serif",
-                      color: textMain,
-                    }}
-                  >
-                    Davlat Taomlari
-                  </p>
-                  <p className="text-xs mt-0.5" style={{ color: textMut }}>
-                    10+ mamlakat oshxonasi
-                  </p>
-                </div>
-                <ChevronRight size={18} style={{ color: "#6366f1" }} />
-              </button>
-            </div>
+            <div
+              style={{
+                height: 1,
+                background:
+                  "linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)",
+                margin: "0 20px",
+              }}
+            />
           </div>
-        </>
-      )}
 
-      {/* ══════════════════════════════════════════
-          DAVLAT TAOMLARI BOTTOM SHEET (70%)
-      ══════════════════════════════════════════ */}
-      {showCountries && (
-        <>
+          {/* Category list */}
           <div
-            className="fixed inset-0 z-[60]"
             style={{
-              background: "rgba(0,0,0,0.55)",
-              backdropFilter: "blur(6px)",
-            }}
-            onClick={() => setShowCountries(false)}
-          />
-
-          <div
-            className="fixed bottom-0 left-0 right-0 z-[70] rounded-t-[28px] overflow-hidden"
-            style={{
-              height: "70vh",
-              background: sheetBg,
-              boxShadow: "0 -12px 60px rgba(0,0,0,0.35)",
-              animation: "slideUp .28s cubic-bezier(.32,1.2,.4,1)",
-              display: "flex",
-              flexDirection: "column",
+              flex: 1,
+              overflowY: "auto",
+              padding: "14px 14px 20px",
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 8,
             }}
           >
-            {/* Handle */}
-            <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-              <div
-                className="w-12 h-1.5 rounded-full"
-                style={{
-                  background: dark
-                    ? "rgba(255,255,255,0.12)"
-                    : "rgba(0,0,0,0.1)",
-                }}
-              />
-            </div>
-
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-3 flex-shrink-0">
-              <div className="flex items-center gap-3">
-                {/* Back to categories */}
-                <button
-                  onClick={() => {
-                    setShowCountries(false);
-                    setTimeout(() => setShowCategories(true), 50);
-                  }}
-                  className="w-8 h-8 rounded-xl flex items-center justify-center"
-                  style={{
-                    background: dark
-                      ? "rgba(255,255,255,0.08)"
-                      : "rgba(21,128,61,0.08)",
-                    color: dark ? "#94a3b8" : "#15803d",
-                  }}
-                >
-                  ←
-                </button>
-                <div>
-                  <h3
-                    className="font-black text-base leading-tight"
-                    style={{
-                      fontFamily: "'Plus Jakarta Sans',sans-serif",
-                      color: textMain,
-                    }}
-                  >
-                    🌍 Davlat Taomlari
-                  </h3>
-                  <p className="text-xs" style={{ color: textMut }}>
-                    {countries.length} ta mamlakat
-                  </p>
-                </div>
-              </div>
+            {categoryItems.map((cat, i) => (
               <button
-                onClick={() => setShowCountries(false)}
-                className="w-9 h-9 rounded-2xl flex items-center justify-center"
+                key={cat.id}
+                onClick={() => handleCategorySelect(cat.id)}
                 style={{
-                  background: dark
-                    ? "rgba(255,255,255,0.08)"
-                    : "rgba(0,0,0,0.06)",
-                  color: dark ? "#94a3b8" : "#6b7280",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "12px 14px",
+                  borderRadius: 16,
+                  background:
+                    active === cat.id
+                      ? "rgba(245,166,35,0.1)"
+                      : "rgba(255,255,255,0.03)",
+                  border: `1px solid ${active === cat.id ? "rgba(245,166,35,0.2)" : "rgba(255,255,255,0.05)"}`,
+                  cursor: "pointer",
+                  textAlign: "left",
+                  opacity: panelVisible ? 1 : 0,
+                  transform: panelVisible ? "translateY(0)" : "translateY(10px)",
+                  transition: `opacity 0.25s ease ${i * 0.03}s, transform 0.3s ease ${i * 0.03}s`,
                 }}
               >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Scrollable list */}
-            <div
-              className="flex-1 overflow-y-auto px-4 pb-6 space-y-3"
-              style={{
-                paddingBottom: "calc(24px + env(safe-area-inset-bottom, 0px))",
-              }}
-            >
-              {countries.map(({ id, flag, name, dish, img, color }) => (
-                <button
-                  key={id}
-                  onClick={() => {
-                    onNavigate(id);
-                    setShowCountries(false);
-                  }}
-                  className="w-full relative rounded-2xl overflow-hidden flex items-center gap-0 text-left active:scale-[0.98] transition-all"
+                <span
                   style={{
-                    background: dark ? "rgba(30,41,59,0.8)" : "white",
-                    border: `1.5px solid ${dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)"}`,
-                    boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
-                    minHeight: "80px",
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    background: "rgba(255,255,255,0.05)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 18,
                   }}
                 >
-                  {/* Ovqat rasmi — o'ng tomon */}
-                  <div className="relative w-28 h-20 flex-shrink-0 overflow-hidden">
-                    <img
-                      src={img}
-                      alt={name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => (e.currentTarget.style.display = "none")}
-                    />
-                    {/* gradient overlay */}
-                    <div
-                      className="absolute inset-0"
-                      style={{
-                        background:
-                          "linear-gradient(to right, rgba(0,0,0,0) 50%, rgba(0,0,0,0.1) 100%)",
-                      }}
-                    />
-                  </div>
-
-                  {/* Ma'lumotlar */}
-                  <div className="flex-1 px-4 py-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      {/* Bayroq */}
-                      <span className="text-2xl leading-none">{flag}</span>
-                      <span
-                        className="font-black text-base leading-tight"
-                        style={{
-                          fontFamily: "'Plus Jakarta Sans',sans-serif",
-                          color: textMain,
-                        }}
-                      >
-                        {name}
-                      </span>
-                    </div>
-                    <p
-                      className="text-xs font-medium"
-                      style={{ color: textMut }}
-                    >
-                      {dish}
-                    </p>
-                    {/* Rang chizig'i */}
-                    <div
-                      className="h-1 w-10 rounded-full mt-2"
-                      style={{ background: color }}
-                    />
-                  </div>
-
-                  {/* Ok */}
-                  <div className="pr-4 flex-shrink-0">
-                    <div
-                      className="w-7 h-7 rounded-xl flex items-center justify-center"
-                      style={{ background: color + "18" }}
-                    >
-                      <ChevronRight size={15} style={{ color }} />
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
+                  {cat.emoji}
+                </span>
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: active === cat.id ? GOLD : "var(--text-secondary)",
+                    fontFamily: "var(--font-display)",
+                  }}
+                >
+                  {cat.label}
+                </span>
+              </button>
+            ))}
           </div>
-        </>
-      )}
+        </div>
+      </div>
 
-      {/* ══════════════════════════════════════════
-          PASTKI NAVIGATSIYA — 5 TA TAB
-      ══════════════════════════════════════════ */}
+      {/* ═══ BOTTOM NAV ═══ */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 md:hidden"
+        className="md:hidden"
         style={{
-          background: navBg,
-          backdropFilter: "blur(20px)",
-          boxShadow: "0 -4px 30px rgba(0,0,0,0.25)",
-          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 100,
+          padding: "8px 12px",
+          paddingBottom: "calc(env(safe-area-inset-bottom,0px) + 8px)",
         }}
       >
-        <div className="flex items-center justify-around h-16 px-1">
-          {tabs.map(({ id, label, icon: Icon, action }) => {
-            const isActive =
-              active === id ||
-              (id === "categories" && (showCategories || showCountries));
+        {/* Glow */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: "10%",
+            right: "10%",
+            height: 40,
+            background:
+              "radial-gradient(ellipse at center, rgba(245,166,35,0.2) 0%, transparent 70%)",
+            pointerEvents: "none",
+            filter: "blur(16px)",
+          }}
+        />
+        <div
+          style={{
+            position: "relative",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-around",
+            borderRadius: 24,
+            padding: "6px 4px",
+            background: "rgba(12, 12, 18, 0.9)",
+            backdropFilter: "blur(30px)",
+            WebkitBackdropFilter: "blur(30px)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            boxShadow:
+              "0 -4px 30px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)",
+          }}
+        >
+          {/* Top shine line */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: "15%",
+              right: "15%",
+              height: 1,
+              background:
+                "linear-gradient(90deg, transparent, rgba(245,166,35,0.3) 30%, rgba(245,166,35,0.5) 50%, rgba(245,166,35,0.3) 70%, transparent)",
+              borderRadius: 99,
+              pointerEvents: "none",
+            }}
+          />
+
+          {tabs.map(({ id, icon: Icon, label, isCategory, isSearch }) => {
+            const isActive = id === activeId;
             return (
               <button
                 key={id}
-                onClick={() => (action ? action() : onNavigate(id))}
-                className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-all relative"
-                style={{ color: isActive ? "white" : "rgba(255,255,255,0.4)" }}
+                onClick={() => handleTabClick({ id, icon: Icon, label, isCategory, isSearch } as any)}
+                style={{
+                  position: "relative",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 4,
+                  flex: 1,
+                  padding: "6px 0 4px",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  WebkitTapHighlightColor: "transparent",
+                }}
               >
-                {/* O'rtadagi kategoriyalar tugmasi — alohida dizayn */}
-                {id === "categories" ? (
-                  <div className="flex flex-col items-center gap-0.5">
-                    <div
-                      className="w-12 h-8 rounded-2xl flex items-center justify-center transition-all"
-                      style={{
-                        background: isActive
-                          ? "rgba(255,255,255,0.25)"
-                          : "rgba(255,255,255,0.12)",
-                        border: "1.5px solid rgba(255,255,255,0.2)",
-                      }}
-                    >
-                      <Icon size={17} strokeWidth={isActive ? 2.5 : 1.8} />
-                    </div>
-                    <span
-                      className="text-[9px] font-bold tracking-wide"
-                      style={{ fontFamily: "'Plus Jakarta Sans',sans-serif" }}
-                    >
-                      {label}
-                    </span>
-                  </div>
-                ) : (
-                  <>
-                    {isActive ? (
-                      <div
-                        className="w-9 h-9 rounded-full flex items-center justify-center mb-0.5"
-                        style={{ background: "rgba(255,255,255,0.2)" }}
-                      >
-                        <Icon size={18} strokeWidth={2.5} />
-                      </div>
-                    ) : (
-                      <Icon size={20} strokeWidth={1.7} className="mb-0.5" />
-                    )}
-                    <span
-                      className="text-[9px] font-bold tracking-wide"
-                      style={{ fontFamily: "'Plus Jakarta Sans',sans-serif" }}
-                    >
-                      {label}
-                    </span>
-                  </>
-                )}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 44,
+                    height: 44,
+                    borderRadius: isActive ? 99 : 14,
+                    background: isActive
+                      ? "linear-gradient(135deg, rgba(245,166,35,0.2), rgba(245,166,35,0.1))"
+                      : "transparent",
+                    border: isActive
+                      ? "1.5px solid rgba(245,166,35,0.3)"
+                      : "1.5px solid transparent",
+                    transition: "all 0.35s cubic-bezier(0.34,1.4,0.64,1)",
+                    transform: isActive
+                      ? "translateY(-2px) scale(1.05)"
+                      : "translateY(0) scale(1)",
+                    boxShadow: isActive
+                      ? "0 4px 16px rgba(245,166,35,0.15)"
+                      : "none",
+                  }}
+                >
+                  <Icon
+                    size={20}
+                    strokeWidth={isActive ? 2.2 : 1.5}
+                    style={{
+                      color: isActive ? GOLD : "rgba(255,255,255,0.35)",
+                      filter: isActive
+                        ? "drop-shadow(0 0 6px rgba(245,166,35,0.5))"
+                        : "none",
+                      transition: "all 0.3s",
+                    }}
+                  />
+                </div>
+                <span
+                  style={{
+                    fontSize: 9,
+                    fontWeight: isActive ? 800 : 500,
+                    color: isActive ? GOLD : "rgba(255,255,255,0.3)",
+                    lineHeight: 1,
+                    fontFamily: "var(--font-display)",
+                    filter: isActive
+                      ? "drop-shadow(0 0 4px rgba(245,166,35,0.4))"
+                      : "none",
+                    transition: "all 0.3s",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {label}
+                </span>
               </button>
             );
           })}
         </div>
       </nav>
-
-      <style>{`
-        @keyframes slideUp {
-          from { transform: translateY(100%); opacity: 0; }
-          to   { transform: translateY(0);    opacity: 1; }
-        }
-      `}</style>
     </>
   );
 };

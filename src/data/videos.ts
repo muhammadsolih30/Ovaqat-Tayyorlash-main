@@ -33,6 +33,17 @@ const thumb = (id: string, w = 640, h = 360) =>
   `https://images.unsplash.com/photo-${id}?w=${w}&h=${h}&fit=crop&auto=format`;
 
 export const chefs: Chef[] = [
+  {
+    id: 'c_pazanda',
+    name: 'PAZANDA.UZ (Dilafruz)',
+    avatar: 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=150&h=150&fit=crop',
+    specialty: {
+      uz: "O'zbek Pazandasi va Qandolatchi",
+      en: 'Uzbek Chef & Pastry Master',
+      ru: 'Узбекский кулинар и кондитер',
+    },
+    videos: 52,
+  },
   { id: 'c1', name: 'Aziz Karimov', avatar: 'https://i.pravatar.cc/150?img=11', specialty: { uz: "O'zbek oshpazi", en: 'Uzbek Chef', ru: 'Узбекский повар' }, videos: 42 },
   { id: 'c2', name: 'Maria Rossi', avatar: 'https://i.pravatar.cc/150?img=23', specialty: { uz: 'Italiya oshpazi', en: 'Italian Chef', ru: 'Итальянский повар' }, videos: 35 },
   { id: 'c3', name: 'Yuki Tanaka', avatar: 'https://i.pravatar.cc/150?img=47', specialty: { uz: 'Yapon oshpazi', en: 'Japanese Chef', ru: 'Японский повар' }, videos: 28 },
@@ -571,12 +582,18 @@ export const videos: Video[] = [
   },
 ];
 
-export const featuredVideos = videos.filter(v => v.featured);
-export const trendingVideos = [...videos].sort((a, b) => b.views - a.views).slice(0, 8);
-export const uzbekVideos = videos.filter(v => v.cuisine === 'uzbek');
-export const worldVideos = videos.filter(v => v.cuisine !== 'uzbek');
-export const quickVideos = videos.filter(v => v.cookTime <= 30);
-export const dessertVideos = videos.filter(v => v.category === 'dessert');
+import { pazandaVideos } from "./pazandaVideos";
+
+export const allVideos: Video[] = [...pazandaVideos, ...videos];
+export { videos as rawVideos };
+export { allVideos as videos };
+
+export const featuredVideos = allVideos.filter(v => v.featured);
+export const trendingVideos = [...allVideos].sort((a, b) => b.views - a.views).slice(0, 12);
+export const uzbekVideos = allVideos.filter(v => v.cuisine === 'uzbek');
+export const worldVideos = allVideos.filter(v => v.cuisine !== 'uzbek');
+export const quickVideos = allVideos.filter(v => v.cookTime <= 30);
+export const dessertVideos = allVideos.filter(v => v.category === 'dessert');
 
 export function formatViews(views: number): string {
   if (views >= 1000000) return `${(views / 1000000).toFixed(1)}M`;

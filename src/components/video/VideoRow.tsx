@@ -8,9 +8,11 @@ interface VideoRowProps {
   videos: Video[];
   onSelectVideo: (id: string) => void;
   onSeeAll?: () => void;
-  savedIds?: string[];
-  onToggleSave?: (id: string) => void;
+  savedIds: string[];
+  onToggleSave: (id: string) => void;
 }
+
+const GOLD = "#F5A623";
 
 const VideoRow = ({
   title,
@@ -20,16 +22,18 @@ const VideoRow = ({
   savedIds,
   onToggleSave,
 }: VideoRowProps) => {
-  const { t, dark } = useVideoLang();
+  const { t } = useVideoLang();
+
+  if (!videos.length) return null;
 
   return (
-    <section className="mb-10">
-      <div className="flex items-center justify-between mb-4 px-1">
+    <section className="mb-12 animate-fade-in">
+      <div className="flex items-center justify-between mb-5 px-1">
         <h2
           className="font-black text-xl"
           style={{
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
-            color: dark ? "#f1f5f9" : "#111827",
+            fontFamily: "var(--font-display)",
+            color: "var(--text-primary)",
           }}
         >
           {title}
@@ -37,23 +41,26 @@ const VideoRow = ({
         {onSeeAll && (
           <button
             onClick={onSeeAll}
-            className="flex items-center gap-1 text-sm font-semibold transition-opacity hover:opacity-70"
+            className="flex items-center gap-1 text-sm font-semibold transition-all group"
             style={{
-              color: "#1DB954",
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              color: GOLD,
+              fontFamily: "var(--font-display)",
             }}
           >
-            {t("seeAll")} <ChevronRight size={16} />
+            {t("seeAll")}
+            <ChevronRight
+              size={16}
+              className="transition-transform group-hover:translate-x-1"
+            />
           </button>
         )}
       </div>
-      {/* Horizontal scroll on mobile, grid on desktop */}
-      <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 md:grid md:grid-cols-4 md:overflow-visible md:pb-0">
-        {videos.map((video) => (
-          <div key={video.id} className="flex-shrink-0 w-64 md:w-auto">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {videos.map((v, i) => (
+          <div key={v.id} className={`animate-card-in stagger-${i + 1}`}>
             <VideoCard
-              video={video}
-              onClick={() => onSelectVideo(video.id)}
+              video={v}
+              onClick={() => onSelectVideo(v.id)}
               savedIds={savedIds}
               onToggleSave={onToggleSave}
             />
