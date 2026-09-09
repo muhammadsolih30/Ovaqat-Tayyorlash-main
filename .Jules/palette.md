@@ -1,0 +1,1 @@
+## 2024-05-18 - Missing ARIA Labels on Mobile Nav Close Buttons\n**Learning:** Icon-only close buttons in navigation panels (`BottomNav.tsx`, `VideoMobileNav.tsx`) lacked `aria-label`s, making them inaccessible to screen readers.\n**Action:** Always verify that icon-only buttons (`<button><Icon/></button>`) have localized `aria-label` attributes for accessibility.
