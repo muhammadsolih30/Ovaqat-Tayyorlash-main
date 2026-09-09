@@ -106,7 +106,6 @@ export const LoginModal: React.FC = () => {
               <input
                 type="password"
                 required
-                defaultValue="secret123"
                 placeholder="••••••••"
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-zinc-900/90 border border-zinc-700/80 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
               />

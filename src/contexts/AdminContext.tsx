@@ -2,8 +2,8 @@ import React, { createContext, useContext, useState, ReactNode } from "react";
 import { Video, videos as defaultVideos } from "@/data/videos";
 import { Recipe, recipes as defaultRecipes } from "@/data/recipes";
 
-const SUPER_ADMIN_USER = "muhammadsolih";
-const SUPER_ADMIN_PASS = "muhammadsolih2234";
+const SUPER_ADMIN_USER = import.meta.env.VITE_SUPER_ADMIN_USER || "";
+const SUPER_ADMIN_PASS = import.meta.env.VITE_SUPER_ADMIN_PASS || "";
 
 export interface LoginLog {
   id: string;
