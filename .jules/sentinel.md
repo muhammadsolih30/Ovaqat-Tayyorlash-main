@@ -1,0 +1,4 @@
+## 2025-03-07 - [CRITICAL] Fixed Hardcoded Admin Credentials
+**Vulnerability:** Found hardcoded Super Admin credentials (`SUPER_ADMIN_USER` and `SUPER_ADMIN_PASS`) embedded directly in `src/contexts/AdminContext.tsx`.
+**Learning:** Hardcoding credentials in frontend code exposes them to source control and to end-users (as React code is served to the client). Even though this seems to be an admin panel, keeping secrets in client-side code is a major security risk.
+**Prevention:** Always use environment variables (e.g. `import.meta.env`) for sensitive configurations and never commit secrets into the codebase. Ensure authentication happens on a secure backend when possible.
