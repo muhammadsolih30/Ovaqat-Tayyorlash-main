@@ -113,6 +113,7 @@ export const ChefProfile: React.FC<ChefProfileProps> = ({
             }}
             className="p-2.5 rounded-full bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-300 transition-colors"
             title="Kanalni ulashish"
+            aria-label="Kanalni ulashish"
           >
             <Share2 size={18} />
           </button>
