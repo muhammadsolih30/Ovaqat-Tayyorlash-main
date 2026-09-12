@@ -151,6 +151,7 @@ export const VideoCardYT: React.FC<VideoCardYTProps> = ({
               : "bg-black/60 text-zinc-300 hover:text-white hover:bg-black/80 opacity-0 group-hover:opacity-100"
           }`}
           title={isSaved ? "Saqlanganlardan o'chirish" : "Keyinroq ko'rish"}
+          aria-label={isSaved ? "Saqlanganlardan o'chirish" : "Keyinroq ko'rish"}
         >
           <Bookmark size={14} fill={isSaved ? "currentColor" : "none"} />
         </button>

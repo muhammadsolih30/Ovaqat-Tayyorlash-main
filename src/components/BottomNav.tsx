@@ -250,6 +250,7 @@ const BottomNav = ({
                   cursor: "pointer",
                   color: "#666",
                 }}
+                aria-label={lang === "uz" ? "Yopish" : "Close"}
               >
                 <X size={16} />
               </button>

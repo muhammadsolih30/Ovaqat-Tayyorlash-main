@@ -181,6 +181,7 @@ const VideoCard = ({
                 : "none",
               transform: saved ? "scale(1.1)" : "scale(1)",
             }}
+            aria-label={saved ? t("unsave") || "Saqlanganlardan o'chirish" : t("save") || "Saqlash"}
           >
             <Bookmark size={13} fill={saved ? "currentColor" : "none"} />
           </button>
