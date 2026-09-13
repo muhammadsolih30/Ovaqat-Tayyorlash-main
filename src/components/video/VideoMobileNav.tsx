@@ -221,6 +221,7 @@ const VideoMobileNav = ({
                 </p>
               </div>
               <button
+                aria-label="Yopish"
                 onClick={closePanel}
                 style={{
                   width: 32,

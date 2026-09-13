@@ -164,6 +164,7 @@ const VideoCard = ({
         {/* Save button */}
         {onToggleSave && (
           <button
+            aria-label={saved ? "Saqlanganlardan olib tashlash" : "Saqlash"}
             onClick={(e) => {
               e.stopPropagation();
               onToggleSave(video.id);
