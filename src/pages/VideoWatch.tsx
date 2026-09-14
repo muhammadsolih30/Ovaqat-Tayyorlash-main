@@ -168,10 +168,7 @@ export const VideoWatch = ({
         {/* LEFT COLUMN (70%): Player + Info + Recipe breakdown + Comments */}
         <div className="min-w-0">
           {/* 1. Video Player */}
-<<<<<<< Updated upstream
-          <div className="relative w-full aspect-video rounded-3xl overflow-hidden bg-black shadow-2xl border border-zinc-200 dark:border-zinc-800/80">
-            {isPlaying ? (
-=======
+
           <div className="relative w-full aspect-video rounded-3xl overflow-hidden bg-black shadow-2xl border border-zinc-800/80">
             {!isOnline ? (
               <div className="relative w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">
@@ -190,7 +187,6 @@ export const VideoWatch = ({
                 </div>
               </div>
             ) : isPlaying ? (
->>>>>>> Stashed changes
               <iframe
                 src={`${video.videoUrl}?autoplay=1`}
                 title={video.title[lang] || video.title.uz}
