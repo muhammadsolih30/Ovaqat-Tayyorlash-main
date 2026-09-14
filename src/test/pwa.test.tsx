@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import OfflineIndicator from "@/components/pwa/OfflineIndicator";
 import SafeImage from "@/components/ui/SafeImage";
 
+
 describe("PWA and Offline Support", () => {
   beforeEach(() => {
     Object.defineProperty(navigator, "onLine", {
