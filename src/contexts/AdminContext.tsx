@@ -3,7 +3,17 @@ import { Video, videos as defaultVideos } from "@/data/videos";
 import { Recipe, recipes as defaultRecipes } from "@/data/recipes";
 
 const SUPER_ADMIN_USER = "muhammadsolih";
-const SUPER_ADMIN_PASS = "muhammadsolih2234";
+// Security: Passwords are hashed using SHA-256 to avoid storing plaintext credentials in the source code
+const SUPER_ADMIN_PASS_HASH = "83fba4e0976dd2b82071cb4b1dd83c25e70706137ccd2648b8e3ab5c4ed14533";
+
+// Helper function to hash a password using SHA-256
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+}
 
 export interface LoginLog {
   id: string;
@@ -40,7 +50,7 @@ export interface SiteUser {
 interface AdminContextType {
   isAdmin: boolean;
   currentAdmin: AdminUser | null;
-  adminLogin: (user: string, pass: string) => boolean;
+  adminLogin: (user: string, pass: string) => Promise<boolean>;
   adminLogout: () => void;
   loginLogs: LoginLog[];
   // Videos
@@ -129,7 +139,7 @@ const demoAdminUsers: AdminUser[] = [
   {
     id: "a1",
     username: "oshpaz_sarvar",
-    password: "sarvar123",
+    password: "efecc4a081f58a34428408210161b5b40cc69c18f0e95d1206746852fa4d2fac", // Hash for sarvar123
     name: "Sarvar Rahimov",
     role: "chef",
     blocked: false,
@@ -140,7 +150,7 @@ const demoAdminUsers: AdminUser[] = [
   {
     id: "a2",
     username: "oshpaz_nilufar",
-    password: "nilufar456",
+    password: "001f34d6cdcdd6f8db0fbbb070770c956391903559dbe87b089cbc4da0734fdd", // Hash for nilufar456
     name: "Nilufar Hasanova",
     role: "chef",
     blocked: false,
@@ -192,13 +202,14 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     setLoginLogs((p) => [log, ...p].slice(0, 50));
   };
 
-  const adminLogin = (user: string, pass: string): boolean => {
-    if (user.trim() === SUPER_ADMIN_USER && pass === SUPER_ADMIN_PASS) {
+  const adminLogin = async (user: string, pass: string): Promise<boolean> => {
+    const hash = await hashPassword(pass);
+    if (user.trim() === SUPER_ADMIN_USER && hash === SUPER_ADMIN_PASS_HASH) {
       setIsAdmin(true);
       setCurrentAdmin({
         id: "super",
         username: SUPER_ADMIN_USER,
-        password: "",
+        password: "", // Avoid storing hashed passwords in state
         name: "Muhammad Solih",
         role: "super",
         blocked: false,
@@ -209,6 +220,19 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
       addLog(user, "success");
       return true;
     }
+
+    const chef = adminUsers.find(a => a.username === user.trim() && a.password === hash);
+    if (chef) {
+      if (chef.blocked) {
+        addLog(user, "failed");
+        return false;
+      }
+      setIsAdmin(true);
+      setCurrentAdmin(chef);
+      addLog(user, "success");
+      return true;
+    }
+
     addLog(user, "failed");
     return false;
   };

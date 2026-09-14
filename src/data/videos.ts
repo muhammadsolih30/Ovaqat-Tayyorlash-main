@@ -66,7 +66,7 @@ export const categories = [
   { id: 'trending', label: { uz: 'Trend', en: 'Trending', ru: 'В тренде' }, icon: '📈' },
 ];
 
-export const videos: Video[] = [
+const _videos: Video[] = [
   // ===== UZBEK CUISINE =====
   {
     id: 'v1',
@@ -584,8 +584,8 @@ export const videos: Video[] = [
 
 import { pazandaVideos } from "./pazandaVideos";
 
-export const allVideos: Video[] = [...pazandaVideos, ...videos];
-export { videos as rawVideos };
+export const allVideos: Video[] = [...pazandaVideos, ..._videos];
+export { _videos as rawVideos };
 export { allVideos as videos };
 
 export const featuredVideos = allVideos.filter(v => v.featured);

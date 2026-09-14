@@ -34,7 +34,7 @@ const AdminLogin = ({ onSuccess, onBack }: AdminLoginProps) => {
 
     await new Promise((r) => setTimeout(r, 800));
 
-    const ok = adminLogin(username.trim(), password);
+    const ok = await adminLogin(username.trim(), password);
     setLoading(false);
 
     if (ok) {
