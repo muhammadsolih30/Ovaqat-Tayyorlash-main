@@ -64,9 +64,9 @@ export const VideoCardYT: React.FC<VideoCardYTProps> = ({
     return (
       <div
         onClick={onClick}
-        className="flex gap-3 cursor-pointer group rounded-xl p-1.5 hover:bg-zinc-800/40 transition-colors"
+        className="flex gap-3 cursor-pointer group rounded-xl p-1.5 hover:bg-zinc-100 dark:bg-zinc-800/40 transition-colors"
       >
-        <div className="relative flex-shrink-0 w-40 sm:w-44 aspect-video rounded-xl overflow-hidden bg-zinc-800">
+        <div className="relative flex-shrink-0 w-40 sm:w-44 aspect-video rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800">
           <img
             src={
               imgErr
@@ -77,19 +77,19 @@ export const VideoCardYT: React.FC<VideoCardYTProps> = ({
             onError={() => setImgErr(true)}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
-          <span className="absolute bottom-1.5 right-1.5 bg-black/80 backdrop-blur-xs text-white text-[10px] font-semibold px-1.5 py-0.5 rounded">
+          <span className="absolute bottom-1.5 right-1.5 bg-black/80 backdrop-blur-xs text-zinc-900 dark:text-white text-[10px] font-semibold px-1.5 py-0.5 rounded">
             {video.duration}
           </span>
         </div>
         <div className="flex-1 min-w-0 flex flex-col justify-start">
-          <h4 className="text-sm font-medium text-zinc-100 group-hover:text-emerald-400 line-clamp-2 leading-snug">
+          <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-400 line-clamp-2 leading-snug">
             {video.title[lang] || video.title.uz}
           </h4>
-          <p className="text-xs text-zinc-400 mt-1 flex items-center gap-1">
+          <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1 flex items-center gap-1">
             {video.chef}
-            <CheckCircle2 size={12} className="text-zinc-500 inline" />
+            <CheckCircle2 size={12} className="text-zinc-500 dark:text-zinc-500 inline" />
           </p>
-          <div className="text-[11px] text-zinc-400 mt-0.5 flex items-center gap-2">
+          <div className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 flex items-center gap-2">
             <span>{country.flag} {country.nameUz}</span>
             <span>•</span>
             <span>{formatViews(video.views)} {t("views")}</span>
@@ -105,7 +105,7 @@ export const VideoCardYT: React.FC<VideoCardYTProps> = ({
       className="flex flex-col cursor-pointer group w-full transition-transform duration-200"
     >
       {/* Thumbnail 16:9 */}
-      <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800/60 shadow-sm group-hover:border-emerald-500/30 transition-all duration-300">
+      <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/60 shadow-sm group-hover:border-emerald-500/30 transition-all duration-300">
         <img
           src={
             imgErr
@@ -119,7 +119,7 @@ export const VideoCardYT: React.FC<VideoCardYTProps> = ({
         />
 
         {/* Duration badge */}
-        <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-black/85 backdrop-blur-xs text-white text-xs font-semibold tracking-wider">
+        <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-black/85 backdrop-blur-xs text-zinc-900 dark:text-white text-xs font-semibold tracking-wider">
           {video.duration}
         </div>
 
@@ -137,7 +137,7 @@ export const VideoCardYT: React.FC<VideoCardYTProps> = ({
         </div>
 
         {/* Cook time badge */}
-        <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-medium bg-black/70 backdrop-blur-md text-zinc-300 flex items-center gap-1 border border-white/10">
+        <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-medium bg-black/70 backdrop-blur-md text-zinc-700 dark:text-zinc-300 flex items-center gap-1 border border-white/10">
           <Clock size={11} className="text-emerald-400" />
           {video.cookTime} daq
         </div>
@@ -148,7 +148,7 @@ export const VideoCardYT: React.FC<VideoCardYTProps> = ({
           className={`absolute bottom-2 left-2 p-1.5 rounded-xl backdrop-blur-md transition-all ${
             isSaved
               ? "bg-emerald-600 text-white"
-              : "bg-black/60 text-zinc-300 hover:text-white hover:bg-black/80 opacity-0 group-hover:opacity-100"
+              : "bg-black/60 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:text-white hover:bg-black/80 opacity-0 group-hover:opacity-100"
           }`}
           title={isSaved ? "Saqlanganlardan o'chirish" : "Keyinroq ko'rish"}
         >
@@ -163,25 +163,25 @@ export const VideoCardYT: React.FC<VideoCardYTProps> = ({
           <img
             src={video.chefAvatar || "https://i.pravatar.cc/150?img=11"}
             alt={video.chef}
-            className="w-9 h-9 rounded-full object-cover border border-zinc-700/80 group-hover:border-emerald-500/50 transition-colors"
+            className="w-9 h-9 rounded-full object-cover border border-zinc-300 dark:border-zinc-700/80 group-hover:border-emerald-500/50 transition-colors"
           />
         </div>
 
         {/* Details */}
         <div className="flex-1 min-w-0">
-          <h3 className="text-[14px] md:text-[15px] font-semibold text-zinc-100 line-clamp-2 leading-snug group-hover:text-emerald-400 transition-colors">
+          <h3 className="text-[14px] md:text-[15px] font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-2 leading-snug group-hover:text-emerald-400 transition-colors">
             {video.title[lang] || video.title.uz}
           </h3>
 
           {/* Chef name */}
-          <div className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-200 mt-1 transition-colors">
+          <div className="flex items-center gap-1 text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:text-zinc-200 mt-1 transition-colors">
             <span className="truncate">{video.chef}</span>
-            <CheckCircle2 size={13} className="text-zinc-500 flex-shrink-0" />
+            <CheckCircle2 size={13} className="text-zinc-500 dark:text-zinc-500 flex-shrink-0" />
           </div>
 
           {/* Stats: Country flag + Views + Likes + Comments */}
-          <div className="text-xs text-zinc-400 mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-            <span className="inline-flex items-center gap-1 text-zinc-300 font-medium">
+          <div className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+            <span className="inline-flex items-center gap-1 text-zinc-700 dark:text-zinc-300 font-medium">
               <span>{country.flag}</span>
               <span>{country.nameUz} taomi</span>
             </span>
@@ -190,13 +190,13 @@ export const VideoCardYT: React.FC<VideoCardYTProps> = ({
           </div>
 
           {/* Social stats */}
-          <div className="flex items-center gap-3 text-[11px] text-zinc-400 mt-1">
+          <div className="flex items-center gap-3 text-[11px] text-zinc-600 dark:text-zinc-400 mt-1">
             <span className="flex items-center gap-1">
               <ThumbsUp size={11} className="text-emerald-500" />
               {formatViews(likesCount)}
             </span>
             <span className="flex items-center gap-1">
-              <MessageSquare size={11} className="text-zinc-400" />
+              <MessageSquare size={11} className="text-zinc-600 dark:text-zinc-400" />
               {commentsCount} izoh
             </span>
           </div>

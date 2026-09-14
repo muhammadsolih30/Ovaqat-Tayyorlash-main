@@ -153,7 +153,7 @@ export const VideoWatch = ({
         {/* LEFT COLUMN (70%): Player + Info + Recipe breakdown + Comments */}
         <div className="min-w-0">
           {/* 1. Video Player */}
-          <div className="relative w-full aspect-video rounded-3xl overflow-hidden bg-black shadow-2xl border border-zinc-800/80">
+          <div className="relative w-full aspect-video rounded-3xl overflow-hidden bg-black shadow-2xl border border-zinc-200 dark:border-zinc-800/80">
             {isPlaying ? (
               <iframe
                 src={`${video.videoUrl}?autoplay=1`}
@@ -182,26 +182,26 @@ export const VideoWatch = ({
           </div>
 
           {/* 2. Video Title */}
-          <h1 className="text-xl sm:text-2xl font-bold text-white mt-4 leading-snug">
+          <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white mt-4 leading-snug">
             {video.title[lang] || video.title.uz}
           </h1>
 
           {/* 3. Chef Channel + Action Buttons Row (YouTube 1:1) */}
-          <div className="flex flex-wrap items-center justify-between gap-4 py-3.5 border-b border-zinc-800/80 mt-1">
+          <div className="flex flex-wrap items-center justify-between gap-4 py-3.5 border-b border-zinc-200 dark:border-zinc-800/80 mt-1">
             {/* Chef info & subscribe button */}
             <div className="flex items-center gap-3">
               <img
                 src={video.chefAvatar}
                 alt={video.chef}
-                className="w-11 h-11 rounded-full object-cover border border-zinc-700 cursor-pointer"
+                className="w-11 h-11 rounded-full object-cover border border-zinc-300 dark:border-zinc-700 cursor-pointer"
                 onClick={() => onNavigate && onNavigate("chefs")}
               />
               <div>
-                <div className="flex items-center gap-1 font-semibold text-sm text-zinc-100">
+                <div className="flex items-center gap-1 font-semibold text-sm text-zinc-900 dark:text-zinc-100">
                   <span>{video.chef}</span>
                   <CheckCircle2 size={14} className="text-emerald-500" />
                 </div>
-                <p className="text-xs text-zinc-400">45.2K obunachi</p>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400">45.2K obunachi</p>
               </div>
 
               <button
@@ -209,7 +209,7 @@ export const VideoWatch = ({
                 onClick={() => toggleSubscribe(video.chef)}
                 className={`ml-2 px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all ${
                   isSubscribed
-                    ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border border-zinc-700"
+                    ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-700"
                     : "bg-white hover:bg-zinc-200 text-zinc-950 shadow-md font-bold"
                 }`}
               >
@@ -230,21 +230,21 @@ export const VideoWatch = ({
             {/* Action buttons (Like, Dislike, Share, Save) */}
             <div className="flex items-center gap-2">
               {/* Like / Dislike pill */}
-              <div className="flex items-center bg-zinc-800/80 rounded-full border border-zinc-700/60 overflow-hidden">
+              <div className="flex items-center bg-zinc-100 dark:bg-zinc-800/80 rounded-full border border-zinc-300 dark:border-zinc-700/60 overflow-hidden">
                 <button
                   onClick={handleLike}
-                  className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold hover:bg-zinc-700/80 transition-colors ${
-                    liked ? "text-emerald-400" : "text-zinc-200"
+                  className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold hover:bg-zinc-200 dark:bg-zinc-700/80 transition-colors ${
+                    liked ? "text-emerald-400" : "text-zinc-800 dark:text-zinc-200"
                   }`}
                 >
                   <ThumbsUp size={15} fill={liked ? "currentColor" : "none"} />
                   <span>{formatViews(displayLikes)}</span>
                 </button>
-                <div className="w-[1px] h-4 bg-zinc-700" />
+                <div className="w-[1px] h-4 bg-zinc-200 dark:bg-zinc-700" />
                 <button
                   onClick={handleDislike}
-                  className={`px-3 py-2 text-xs hover:bg-zinc-700/80 transition-colors ${
-                    disliked ? "text-red-400" : "text-zinc-300"
+                  className={`px-3 py-2 text-xs hover:bg-zinc-200 dark:bg-zinc-700/80 transition-colors ${
+                    disliked ? "text-red-400" : "text-zinc-700 dark:text-zinc-300"
                   }`}
                   title="Yoqmadi"
                 >
@@ -260,7 +260,7 @@ export const VideoWatch = ({
                     alert("Retsept havolasi nusxalandi!");
                   }
                 }}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-zinc-800/80 hover:bg-zinc-700/80 border border-zinc-700/60 text-xs font-semibold text-zinc-200 transition-colors"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-zinc-100 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:bg-zinc-700/80 border border-zinc-300 dark:border-zinc-700/60 text-xs font-semibold text-zinc-800 dark:text-zinc-200 transition-colors"
               >
                 <Share2 size={14} />
                 <span>Ulashish</span>
@@ -272,7 +272,7 @@ export const VideoWatch = ({
                 className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full border text-xs font-semibold transition-all ${
                   isSaved
                     ? "bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-600/30"
-                    : "bg-zinc-800/80 hover:bg-zinc-700/80 border-zinc-700/60 text-zinc-200"
+                    : "bg-zinc-100 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:bg-zinc-700/80 border-zinc-300 dark:border-zinc-700/60 text-zinc-800 dark:text-zinc-200"
                 }`}
               >
                 <Bookmark size={14} fill={isSaved ? "currentColor" : "none"} />
@@ -284,9 +284,9 @@ export const VideoWatch = ({
           {/* 4. Description Box (YouTube collapsible) */}
           <div
             onClick={() => setDescExpanded(!descExpanded)}
-            className="mt-4 p-4 rounded-2xl bg-zinc-900/90 hover:bg-zinc-900 border border-zinc-800 cursor-pointer transition-colors"
+            className="mt-4 p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900/90 hover:bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 cursor-pointer transition-colors"
           >
-            <div className="flex items-center gap-3 text-xs font-bold text-zinc-300 mb-1.5">
+            <div className="flex items-center gap-3 text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1.5">
               <span>{formatViews(video.views)} marta ko'rildi</span>
               <span>•</span>
               <span className="flex items-center gap-1">
@@ -302,7 +302,7 @@ export const VideoWatch = ({
               <span className="text-emerald-400 capitalize">{video.difficulty}</span>
             </div>
 
-            <p className={`text-xs sm:text-sm text-zinc-300 leading-relaxed ${descExpanded ? "" : "line-clamp-2"}`}>
+            <p className={`text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed ${descExpanded ? "" : "line-clamp-2"}`}>
               {video.description[lang] || video.description.uz}
             </p>
 
@@ -322,15 +322,15 @@ export const VideoWatch = ({
           </div>
 
           {/* 5. Recipe Interactive Panel (Ingredients + Steps + Timer) */}
-          <div className="mt-6 rounded-2xl bg-zinc-900/60 border border-zinc-800 overflow-hidden">
+          <div className="mt-6 rounded-2xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 overflow-hidden">
             {/* Tabs */}
-            <div className="flex border-b border-zinc-800 text-xs sm:text-sm font-semibold">
+            <div className="flex border-b border-zinc-200 dark:border-zinc-800 text-xs sm:text-sm font-semibold">
               <button
                 onClick={() => setActiveTab("recipe")}
                 className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 transition-colors ${
                   activeTab === "recipe"
-                    ? "bg-zinc-800/80 text-emerald-400 border-b-2 border-emerald-500"
-                    : "text-zinc-400 hover:text-white"
+                    ? "bg-zinc-100 dark:bg-zinc-800/80 text-emerald-400 border-b-2 border-emerald-500"
+                    : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                 }`}
               >
                 <ChefHat size={16} />
@@ -340,8 +340,8 @@ export const VideoWatch = ({
                 onClick={() => setActiveTab("steps")}
                 className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 transition-colors ${
                   activeTab === "steps"
-                    ? "bg-zinc-800/80 text-emerald-400 border-b-2 border-emerald-500"
-                    : "text-zinc-400 hover:text-white"
+                    ? "bg-zinc-100 dark:bg-zinc-800/80 text-emerald-400 border-b-2 border-emerald-500"
+                    : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                 }`}
               >
                 <CheckSquare size={16} />
@@ -351,8 +351,8 @@ export const VideoWatch = ({
                 onClick={() => setActiveTab("timer")}
                 className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 transition-colors ${
                   activeTab === "timer"
-                    ? "bg-zinc-800/80 text-emerald-400 border-b-2 border-emerald-500"
-                    : "text-zinc-400 hover:text-white"
+                    ? "bg-zinc-100 dark:bg-zinc-800/80 text-emerald-400 border-b-2 border-emerald-500"
+                    : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                 }`}
               >
                 <Timer size={16} />
@@ -364,7 +364,7 @@ export const VideoWatch = ({
               {/* Tab 1: Ingredients Checklist */}
               {activeTab === "recipe" && (
                 <div className="space-y-2">
-                  <p className="text-xs text-zinc-400 mb-3">
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-3">
                     Tayyorlagan masalliqlar ustiga bosing (tekshirish uchun):
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -377,14 +377,14 @@ export const VideoWatch = ({
                           onClick={() => toggleIngredient(idx)}
                           className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer select-none transition-all ${
                             checked
-                              ? "bg-emerald-950/30 border-emerald-500/40 text-zinc-400 line-through"
-                              : "bg-zinc-800/40 border-zinc-700/50 text-zinc-200 hover:border-emerald-500/30"
+                              ? "bg-emerald-950/30 border-emerald-500/40 text-zinc-600 dark:text-zinc-400 line-through"
+                              : "bg-zinc-100 dark:bg-zinc-800/40 border-zinc-300 dark:border-zinc-700/50 text-zinc-800 dark:text-zinc-200 hover:border-emerald-500/30"
                           }`}
                         >
                           {checked ? (
                             <CheckSquare size={17} className="text-emerald-500 flex-shrink-0" />
                           ) : (
-                            <Square size={17} className="text-zinc-500 flex-shrink-0" />
+                            <Square size={17} className="text-zinc-500 dark:text-zinc-500 flex-shrink-0" />
                           )}
                           <span className="text-xs sm:text-sm">{text}</span>
                         </div>
@@ -400,12 +400,12 @@ export const VideoWatch = ({
                   {video.steps.map((st, idx) => (
                     <div
                       key={idx}
-                      className="flex gap-3.5 p-3.5 rounded-xl bg-zinc-800/30 border border-zinc-700/40"
+                      className="flex gap-3.5 p-3.5 rounded-xl bg-zinc-100 dark:bg-zinc-800/30 border border-zinc-300 dark:border-zinc-700/40"
                     >
                       <span className="w-6 h-6 rounded-full bg-emerald-600/20 text-emerald-400 text-xs font-bold flex items-center justify-center flex-shrink-0 border border-emerald-500/30">
                         {idx + 1}
                       </span>
-                      <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed">
+                      <p className="text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed">
                         {st[lang] || st.uz}
                       </p>
                     </div>
@@ -416,7 +416,7 @@ export const VideoWatch = ({
               {/* Tab 3: Cooking Timer */}
               {activeTab === "timer" && (
                 <div className="flex flex-col items-center justify-center py-6 text-center">
-                  <div className="w-32 h-32 rounded-full border-4 border-emerald-500/40 flex items-center justify-center mb-4 bg-zinc-950">
+                  <div className="w-32 h-32 rounded-full border-4 border-emerald-500/40 flex items-center justify-center mb-4 bg-white dark:bg-zinc-950">
                     <span className="text-3xl font-mono font-bold text-white tracking-widest">
                       {fmtTimer(timerSeconds)}
                     </span>
@@ -426,7 +426,7 @@ export const VideoWatch = ({
                       <button
                         key={m}
                         onClick={() => startTimer(m)}
-                        className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-emerald-600 text-white text-xs font-semibold transition-colors"
+                        className="px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-emerald-600 text-white text-xs font-semibold transition-colors"
                       >
                         +{m} daq
                       </button>
@@ -449,7 +449,7 @@ export const VideoWatch = ({
 
         {/* RIGHT COLUMN (30%): Recommended Videos (YouTube Up Next) */}
         <div className="space-y-3">
-          <h3 className="text-base font-bold text-white mb-2 px-1">
+          <h3 className="text-base font-bold text-zinc-900 dark:text-white mb-2 px-1">
             Tavsiya etilgan videolar
           </h3>
           <div className="space-y-3">

@@ -48,7 +48,7 @@ export const VideoHome = ({
   return (
     <div className="pb-16 w-full max-w-[1920px] mx-auto animate-fade-in">
       {/* 1. Category Bar (Chips) pinned under header */}
-      <div className="sticky top-14 z-20 bg-zinc-950/95 backdrop-blur-md pb-1 border-b border-zinc-900/60 mb-5">
+      <div className="sticky top-14 z-20 bg-white dark:bg-zinc-950/95 backdrop-blur-md pb-1 border-b border-zinc-900/60 mb-5">
         <CategoryBar
           selectedCategory={activeCategory}
           onSelectCategory={setActiveCategory}
@@ -60,7 +60,7 @@ export const VideoHome = ({
       {activeCategory === "all" && (
         <div className="mb-8">
           <div className="flex items-center justify-between mb-3 px-1">
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
+            <h2 className="text-base font-bold text-zinc-900 dark:text-white flex items-center gap-2">
               <ChefHat size={18} className="text-emerald-500" />
               <span>Mashhur Oshpazlar va Kanallar</span>
             </h2>
@@ -98,10 +98,10 @@ export const VideoHome = ({
       </div>
 
       {filteredVideos.length === 0 && (
-        <div className="text-center py-20 bg-zinc-900/30 rounded-3xl border border-zinc-800/50 mt-6">
+        <div className="text-center py-20 bg-zinc-50 dark:bg-zinc-900/30 rounded-3xl border border-zinc-200 dark:border-zinc-800/50 mt-6">
           <p className="text-4xl mb-3">🍳</p>
           <h3 className="text-lg font-bold text-white">Bu bo'limda hali taomlar yo'q</h3>
-          <p className="text-xs text-zinc-400 mt-1">Boshqa davlat yoki toifani tanlab ko'ring</p>
+          <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">Boshqa davlat yoki toifani tanlab ko'ring</p>
           <button
             onClick={() => setActiveCategory("all")}
             className="mt-4 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold"

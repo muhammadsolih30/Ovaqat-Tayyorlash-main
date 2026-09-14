@@ -73,12 +73,12 @@ export const VideoHeader = ({
   ];
 
   return (
-    <header className="sticky top-0 z-50 h-14 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/80 px-4 flex items-center justify-between gap-4 select-none">
+    <header className="sticky top-0 z-50 h-14 bg-white dark:bg-zinc-950/95 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800/80 px-4 flex items-center justify-between gap-4 select-none">
       {/* LEFT: Menu button & Logo */}
       <div className="flex items-center gap-3.5 flex-shrink-0">
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 rounded-full hover:bg-zinc-800/80 text-zinc-300 hover:text-white transition-colors"
+          className="p-2 rounded-full hover:bg-zinc-100 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors"
           title="Menyu"
         >
           <Menu size={20} />
@@ -91,7 +91,7 @@ export const VideoHeader = ({
           <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-green-500 flex items-center justify-center shadow-md shadow-emerald-600/30 group-hover:scale-105 transition-transform">
             <ChefHat size={18} className="text-white" />
           </div>
-          <span className="text-lg font-black tracking-tight text-white flex items-center">
+          <span className="text-lg font-black tracking-tight text-zinc-900 dark:text-white flex items-center">
             Taom<span className="text-emerald-500">.uz</span>
           </span>
         </div>
@@ -108,7 +108,7 @@ export const VideoHeader = ({
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
               placeholder="Retseptlar, taomlar va oshpazlarni qidirish..."
-              className="w-full h-10 pl-4 pr-10 rounded-l-full bg-zinc-900 border border-zinc-700/80 focus:border-emerald-500 text-sm text-zinc-100 placeholder-zinc-500 outline-none transition-all shadow-inner"
+              className="w-full h-10 pl-4 pr-10 rounded-l-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700/80 focus:border-emerald-500 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 outline-none transition-all shadow-inner"
             />
             {query && (
               <button
@@ -117,7 +117,7 @@ export const VideoHeader = ({
                   setQuery("");
                   setSuggestions([]);
                 }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 dark:text-zinc-500 hover:text-zinc-700 dark:text-zinc-300"
               >
                 <X size={15} />
               </button>
@@ -125,7 +125,7 @@ export const VideoHeader = ({
           </div>
           <button
             type="submit"
-            className="h-10 px-6 rounded-r-full bg-zinc-800 hover:bg-zinc-700/80 border border-l-0 border-zinc-700/80 text-zinc-300 hover:text-white transition-colors flex items-center justify-center"
+            className="h-10 px-6 rounded-r-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:bg-zinc-700/80 border border-l-0 border-zinc-300 dark:border-zinc-700/80 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:text-white transition-colors flex items-center justify-center"
             title="Qidirish"
           >
             <Search size={18} />
@@ -134,7 +134,7 @@ export const VideoHeader = ({
 
         {/* Suggestions dropdown */}
         {searchFocused && suggestions.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-900/95 backdrop-blur-md rounded-2xl border border-zinc-800 shadow-2xl overflow-hidden z-50">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-50 dark:bg-zinc-900/95 backdrop-blur-md rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden z-50">
             {suggestions.map((v) => (
               <div
                 key={v.id}
@@ -142,7 +142,7 @@ export const VideoHeader = ({
                   onNavigate("video", v.id);
                   setQuery("");
                 }}
-                className="flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-800/80 cursor-pointer transition-colors border-b border-zinc-800/40 last:border-0"
+                className="flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-100 dark:bg-zinc-800/80 cursor-pointer transition-colors border-b border-zinc-200 dark:border-zinc-800/40 last:border-0"
               >
                 <img
                   src={v.thumbnail}
@@ -150,10 +150,10 @@ export const VideoHeader = ({
                   className="w-10 h-7 rounded-lg object-cover flex-shrink-0"
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-zinc-200 truncate">
+                  <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 truncate">
                     {v.title[lang] || v.title.uz}
                   </p>
-                  <p className="text-[11px] text-zinc-400 truncate">{v.chef}</p>
+                  <p className="text-[11px] text-zinc-600 dark:text-zinc-400 truncate">{v.chef}</p>
                 </div>
               </div>
             ))}
@@ -164,7 +164,7 @@ export const VideoHeader = ({
       {/* RIGHT: Language, Theme, Notifications & User Auth */}
       <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
         {/* Language selector */}
-        <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-full p-0.5 text-xs font-semibold text-zinc-400">
+        <div className="flex items-center bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full p-0.5 text-xs font-semibold text-zinc-600 dark:text-zinc-400">
           {(["uz", "ru", "en"] as const).map((l) => (
             <button
               key={l}
@@ -172,7 +172,7 @@ export const VideoHeader = ({
               className={`px-2 py-0.5 rounded-full uppercase transition-all ${
                 lang === l
                   ? "bg-emerald-600 text-white shadow-xs"
-                  : "hover:text-zinc-200"
+                  : "hover:text-zinc-800 dark:text-zinc-200"
               }`}
             >
               {l}
@@ -183,7 +183,7 @@ export const VideoHeader = ({
         {/* Dark/Light mode toggle */}
         <button
           onClick={toggleDark}
-          className="p-2 rounded-full hover:bg-zinc-800/80 text-zinc-300 hover:text-white transition-colors"
+          className="p-2 rounded-full hover:bg-zinc-100 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors"
           title={dark ? "Yorug' rejim" : "Qorong'u rejim"}
         >
           {dark ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} />}
@@ -194,7 +194,7 @@ export const VideoHeader = ({
           <div className="relative">
             <button
               onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-              className="flex items-center gap-2 p-1 rounded-full hover:bg-zinc-800/80 transition-colors"
+              className="flex items-center gap-2 p-1 rounded-full hover:bg-zinc-100 dark:bg-zinc-800/80 transition-colors"
             >
               <img
                 src={
@@ -208,24 +208,35 @@ export const VideoHeader = ({
 
             {/* Profile Dropdown */}
             {profileDropdownOpen && (
-              <div className="absolute right-0 top-full mt-2 w-56 bg-zinc-900 rounded-2xl border border-zinc-800 shadow-2xl p-2 z-50 animate-fade-in">
-                <div className="px-3 py-2 border-b border-zinc-800 mb-1">
-                  <p className="text-xs font-semibold text-white truncate">
+              <div className="absolute right-0 top-full mt-2 w-56 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-2xl p-2 z-50 animate-fade-in">
+                <div className="px-3 py-2 border-b border-zinc-200 dark:border-zinc-800 mb-1">
+                  <p className="text-xs font-semibold text-zinc-900 dark:text-white truncate">
                     {user?.name}
                   </p>
-                  <p className="text-[11px] text-zinc-400 truncate">
+                  <p className="text-[11px] text-zinc-600 dark:text-zinc-400 truncate">
                     {user?.email}
                   </p>
                 </div>
 
                 <button
                   onClick={() => {
+                    onNavigate("profile");
+                    setProfileDropdownOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:text-white hover:bg-zinc-100 dark:bg-zinc-800 rounded-xl transition-colors text-left"
+                >
+                  <User size={15} className="text-emerald-400" />
+                  <span>Sizning profilingiz</span>
+                </button>
+
+                <button
+                  onClick={() => {
                     onNavigate("favorites");
                     setProfileDropdownOpen(false);
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-300 hover:text-white hover:bg-zinc-800 rounded-xl transition-colors text-left"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:text-white hover:bg-zinc-100 dark:bg-zinc-800 rounded-xl transition-colors text-left mt-1"
                 >
-                  <Bookmark size={15} className="text-emerald-400" />
+                  <Bookmark size={15} className="text-zinc-600 dark:text-zinc-400" />
                   <span>Saqlangan retseptlar</span>
                 </button>
 
@@ -234,7 +245,7 @@ export const VideoHeader = ({
                     logout();
                     setProfileDropdownOpen(false);
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-red-400 hover:text-red-300 hover:bg-zinc-800 rounded-xl transition-colors text-left mt-1"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-red-400 hover:text-red-300 hover:bg-zinc-100 dark:bg-zinc-800 rounded-xl transition-colors text-left mt-1"
                 >
                   <LogOut size={15} />
                   <span>Chiqish</span>

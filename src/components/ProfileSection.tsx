@@ -53,7 +53,7 @@ const ProfileSection = ({ onOpenAdmin }: ProfileSectionProps) => {
           👨‍🍳
         </div>
         <h2
-          className="font-bold text-xl text-white mb-1 relative z-10"
+          className="font-bold text-xl text-zinc-900 dark:text-white mb-1 relative z-10"
           style={{ fontFamily: "var(--font-display)" }}
         >
           {t("profile")}
@@ -374,7 +374,7 @@ const ProfileSection = ({ onOpenAdmin }: ProfileSectionProps) => {
             </p>
             <button
               onClick={() => onOpenAdmin?.()}
-              className="w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
+              className="w-full py-3 rounded-xl font-bold text-zinc-900 dark:text-white text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
               style={{
                 background:
                   "linear-gradient(135deg, hsl(152 72% 28%) 0%, hsl(148 65% 22%) 100%)",

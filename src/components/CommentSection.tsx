@@ -8,7 +8,7 @@ interface CommentSectionProps {
 }
 
 export const CommentSection: React.FC<CommentSectionProps> = ({ videoId }) => {
-  const { user, isLoggedIn, openLoginModal } = useAuth();
+  const { user, isLoggedIn, openLoginModal, addToCommented } = useAuth();
   const [comments, setComments] = useState<Comment[]>(() => {
     return initialComments.filter((c) => c.videoId === videoId || c.videoId === "v1");
   });
@@ -36,6 +36,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ videoId }) => {
     };
 
     setComments([newComment, ...comments]);
+    addToCommented(videoId);
     setInputText("");
     setIsFocused(false);
   };
@@ -61,14 +62,14 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ videoId }) => {
   };
 
   return (
-    <div className="mt-8 border-t border-zinc-800/80 pt-6">
+    <div className="mt-8 border-t border-zinc-200 dark:border-zinc-800/80 pt-6">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+        <h3 className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-2">
           <MessageSquare size={20} className="text-emerald-500" />
           <span>{comments.length} ta izoh</span>
         </h3>
-        <span className="text-xs text-zinc-400 bg-zinc-800/60 px-2.5 py-1 rounded-full border border-zinc-700/50">
+        <span className="text-xs text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800/60 px-2.5 py-1 rounded-full border border-zinc-300 dark:border-zinc-700/50">
           Eng ommabop
         </span>
       </div>
@@ -81,7 +82,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ videoId }) => {
             "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop"
           }
           alt={user?.name || "Avatar"}
-          className="w-10 h-10 rounded-full object-cover border border-zinc-700/70 flex-shrink-0"
+          className="w-10 h-10 rounded-full object-cover border border-zinc-300 dark:border-zinc-700/70 flex-shrink-0"
         />
         <div className="flex-1">
           <form onSubmit={handleSubmit}>
@@ -101,7 +102,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ videoId }) => {
                   ? "Izoh qoldiring..."
                   : "Izoh yozish uchun tizimga kiring..."
               }
-              className="w-full bg-transparent border-b border-zinc-700 focus:border-emerald-500 py-2 text-sm text-zinc-100 placeholder-zinc-500 outline-none transition-colors"
+              className="w-full bg-transparent border-b border-zinc-300 dark:border-zinc-700 focus:border-emerald-500 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 outline-none transition-colors"
             />
             {isFocused && (
               <div className="flex justify-end gap-2 mt-3 animate-fade-in">
@@ -111,7 +112,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ videoId }) => {
                     setInputText("");
                     setIsFocused(false);
                   }}
-                  className="px-3.5 py-1.5 rounded-full text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+                  className="px-3.5 py-1.5 rounded-full text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:text-white hover:bg-zinc-100 dark:bg-zinc-800 transition-colors"
                 >
                   Bekor qilish
                 </button>
@@ -121,7 +122,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ videoId }) => {
                   className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all ${
                     inputText.trim()
                       ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm shadow-emerald-600/30"
-                      : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-500 cursor-not-allowed"
                   }`}
                 >
                   <Send size={12} />
@@ -140,18 +141,18 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ videoId }) => {
             <img
               src={comment.authorAvatar}
               alt={comment.authorName}
-              className="w-9 h-9 rounded-full object-cover border border-zinc-800 flex-shrink-0"
+              className="w-9 h-9 rounded-full object-cover border border-zinc-200 dark:border-zinc-800 flex-shrink-0"
             />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-semibold text-zinc-200">
+                <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
                   {comment.authorName}
                 </span>
-                <span className="text-[11px] text-zinc-500">
+                <span className="text-[11px] text-zinc-500 dark:text-zinc-500">
                   {comment.createdAt}
                 </span>
               </div>
-              <p className="text-sm text-zinc-300 leading-relaxed break-words">
+              <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed break-words">
                 {comment.text}
               </p>
               {/* Like / Reply row */}
@@ -161,7 +162,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ videoId }) => {
                   className={`flex items-center gap-1.5 text-xs transition-colors ${
                     comment.liked
                       ? "text-emerald-400 font-medium"
-                      : "text-zinc-400 hover:text-zinc-200"
+                      : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:text-zinc-200"
                   }`}
                 >
                   <ThumbsUp
@@ -175,7 +176,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ videoId }) => {
                     if (!isLoggedIn) openLoginModal();
                     else setIsFocused(true);
                   }}
-                  className="text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
+                  className="text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:text-zinc-200 transition-colors"
                 >
                   Javob berish
                 </button>

@@ -86,7 +86,7 @@ const PremiumModal = () => {
               <Crown size={32} style={{ color: "#f9a825" }} />
             </div>
             <h2
-              className="text-2xl font-black text-white mb-1"
+              className="text-2xl font-black text-zinc-900 dark:text-white mb-1"
               style={{ fontFamily: "var(--font-display)" }}
             >
               {lang === "uz" ? "Premium Obuna" : "Premium Plan"}
@@ -240,7 +240,7 @@ const PremiumModal = () => {
             {/* CTA Button */}
             <button
               onClick={() => handleBuy("yearly")}
-              className="w-full py-4 rounded-2xl font-black text-white text-base transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="w-full py-4 rounded-2xl font-black text-zinc-900 dark:text-white text-base transition-all hover:scale-[1.02] active:scale-[0.98]"
               style={{
                 fontFamily: "var(--font-display)",
                 background:

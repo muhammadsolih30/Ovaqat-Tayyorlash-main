@@ -91,12 +91,23 @@ const VideoLangContext = createContext<VideoLangContextType | undefined>(
 
 export const VideoLangProvider = ({ children }: { children: ReactNode }) => {
   const [lang, setLang] = useState<Lang>("uz");
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(() => {
+    const saved = localStorage.getItem("theme");
+    return saved ? saved === "dark" : true;
+  });
+
+  React.useEffect(() => {
+    if (dark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    localStorage.setItem("theme", dark ? "dark" : "light");
+  }, [dark]);
 
   const t = (key: string): string => translations[key]?.[lang] || key;
   const toggleDark = () => {
     setDark((d) => !d);
-    document.documentElement.classList.toggle("dark");
   };
 
   return (

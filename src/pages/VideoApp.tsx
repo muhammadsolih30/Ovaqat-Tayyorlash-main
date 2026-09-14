@@ -9,6 +9,7 @@ import VideoWatch from "./VideoWatch";
 import VideoSearch from "./VideoSearch";
 import VideoGrid from "./VideoGrid";
 import ChefProfile from "./ChefProfile";
+import UserProfile from "./UserProfile";
 import LoginModal from "@/components/LoginModal";
 import ChefCard from "@/components/ChefCard";
 import AdminLogin from "./admin/AdminLogin";
@@ -23,7 +24,7 @@ const VideoAppContent = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(() => window.location.pathname === "/admin");
 
   const toggleSave = (id: string) =>
     setSavedIds((prev) =>
@@ -88,7 +89,7 @@ const VideoAppContent = () => {
   }
 
   return (
-    <div className="bg-zinc-950 text-zinc-100 min-h-screen font-sans antialiased selection:bg-emerald-500 selection:text-white">
+    <div className="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 min-h-screen font-sans antialiased selection:bg-emerald-500 selection:text-white">
       {/* 1. Header (YouTube 1:1) */}
       <VideoHeader
         onSearch={handleSearch}
@@ -133,8 +134,8 @@ const VideoAppContent = () => {
             />
           ) : page === "chefs" ? (
             <div className="max-w-6xl mx-auto py-4 animate-fade-in">
-              <h1 className="text-2xl font-bold text-white mb-2">Barcha Oshpazlar va Retsept Mualliflari</h1>
-              <p className="text-sm text-zinc-400 mb-6">O'zingizga ma'qul oshpazni tanlang va ularning sara videolarini tomosha qiling</p>
+              <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">Barcha Oshpazlar va Retsept Mualliflari</h1>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6">O'zingizga ma'qul oshpazni tanlang va ularning sara videolarini tomosha qiling</p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {chefs.map((chef) => (
                   <ChefCard
@@ -145,14 +146,16 @@ const VideoAppContent = () => {
                 ))}
               </div>
             </div>
+          ) : page === "profile" ? (
+            <UserProfile />
           ) : page === "favorites" ? (
             <div className="max-w-7xl mx-auto py-4 animate-fade-in">
-              <h1 className="text-2xl font-bold text-white mb-2">Saqlangan Retseptlaringiz</h1>
-              <p className="text-sm text-zinc-400 mb-6">Keyinroq pishirish uchun belgilab qo'ygan taomlaringiz ro'yxati</p>
+              <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">Saqlangan Retseptlaringiz</h1>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6">Keyinroq pishirish uchun belgilab qo'ygan taomlaringiz ro'yxati</p>
               {savedIds.length === 0 ? (
-                <div className="text-center py-20 bg-zinc-900/30 rounded-3xl border border-zinc-800">
+                <div className="text-center py-20 bg-zinc-50 dark:bg-zinc-900/30 rounded-3xl border border-zinc-200 dark:border-zinc-800">
                   <p className="text-4xl mb-3">🔖</p>
-                  <p className="text-base text-zinc-300 font-semibold">Hali hech qanday retsept saqlanmagan</p>
+                  <p className="text-base text-zinc-700 dark:text-zinc-300 font-semibold">Hali hech qanday retsept saqlanmagan</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">

@@ -38,14 +38,14 @@ export const ChefProfile: React.FC<ChefProfileProps> = ({
       {/* Back button */}
       <button
         onClick={onBack}
-        className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-xl bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-300 text-xs font-semibold transition-colors"
+        className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:bg-zinc-700/80 text-zinc-700 dark:text-zinc-300 text-xs font-semibold transition-colors"
       >
         <ArrowLeft size={14} />
         Orqaga qaytish
       </button>
 
       {/* Banner / Cover */}
-      <div className="relative w-full h-44 sm:h-60 rounded-3xl overflow-hidden bg-gradient-to-r from-emerald-950 via-zinc-900 to-black border border-zinc-800">
+      <div className="relative w-full h-44 sm:h-60 rounded-3xl overflow-hidden bg-gradient-to-r from-emerald-950 via-zinc-900 to-black border border-zinc-200 dark:border-zinc-800">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-600/20 via-transparent to-transparent" />
         <div className="absolute bottom-4 right-5 text-right hidden sm:block">
           <span className="text-xs font-medium text-emerald-400/80 bg-black/60 px-3 py-1 rounded-full border border-emerald-500/20">
@@ -60,19 +60,19 @@ export const ChefProfile: React.FC<ChefProfileProps> = ({
           <img
             src={chef.avatar}
             alt={chef.name}
-            className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-zinc-950 shadow-2xl bg-zinc-900"
+            className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-zinc-950 shadow-2xl bg-zinc-50 dark:bg-zinc-900"
           />
           <div className="mb-1">
             <div className="flex items-center justify-center sm:justify-start gap-1.5">
-              <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white tracking-tight">
                 {chef.name}
               </h1>
               <CheckCircle2 size={20} className="text-emerald-500 fill-emerald-500/20" />
             </div>
-            <p className="text-sm text-zinc-400 font-medium mt-0.5">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 font-medium mt-0.5">
               @{chef.name.toLowerCase().replace(/\s+/g, "")} • {chef.specialty.uz}
             </p>
-            <div className="flex items-center justify-center sm:justify-start gap-3 text-xs text-zinc-500 mt-1">
+            <div className="flex items-center justify-center sm:justify-start gap-3 text-xs text-zinc-500 dark:text-zinc-500 mt-1">
               <span>{(subscribersCount / 1000).toFixed(1)}K obunachilar</span>
               <span>•</span>
               <span>{displayVideos.length} ta video retsept</span>
@@ -88,7 +88,7 @@ export const ChefProfile: React.FC<ChefProfileProps> = ({
             onClick={() => toggleSubscribe(chef.id)}
             className={`px-5 py-2.5 rounded-full text-sm font-semibold flex items-center gap-2 transition-all ${
               isSubscribed
-                ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700/80 border border-zinc-700/60"
+                ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:bg-zinc-700/80 border border-zinc-300 dark:border-zinc-700/60"
                 : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30"
             }`}
           >
@@ -111,7 +111,7 @@ export const ChefProfile: React.FC<ChefProfileProps> = ({
                 alert("Kanal havolasi nusxalandi!");
               }
             }}
-            className="p-2.5 rounded-full bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-300 transition-colors"
+            className="p-2.5 rounded-full bg-zinc-100 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:bg-zinc-700/80 text-zinc-700 dark:text-zinc-300 transition-colors"
             title="Kanalni ulashish"
           >
             <Share2 size={18} />
@@ -120,11 +120,11 @@ export const ChefProfile: React.FC<ChefProfileProps> = ({
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-zinc-800 mb-6 flex gap-6 px-4 text-sm font-medium">
+      <div className="border-b border-zinc-200 dark:border-zinc-800 mb-6 flex gap-6 px-4 text-sm font-medium">
         <button className="pb-3 text-emerald-500 border-b-2 border-emerald-500 font-semibold">
           Videolar ({displayVideos.length})
         </button>
-        <button className="pb-3 text-zinc-400 hover:text-zinc-200">
+        <button className="pb-3 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:text-zinc-200">
           Kanal haqida
         </button>
       </div>

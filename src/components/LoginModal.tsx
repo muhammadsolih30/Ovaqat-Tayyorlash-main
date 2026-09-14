@@ -1,22 +1,44 @@
 import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { X, ChefHat, LogIn, Sparkles, User, Mail, Lock } from "lucide-react";
+import { X, ChefHat, LogIn, User, Mail, Lock, AlertCircle } from "lucide-react";
 
 export const LoginModal: React.FC = () => {
-  const { isLoginModalOpen, closeLoginModal, login } = useAuth();
+  const { isLoginModalOpen, closeLoginModal, login, register } = useAuth();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
   if (!isLoginModalOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    login(name || (mode === "login" ? "Aziz Foydalanuvchi" : "Yangi Oshpaz"), email || "user@taom.uz");
+    setErrorMsg("");
+
+    if (mode === "login") {
+      const res = login(email, password);
+      if (!res.success) {
+        setErrorMsg(res.message);
+      }
+    } else {
+      if (!name || !email || !password) {
+        setErrorMsg("Iltimos, barcha maydonlarni to'ldiring.");
+        return;
+      }
+      const res = register(name, email, password);
+      if (!res.success) {
+        setErrorMsg(res.message);
+      }
+    }
   };
 
   const handleGoogleMock = () => {
-    login("Google Foydalanuvchisi", "google.user@gmail.com");
+    setErrorMsg("");
+    // In a real app this would open Google OAuth popup
+    // Here we just mock it using a generic google email or the one typed
+    const googleEmail = email.includes("@") ? email : "foydalanuvchi@gmail.com";
+    login(googleEmail, "", true);
   };
 
   return (
@@ -39,7 +61,7 @@ export const LoginModal: React.FC = () => {
         {/* Close Button */}
         <button
           onClick={closeLoginModal}
-          className="absolute top-5 right-5 w-9 h-9 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800/60 transition-colors"
+          className="absolute top-5 right-5 w-9 h-9 rounded-full flex items-center justify-center text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:text-white hover:bg-zinc-100 dark:bg-zinc-800/60 transition-colors"
         >
           <X size={18} />
         </button>
@@ -49,66 +71,74 @@ export const LoginModal: React.FC = () => {
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-green-500 flex items-center justify-center shadow-lg shadow-emerald-500/20 mb-3">
             <ChefHat size={28} className="text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight flex items-center gap-2">
             Taom<span className="text-emerald-500">.uz</span>
           </h2>
-          <p className="text-sm text-zinc-400 mt-1">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
             {mode === "login"
               ? "Videolarga like bosish, izoh qoldirish va sevimli qilish uchun kiring"
               : "Yangi akkaunt ochib, eng sara retseptlarni o'rganing"}
           </p>
         </div>
 
+        {errorMsg && (
+          <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-2.5 text-red-400 text-sm">
+            <AlertCircle size={18} className="shrink-0 mt-0.5" />
+            <p leading-tight>{errorMsg}</p>
+          </div>
+        )}
+
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-3.5">
           {mode === "register" && (
             <div>
-              <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
                 Ismingiz
               </label>
               <div className="relative flex items-center">
-                <User size={17} className="absolute left-3.5 text-zinc-500" />
+                <User size={17} className="absolute left-3.5 text-zinc-500 dark:text-zinc-500" />
                 <input
                   type="text"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ism familiyangiz"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-zinc-900/90 border border-zinc-700/80 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900/90 border border-zinc-300 dark:border-zinc-700/80 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
                 />
               </div>
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
-              Email yoki Telefon
+            <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
+              Email yoki Username
             </label>
             <div className="relative flex items-center">
-              <Mail size={17} className="absolute left-3.5 text-zinc-500" />
+              <Mail size={17} className="absolute left-3.5 text-zinc-500 dark:text-zinc-500" />
               <input
                 type="text"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value.toLowerCase())}
                 placeholder="misol@taom.uz"
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-zinc-900/90 border border-zinc-700/80 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900/90 border border-zinc-300 dark:border-zinc-700/80 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
               Parol
             </label>
             <div className="relative flex items-center">
-              <Lock size={17} className="absolute left-3.5 text-zinc-500" />
+              <Lock size={17} className="absolute left-3.5 text-zinc-500 dark:text-zinc-500" />
               <input
                 type="password"
                 required
-                defaultValue="secret123"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-zinc-900/90 border border-zinc-700/80 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900/90 border border-zinc-300 dark:border-zinc-700/80 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
               />
             </div>
           </div>
@@ -124,16 +154,16 @@ export const LoginModal: React.FC = () => {
 
         {/* Divider */}
         <div className="flex items-center my-4">
-          <div className="flex-1 border-t border-zinc-800" />
-          <span className="px-3 text-xs text-zinc-500 uppercase">yoki</span>
-          <div className="flex-1 border-t border-zinc-800" />
+          <div className="flex-1 border-t border-zinc-200 dark:border-zinc-800" />
+          <span className="px-3 text-xs text-zinc-500 dark:text-zinc-500 uppercase">yoki</span>
+          <div className="flex-1 border-t border-zinc-200 dark:border-zinc-800" />
         </div>
 
         {/* Google Mock */}
         <button
           onClick={handleGoogleMock}
           type="button"
-          className="w-full py-2.5 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800/80 border border-zinc-700/70 text-zinc-200 text-sm font-medium flex items-center justify-center gap-2.5 transition-colors"
+          className="w-full py-2.5 px-4 rounded-xl bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-300 dark:border-zinc-700/70 text-zinc-800 dark:text-zinc-200 text-sm font-medium flex items-center justify-center gap-2.5 transition-colors"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path
@@ -157,13 +187,16 @@ export const LoginModal: React.FC = () => {
         </button>
 
         {/* Switch Mode Footer */}
-        <div className="mt-5 text-center text-xs text-zinc-400">
+        <div className="mt-5 text-center text-xs text-zinc-600 dark:text-zinc-400">
           {mode === "login" ? (
             <p>
               Akkauntingiz yo'qmi?{" "}
               <button
                 type="button"
-                onClick={() => setMode("register")}
+                onClick={() => {
+                  setMode("register");
+                  setErrorMsg("");
+                }}
                 className="text-emerald-400 hover:underline font-semibold"
               >
                 Ro'yxatdan o'tish
@@ -174,7 +207,10 @@ export const LoginModal: React.FC = () => {
               Hisobingiz bormi?{" "}
               <button
                 type="button"
-                onClick={() => setMode("login")}
+                onClick={() => {
+                  setMode("login");
+                  setErrorMsg("");
+                }}
                 className="text-emerald-400 hover:underline font-semibold"
               >
                 Kirish

@@ -56,7 +56,7 @@ const RecipeCard = ({
           className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm transition-all ${
             saved
               ? "bg-rose-500 text-white shadow-lg"
-              : "bg-black/25 text-white hover:bg-black/45"
+              : "bg-black/25 text-zinc-900 dark:text-white hover:bg-black/45"
           }`}
         >
           <svg
@@ -74,7 +74,7 @@ const RecipeCard = ({
         {/* Kaloriya badge */}
         {recipe.calories && (
           <div
-            className="absolute bottom-2 left-2 text-white text-[10px] px-2 py-0.5 rounded-full font-bold backdrop-blur-sm"
+            className="absolute bottom-2 left-2 text-zinc-900 dark:text-white text-[10px] px-2 py-0.5 rounded-full font-bold backdrop-blur-sm"
             style={{ background: "rgba(0,0,0,0.5)" }}
           >
             {recipe.calories} kcal

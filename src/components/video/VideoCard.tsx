@@ -56,7 +56,7 @@ const VideoCard = ({
             style={{ background: "rgba(0,0,0,0.3)" }}
           />
           <div
-            className="absolute bottom-1.5 right-1.5 px-2 py-0.5 rounded-lg text-white text-[10px] font-bold"
+            className="absolute bottom-1.5 right-1.5 px-2 py-0.5 rounded-lg text-zinc-900 dark:text-white text-[10px] font-bold"
             style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)" }}
           >
             {video.duration}
@@ -151,7 +151,7 @@ const VideoCard = ({
 
         {/* Duration badge */}
         <div
-          className="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-xl text-white text-[11px] font-bold"
+          className="absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-xl text-zinc-900 dark:text-white text-[11px] font-bold"
           style={{
             background: "rgba(0,0,0,0.75)",
             backdropFilter: "blur(8px)",

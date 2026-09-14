@@ -52,7 +52,7 @@ export const CategoryBar: React.FC<CategoryBarProps> = ({
       {/* Scroll Left Button */}
       <button
         onClick={() => handleScroll("left")}
-        className="absolute left-0 z-10 hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-zinc-900/90 border border-zinc-700/60 shadow-md text-zinc-300 hover:text-white hover:bg-zinc-800 transition-all opacity-0 group-hover/bar:opacity-100"
+        className="absolute left-0 z-10 hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-zinc-50 dark:bg-zinc-900/90 border border-zinc-300 dark:border-zinc-700/60 shadow-md text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:text-white hover:bg-zinc-100 dark:bg-zinc-800 transition-all opacity-0 group-hover/bar:opacity-100"
         aria-label="Oldingi"
       >
         <ChevronLeft size={18} />
@@ -73,7 +73,7 @@ export const CategoryBar: React.FC<CategoryBarProps> = ({
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-medium whitespace-nowrap transition-all duration-200 cursor-pointer ${
                 isSelected
                   ? "bg-emerald-600 text-white font-semibold shadow-sm shadow-emerald-700/50"
-                  : "bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700/70 hover:text-white border border-transparent hover:border-zinc-700"
+                  : "bg-zinc-100 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:bg-zinc-700/70 hover:text-zinc-900 dark:text-white border border-transparent hover:border-zinc-300 dark:border-zinc-700"
               }`}
             >
               {item.flag && <span className="text-sm leading-none">{item.flag}</span>}
@@ -87,7 +87,7 @@ export const CategoryBar: React.FC<CategoryBarProps> = ({
       {/* Scroll Right Button */}
       <button
         onClick={() => handleScroll("right")}
-        className="absolute right-0 z-10 hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-zinc-900/90 border border-zinc-700/60 shadow-md text-zinc-300 hover:text-white hover:bg-zinc-800 transition-all opacity-0 group-hover/bar:opacity-100"
+        className="absolute right-0 z-10 hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-zinc-50 dark:bg-zinc-900/90 border border-zinc-300 dark:border-zinc-700/60 shadow-md text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:text-white hover:bg-zinc-100 dark:bg-zinc-800 transition-all opacity-0 group-hover/bar:opacity-100"
         aria-label="Keyingi"
       >
         <ChevronRight size={18} />

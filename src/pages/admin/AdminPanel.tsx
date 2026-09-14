@@ -405,7 +405,7 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
       {/* Toast */}
       {notif && (
         <div
-          className="fixed top-5 right-5 z-[999] flex items-center gap-2.5 px-5 py-3 rounded-2xl text-white text-sm font-bold shadow-2xl"
+          className="fixed top-5 right-5 z-[999] flex items-center gap-2.5 px-5 py-3 rounded-2xl text-zinc-900 dark:text-white text-sm font-bold shadow-2xl"
           style={{
             background: notif.ok
               ? "linear-gradient(135deg,#1DB954,#15803d)"
@@ -421,7 +421,7 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
       {/* Share copy notif */}
       {shareNotif && (
         <div
-          className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[999] flex items-center gap-2 px-5 py-3 rounded-2xl text-white text-sm font-bold shadow-2xl"
+          className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[999] flex items-center gap-2 px-5 py-3 rounded-2xl text-zinc-900 dark:text-white text-sm font-bold shadow-2xl"
           style={{ background: "linear-gradient(135deg,#3b82f6,#1d4ed8)" }}
         >
           <Copy size={14} /> {shareNotif}
@@ -511,7 +511,7 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
               M
             </div>
             <div>
-              <div className="text-white text-xs font-bold">muhammadsolih</div>
+              <div className="text-zinc-900 dark:text-white text-xs font-bold">muhammadsolih</div>
               <div className="text-[10px]" style={{ color: G }}>
                 Super Admin
               </div>
@@ -2838,7 +2838,7 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
                   setEditVideo(null);
                   toast("Video yangilandi! ✅");
                 }}
-                className="flex-1 py-3 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2"
+                className="flex-1 py-3 rounded-xl font-bold text-sm text-zinc-900 dark:text-white flex items-center justify-center gap-2"
                 style={{ background: `linear-gradient(135deg,${G},#15803d)` }}
               >
                 <Check size={15} /> Saqlash

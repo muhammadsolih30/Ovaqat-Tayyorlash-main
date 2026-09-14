@@ -84,7 +84,7 @@ const SideNav = ({ active, onNavigate }: SideNavProps) => {
         {!isPremium ? (
           <button
             onClick={openPremiumModal}
-            className="w-full py-3 px-4 rounded-2xl font-black text-sm text-white flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full py-3 px-4 rounded-2xl font-black text-sm text-zinc-900 dark:text-white flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
             style={{
               fontFamily: "var(--font-display)",
               background: "linear-gradient(135deg, #f9a825 0%, #ff6b35 100%)",

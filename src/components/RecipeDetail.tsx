@@ -26,7 +26,7 @@ const RecipeDetail = ({ recipe, onBack }: RecipeDetailProps) => {
           <ArrowLeft size={18} />
         </button>
         <div className="absolute bottom-4 left-4 right-4">
-          <h1 className="text-2xl font-display font-bold text-white mb-2">
+          <h1 className="text-2xl font-display font-bold text-zinc-900 dark:text-white mb-2">
             {recipe.name[lang]}
           </h1>
           <div className="flex items-center gap-4 text-white/80 text-sm">
