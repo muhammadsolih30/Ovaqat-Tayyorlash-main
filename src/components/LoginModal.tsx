@@ -61,6 +61,7 @@ export const LoginModal: React.FC = () => {
         {/* Close Button */}
         <button
           onClick={closeLoginModal}
+          aria-label="Yopish"
           className="absolute top-5 right-5 w-9 h-9 rounded-full flex items-center justify-center text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:text-white hover:bg-zinc-100 dark:bg-zinc-800/60 transition-colors"
         >
           <X size={18} />
@@ -92,12 +93,13 @@ export const LoginModal: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-3.5">
           {mode === "register" && (
             <div>
-              <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
+              <label htmlFor="register-name" className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
                 Ismingiz
               </label>
               <div className="relative flex items-center">
                 <User size={17} className="absolute left-3.5 text-zinc-500 dark:text-zinc-500" />
                 <input
+                  id="register-name"
                   type="text"
                   required
                   value={name}
@@ -110,12 +112,13 @@ export const LoginModal: React.FC = () => {
           )}
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
+            <label htmlFor="login-email" className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
               Email yoki Username
             </label>
             <div className="relative flex items-center">
               <Mail size={17} className="absolute left-3.5 text-zinc-500 dark:text-zinc-500" />
               <input
+                id="login-email"
                 type="text"
                 required
                 value={email}
@@ -127,12 +130,13 @@ export const LoginModal: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
+            <label htmlFor="login-password" className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
               Parol
             </label>
             <div className="relative flex items-center">
               <Lock size={17} className="absolute left-3.5 text-zinc-500 dark:text-zinc-500" />
               <input
+                id="login-password"
                 type="password"
                 required
                 value={password}
