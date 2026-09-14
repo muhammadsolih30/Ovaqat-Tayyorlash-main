@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import VideoApp from "./pages/VideoApp";
 import NotFound from "./pages/NotFound";
+import OfflineIndicator from "./components/pwa/OfflineIndicator";
+import InstallPrompt from "./components/pwa/InstallPrompt";
 
 const queryClient = new QueryClient();
 
@@ -14,6 +16,8 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <OfflineIndicator />
+      <InstallPrompt />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<VideoApp />} />

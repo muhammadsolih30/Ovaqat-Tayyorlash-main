@@ -23,6 +23,7 @@ import {
   Flame,
   UserCheck,
   UserPlus,
+  WifiOff,
 } from "lucide-react";
 
 interface VideoWatchProps {
@@ -69,6 +70,20 @@ export const VideoWatch = ({
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
   const [timerInterval, setTimerInterval] = useState<ReturnType<typeof setInterval> | null>(null);
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator !== "undefined" ? navigator.onLine : true
+  );
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   const isSaved = savedIds.includes(video.id);
   const isSubscribed = subscribedChefIds.includes(video.chef);
@@ -153,8 +168,29 @@ export const VideoWatch = ({
         {/* LEFT COLUMN (70%): Player + Info + Recipe breakdown + Comments */}
         <div className="min-w-0">
           {/* 1. Video Player */}
+<<<<<<< Updated upstream
           <div className="relative w-full aspect-video rounded-3xl overflow-hidden bg-black shadow-2xl border border-zinc-200 dark:border-zinc-800/80">
             {isPlaying ? (
+=======
+          <div className="relative w-full aspect-video rounded-3xl overflow-hidden bg-black shadow-2xl border border-zinc-800/80">
+            {!isOnline ? (
+              <div className="relative w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center mb-3 border border-amber-500/20 shadow-lg shadow-amber-500/10">
+                  <WifiOff size={28} />
+                </div>
+                <h3 className="text-sm sm:text-base font-bold text-white mb-1.5">
+                  Oflayn rejim: Video tomosha qilish imkonsiz
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-400 max-w-md leading-relaxed mb-4">
+                  Videoni ochish uchun internet talab etiladi. Ammo quyida ushbu taomning barcha masalliqlari, qadamlari va pishirish taymeri to'liq ishlamoqda!
+                </p>
+                <div className="flex items-center gap-2 text-xs font-semibold px-3.5 py-1.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  <CheckCircle2 size={14} />
+                  <span>Retsept va bosqichlar mavjud 👇</span>
+                </div>
+              </div>
+            ) : isPlaying ? (
+>>>>>>> Stashed changes
               <iframe
                 src={`${video.videoUrl}?autoplay=1`}
                 title={video.title[lang] || video.title.uz}
