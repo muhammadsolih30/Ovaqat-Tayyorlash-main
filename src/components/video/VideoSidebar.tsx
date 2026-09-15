@@ -39,6 +39,7 @@ export const VideoSidebar = ({ active, onNavigate, open }: VideoSidebarProps) =>
       <aside className="hidden md:flex flex-col w-[72px] h-[calc(100vh-56px)] sticky top-14 bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800/80 py-3 items-center gap-1 select-none z-30">
         <button
           onClick={() => onNavigate("home")}
+          aria-label="Bosh sahifa"
           className={`w-16 py-3 rounded-xl flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${
             active === "home"
               ? "text-emerald-500 bg-zinc-50 dark:bg-zinc-900"
@@ -51,6 +52,7 @@ export const VideoSidebar = ({ active, onNavigate, open }: VideoSidebarProps) =>
 
         <button
           onClick={() => onNavigate("trending")}
+          aria-label="Trenddagi taomlar"
           className={`w-16 py-3 rounded-xl flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${
             active === "trending"
               ? "text-emerald-500 bg-zinc-50 dark:bg-zinc-900"
@@ -63,6 +65,7 @@ export const VideoSidebar = ({ active, onNavigate, open }: VideoSidebarProps) =>
 
         <button
           onClick={() => handleAuthNav("profile")}
+          aria-label="Siz"
           className={`w-16 py-3 rounded-xl flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${
             active === "profile"
               ? "text-emerald-500 bg-zinc-50 dark:bg-zinc-900"
@@ -75,6 +78,7 @@ export const VideoSidebar = ({ active, onNavigate, open }: VideoSidebarProps) =>
 
         <button
           onClick={() => onNavigate("chefs")}
+          aria-label="Oshpazlar"
           className={`w-16 py-3 rounded-xl flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors ${
             active === "chefs"
               ? "text-emerald-500 bg-zinc-50 dark:bg-zinc-900"
