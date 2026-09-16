@@ -1,0 +1,3 @@
+## 2024-03-20 - Adding explicit ARIA labels to icon-only buttons
+**Learning:** `title` attributes alone aren't consistently read by all screen readers. When an icon-only button performs a significant action (like a menu toggle, search clear/submit, theme toggle, or opening a profile dropdown), it's essential to explicitly pair it with an `aria-label` along with keyboard focus indicators (`focus-visible`). Additionally, dropdown toggles must use `aria-expanded` and `aria-haspopup`/`aria-controls` for proper screen reader communication.
+**Action:** When auditing or implementing icon-only buttons, prioritize setting descriptive `aria-label`s in the application's language and adding standard focus indicators to ensure strong accessibility out-of-the-box.
