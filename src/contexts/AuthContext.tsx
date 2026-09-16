@@ -12,11 +12,49 @@ export interface User {
   commentedIds?: string[];
 }
 
+// Security: Passwords are hashed using PBKDF2 with SHA-256 and a random salt to avoid storing plaintext credentials
+async function hashPassword(password: string, saltHex?: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const passwordData = encoder.encode(password);
+
+  let salt: Uint8Array;
+  if (saltHex) {
+    salt = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
+  } else {
+    salt = crypto.getRandomValues(new Uint8Array(16));
+  }
+
+  const baseKey = await crypto.subtle.importKey(
+    "raw",
+    passwordData,
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+
+  const hashBuffer = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: salt,
+      iterations: 100000,
+      hash: "SHA-256",
+    },
+    baseKey,
+    256
+  );
+
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashStr = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  const newSaltHex = Array.from(salt).map(b => b.toString(16).padStart(2, "0")).join("");
+
+  return `${newSaltHex}:${hashStr}`;
+}
+
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
-  login: (email: string, password?: string, isGoogle?: boolean) => { success: boolean; message: string };
-  register: (name: string, email: string, password?: string) => { success: boolean; message: string };
+  login: (email: string, password?: string, isGoogle?: boolean) => Promise<{ success: boolean; message: string }>;
+  register: (name: string, email: string, password?: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   isLoginModalOpen: boolean;
   openLoginModal: () => void;
@@ -67,15 +105,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("taomuz_subscriptions", JSON.stringify(subscribedChefIds));
   }, [subscribedChefIds]);
 
-  const register = (name: string, email: string, password?: string) => {
+  const register = async (name: string, email: string, password?: string) => {
     if (users.find((u) => u.email === email)) {
       return { success: false, message: "Bu email bilan ro'yxatdan o'tilgan." };
     }
+    const hashedPassword = password ? await hashPassword(password) : undefined;
     const newUser: User = {
       id: "u_" + Date.now(),
       name,
       email,
-      password,
+      password: hashedPassword,
       avatar: "https://ui-avatars.com/api/?name=" + encodeURIComponent(name) + "&background=10b981&color=fff",
       historyIds: [],
       likedIds: [],
@@ -88,7 +127,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { success: true, message: "Muvaffaqiyatli ro'yxatdan o'tdingiz!" };
   };
 
-  const login = (email: string, password?: string, isGoogle: boolean = false) => {
+  const login = async (email: string, password?: string, isGoogle: boolean = false) => {
     const existingUser = users.find((u) => u.email === email);
     
     if (isGoogle) {
@@ -118,11 +157,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { success: false, message: "Bunday foydalanuvchi topilmadi. Iltimos ro'yxatdan o'ting." };
     }
 
-    if (existingUser.password !== password) {
-      return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+    let updatedUser = existingUser;
+
+    if (password) {
+      // Check if stored password is a PBKDF2 hash with salt (format: saltHex:hashHex)
+      const isHashed = existingUser.password?.includes(":");
+
+      if (isHashed) {
+        const [saltHex] = existingUser.password!.split(":");
+        const hashedPassword = await hashPassword(password, saltHex);
+        if (existingUser.password !== hashedPassword) {
+          return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+        }
+      } else {
+        // Backwards compatibility for existing users with unhashed passwords
+        if (existingUser.password !== password) {
+          return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+        }
+
+        // Migrate to new PBKDF2 hash format
+        const newHashedPassword = await hashPassword(password);
+        updatedUser = { ...existingUser, password: newHashedPassword };
+        setUsers((prev) => prev.map((u) => (u.id === existingUser.id ? updatedUser : u)));
+      }
+    } else if (existingUser.password) {
+        return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
     }
 
-    setUser(existingUser);
+    setUser(updatedUser);
     setIsLoginModalOpen(false);
     return { success: true, message: "Muvaffaqiyatli kirdingiz!" };
   };
