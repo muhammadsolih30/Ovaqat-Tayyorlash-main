@@ -1,4 +1,4 @@
-## 2025-03-06 - [Hardcoded Admin Credentials]
-**Vulnerability:** Found hardcoded super admin credentials in `src/contexts/AdminContext.tsx`. The credentials (`SUPER_ADMIN_USER = "muhammadsolih"` and `SUPER_ADMIN_PASS = "muhammadsolih2234"`) are explicitly stored in the client-side code.
-**Learning:** In a pure frontend application, any hardcoded credentials can be easily read by anyone inspecting the code or the bundled JavaScript files. This grants unauthorized full admin access to the application, bypassing all intended security controls.
-**Prevention:** Never hardcode credentials or secrets in the client-side code. Use environment variables (e.g., `import.meta.env.VITE_SUPER_ADMIN_USER`) during the build process, or implement a proper backend service for authentication where secrets remain on the server.
+## 2025-03-06 - [Hash Passwords using PBKDF2 (SHA-256) instead of Plaintext]
+**Vulnerability:** Client-side plaintext password storage for user authentication within the internal user store in `src/contexts/AuthContext.tsx`.
+**Learning:** Even in mocked frontend environments, plaintext passwords can leak out or provide a false sense of security in the architecture. It is crucial to mimic secure server behavior in the mock API by using cryptographic salt and hashing implementations available in modern browsers (like `crypto.subtle`).
+**Prevention:** Implement `generateSaltHex` and `hashPasswordWithSalt` to handle newly registered users securely, storing only the hashed password and salt. Existing plaintext passwords remain operational through backward-compatibility logic, which facilitates secure migrations.
