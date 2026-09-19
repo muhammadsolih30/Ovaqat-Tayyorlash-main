@@ -1,0 +1,3 @@
+## 2025-03-07 - [Missing ARIA Labels & Focus States on Icon Buttons]
+**Learning:** Icon-only buttons across various components (e.g., `LoginModal`, `VideoCard`) frequently lack `aria-label` attributes and keyboard focus indicators (`focus-visible` styles). This makes them inaccessible to screen reader users and difficult for keyboard navigators to identify active elements.
+**Action:** Always verify that icon-only buttons include descriptive `aria-label`s and visible focus states (e.g., `focus-visible:ring-2 focus-visible:ring-emerald-500`) when implementing or reviewing UI components in this app.
