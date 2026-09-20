@@ -5,7 +5,8 @@ export interface User {
   name: string;
   email: string;
   avatar: string;
-  password?: string;
+  passwordHash?: string;
+  salt?: string;
   historyIds?: string[];
   likedIds?: string[];
   savedIds?: string[];
@@ -15,8 +16,8 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
-  login: (email: string, password?: string, isGoogle?: boolean) => { success: boolean; message: string };
-  register: (name: string, email: string, password?: string) => { success: boolean; message: string };
+  login: (email: string, password?: string, isGoogle?: boolean) => Promise<{ success: boolean; message: string }>;
+  register: (name: string, email: string, password?: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   isLoginModalOpen: boolean;
   openLoginModal: () => void;
@@ -30,6 +31,18 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+async function deriveKey(password: string, salt: Uint8Array): Promise<string> {
+  const encoder = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw", encoder.encode(password), { name: "PBKDF2" }, false, ["deriveBits"]
+  );
+  const hashBuffer = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
+    keyMaterial, 256
+  );
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [users, setUsers] = useState<User[]>(() => {
@@ -67,15 +80,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("taomuz_subscriptions", JSON.stringify(subscribedChefIds));
   }, [subscribedChefIds]);
 
-  const register = (name: string, email: string, password?: string) => {
+  const register = async (name: string, email: string, password?: string) => {
     if (users.find((u) => u.email === email)) {
       return { success: false, message: "Bu email bilan ro'yxatdan o'tilgan." };
     }
+
+    let passwordHash, saltHex;
+    if (password) {
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, "0")).join("");
+      passwordHash = await deriveKey(password, salt);
+    }
+
     const newUser: User = {
       id: "u_" + Date.now(),
       name,
       email,
-      password,
+      passwordHash,
+      salt: saltHex,
       avatar: "https://ui-avatars.com/api/?name=" + encodeURIComponent(name) + "&background=10b981&color=fff",
       historyIds: [],
       likedIds: [],
@@ -88,7 +110,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { success: true, message: "Muvaffaqiyatli ro'yxatdan o'tdingiz!" };
   };
 
-  const login = (email: string, password?: string, isGoogle: boolean = false) => {
+  const login = async (email: string, password?: string, isGoogle: boolean = false) => {
     const existingUser = users.find((u) => u.email === email);
     
     if (isGoogle) {
@@ -118,8 +140,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { success: false, message: "Bunday foydalanuvchi topilmadi. Iltimos ro'yxatdan o'ting." };
     }
 
-    if (existingUser.password !== password) {
+    if (password && existingUser.passwordHash && existingUser.salt) {
+      const salt = new Uint8Array(existingUser.salt.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
+      const hash = await deriveKey(password, salt);
+      if (existingUser.passwordHash !== hash) {
+        return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+      }
+    } else if (!isGoogle && existingUser.passwordHash) {
       return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+    } else if (!isGoogle && !existingUser.passwordHash && password) {
+      // Allow legacy plaintext passwords temporarily to not break existing users
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((existingUser as any).password !== password) {
+        return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+      }
+    } else if (!isGoogle && !password) {
+      return { success: false, message: "Parol kiritilmadi." };
     }
 
     setUser(existingUser);
