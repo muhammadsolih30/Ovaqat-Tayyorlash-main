@@ -1,5 +1,22 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
+// Helper to hash passwords securely using PBKDF2 with a random salt
+async function hashPassword(password: string, saltStr?: string): Promise<string> {
+  const encoder = new TextEncoder();
+  let salt: Uint8Array;
+  if (saltStr) {
+    const matched = saltStr.match(/.{1,2}/g);
+    salt = new Uint8Array(matched ? matched.map(byte => parseInt(byte, 16)) : new Array(16).fill(0));
+  } else {
+    salt = crypto.getRandomValues(new Uint8Array(16));
+  }
+  const keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(password), { name: "PBKDF2" }, false, ["deriveBits"]);
+  const hashBuffer = await crypto.subtle.deriveBits({ name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" }, keyMaterial, 256);
+  const hashStr = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+  const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, "0")).join("");
+  return `${saltHex}:${hashStr}`;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -15,8 +32,8 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
-  login: (email: string, password?: string, isGoogle?: boolean) => { success: boolean; message: string };
-  register: (name: string, email: string, password?: string) => { success: boolean; message: string };
+  login: (email: string, password?: string, isGoogle?: boolean) => Promise<{ success: boolean; message: string }>;
+  register: (name: string, email: string, password?: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   isLoginModalOpen: boolean;
   openLoginModal: () => void;
@@ -67,15 +84,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("taomuz_subscriptions", JSON.stringify(subscribedChefIds));
   }, [subscribedChefIds]);
 
-  const register = (name: string, email: string, password?: string) => {
+  const register = async (name: string, email: string, password?: string) => {
     if (users.find((u) => u.email === email)) {
       return { success: false, message: "Bu email bilan ro'yxatdan o'tilgan." };
     }
+
+    let hashedPassword = password;
+    if (password) {
+      hashedPassword = await hashPassword(password);
+    }
+
     const newUser: User = {
       id: "u_" + Date.now(),
       name,
       email,
-      password,
+      password: hashedPassword,
       avatar: "https://ui-avatars.com/api/?name=" + encodeURIComponent(name) + "&background=10b981&color=fff",
       historyIds: [],
       likedIds: [],
@@ -88,7 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { success: true, message: "Muvaffaqiyatli ro'yxatdan o'tdingiz!" };
   };
 
-  const login = (email: string, password?: string, isGoogle: boolean = false) => {
+  const login = async (email: string, password?: string, isGoogle: boolean = false) => {
     const existingUser = users.find((u) => u.email === email);
     
     if (isGoogle) {
@@ -118,8 +141,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { success: false, message: "Bunday foydalanuvchi topilmadi. Iltimos ro'yxatdan o'ting." };
     }
 
-    if (existingUser.password !== password) {
-      return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+    if (existingUser.password && existingUser.password.includes(":")) {
+      const salt = existingUser.password.split(":")[0];
+      if (password) {
+        const hashedInput = await hashPassword(password, salt);
+        if (existingUser.password !== hashedInput) {
+          return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+        }
+      } else {
+         return { success: false, message: "Parol kiritilmadi." };
+      }
+    } else {
+      // Fallback for non-hashed legacy passwords (or we could just reject them)
+      if (existingUser.password !== password) {
+        return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+      }
     }
 
     setUser(existingUser);
