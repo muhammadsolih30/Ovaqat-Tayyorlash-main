@@ -1,0 +1,3 @@
+## 2023-09-24 - Accessibility for Icon-only Buttons
+**Learning:** Found multiple icon-only buttons (like Close in modals and Save in cards) that lack `aria-label`s and proper keyboard focus indicators (`focus-visible`). Since the UI relies heavily on Tailwind CSS, standardizing these missing states is critical for screen reader compatibility and keyboard navigation.
+**Action:** Added `aria-label`s and `focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none` classes to icon-only buttons. I should apply this pattern consistently when discovering other icon-only interactive elements in the repository.
