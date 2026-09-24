@@ -24,6 +24,7 @@ const translations: Translations = {
   recipes: { uz: "Taomlar", en: "Recipes" },
   ingredients: { uz: "Maslahatlar", en: "By Ingredients" },
   saved: { uz: "Saqlangan", en: "Saved" },
+  save: { uz: "Saqlash", en: "Save" },
   tips: { uz: "Foydali", en: "Tips" },
   profile: { uz: "Profil", en: "Profile" },
   minutes: { uz: "daqiqa", en: "min" },

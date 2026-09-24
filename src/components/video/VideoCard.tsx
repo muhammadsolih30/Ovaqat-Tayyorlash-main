@@ -164,11 +164,13 @@ const VideoCard = ({
         {/* Save button */}
         {onToggleSave && (
           <button
+            aria-label={saved ? t("saved") : t("save")}
+            aria-pressed={saved}
             onClick={(e) => {
               e.stopPropagation();
               onToggleSave(video.id);
             }}
-            className="absolute top-2.5 right-2.5 w-8 h-8 rounded-xl flex items-center justify-center transition-all"
+            className="absolute top-2.5 right-2.5 w-8 h-8 rounded-xl flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1"
             style={{
               background: saved
                 ? "linear-gradient(135deg, #F5A623, #E8960F)"
