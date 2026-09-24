@@ -41,6 +41,8 @@ const translations: Record<string, Record<Lang, string>> = {
   ingredients: { uz: "Ingredientlar", en: "Ingredients", ru: "Ингредиенты" },
   steps: { uz: "Tayyorlash", en: "Cooking Steps", ru: "Шаги приготовления" },
   recommended: { uz: "Tavsiya etilgan", en: "Recommended", ru: "Рекомендуем" },
+  saved: { uz: "Saqlangan", en: "Saved", ru: "Сохранено" },
+  save: { uz: "Saqlash", en: "Save", ru: "Сохранить" },
   easy: { uz: "Oson", en: "Easy", ru: "Лёгко" },
   medium: { uz: "O'rta", en: "Medium", ru: "Средне" },
   hard: { uz: "Qiyin", en: "Hard", ru: "Сложно" },
