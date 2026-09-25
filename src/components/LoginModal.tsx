@@ -12,12 +12,12 @@ export const LoginModal: React.FC = () => {
 
   if (!isLoginModalOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
 
     if (mode === "login") {
-      const res = login(email, password);
+      const res = await login(email, password);
       if (!res.success) {
         setErrorMsg(res.message);
       }
@@ -26,7 +26,7 @@ export const LoginModal: React.FC = () => {
         setErrorMsg("Iltimos, barcha maydonlarni to'ldiring.");
         return;
       }
-      const res = register(name, email, password);
+      const res = await register(name, email, password);
       if (!res.success) {
         setErrorMsg(res.message);
       }

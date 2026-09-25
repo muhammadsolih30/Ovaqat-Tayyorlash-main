@@ -12,11 +12,20 @@ export interface User {
   commentedIds?: string[];
 }
 
+// Helper function to hash a password using SHA-256
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
-  login: (email: string, password?: string, isGoogle?: boolean) => { success: boolean; message: string };
-  register: (name: string, email: string, password?: string) => { success: boolean; message: string };
+  login: (email: string, password?: string, isGoogle?: boolean) => Promise<{ success: boolean; message: string }>;
+  register: (name: string, email: string, password?: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   isLoginModalOpen: boolean;
   openLoginModal: () => void;
@@ -67,15 +76,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("taomuz_subscriptions", JSON.stringify(subscribedChefIds));
   }, [subscribedChefIds]);
 
-  const register = (name: string, email: string, password?: string) => {
+  const register = async (name: string, email: string, password?: string) => {
     if (users.find((u) => u.email === email)) {
       return { success: false, message: "Bu email bilan ro'yxatdan o'tilgan." };
     }
+    const hashedPassword = password ? await hashPassword(password) : undefined;
     const newUser: User = {
       id: "u_" + Date.now(),
       name,
       email,
-      password,
+      password: hashedPassword,
       avatar: "https://ui-avatars.com/api/?name=" + encodeURIComponent(name) + "&background=10b981&color=fff",
       historyIds: [],
       likedIds: [],
@@ -88,7 +98,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { success: true, message: "Muvaffaqiyatli ro'yxatdan o'tdingiz!" };
   };
 
-  const login = (email: string, password?: string, isGoogle: boolean = false) => {
+  const login = async (email: string, password?: string, isGoogle: boolean = false) => {
     const existingUser = users.find((u) => u.email === email);
     
     if (isGoogle) {
@@ -118,8 +128,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { success: false, message: "Bunday foydalanuvchi topilmadi. Iltimos ro'yxatdan o'ting." };
     }
 
-    if (existingUser.password !== password) {
-      return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+    if (password) {
+      const hashedPassword = await hashPassword(password);
+      if (existingUser.password !== hashedPassword) {
+        return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+      }
+    } else if (existingUser.password) {
+      // If no password provided but user has one
+      return { success: false, message: "Parol kiritilmagan." };
     }
 
     setUser(existingUser);
