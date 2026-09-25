@@ -1,0 +1,3 @@
+## 2024-05-20 - Icon-Only Button Accessibility Pattern
+**Learning:** Found a pattern across multiple components (e.g., `VideoHeader.tsx`) where icon-only action buttons lacked `aria-label`s and visible focus states. This makes keyboard navigation extremely difficult as users don't know what action a button performs or when it has focus.
+**Action:** When adding or reviewing icon-only buttons, always ensure they have descriptive `aria-label` attributes (matching the app's language context) and visible keyboard focus states (e.g., `focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none`). This is a critical pattern for this app's design system.
