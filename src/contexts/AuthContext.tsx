@@ -6,6 +6,7 @@ export interface User {
   email: string;
   avatar: string;
   password?: string;
+  salt?: string;
   historyIds?: string[];
   likedIds?: string[];
   savedIds?: string[];
@@ -15,8 +16,8 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
-  login: (email: string, password?: string, isGoogle?: boolean) => { success: boolean; message: string };
-  register: (name: string, email: string, password?: string) => { success: boolean; message: string };
+  login: (email: string, password?: string, isGoogle?: boolean) => Promise<{ success: boolean; message: string }>;
+  register: (name: string, email: string, password?: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   isLoginModalOpen: boolean;
   openLoginModal: () => void;
@@ -30,6 +31,44 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Generate a random 16-byte salt
+function generateSalt(): string {
+  const array = new Uint8Array(16);
+  crypto.getRandomValues(array);
+  return Array.from(array).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+// Hash a password using PBKDF2
+async function hashPassword(password: string, saltHex: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const passwordData = encoder.encode(password);
+
+  // Convert hex salt to Uint8Array
+  const saltBytes = new Uint8Array(saltHex.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []);
+
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    passwordData,
+    { name: "PBKDF2" },
+    false,
+    ["deriveBits", "deriveKey"]
+  );
+
+  const hashBuffer = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: saltBytes,
+      iterations: 100000,
+      hash: "SHA-256"
+    },
+    keyMaterial,
+    256
+  );
+
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+}
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [users, setUsers] = useState<User[]>(() => {
@@ -67,28 +106,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("taomuz_subscriptions", JSON.stringify(subscribedChefIds));
   }, [subscribedChefIds]);
 
-  const register = (name: string, email: string, password?: string) => {
+  const register = async (name: string, email: string, password?: string) => {
     if (users.find((u) => u.email === email)) {
       return { success: false, message: "Bu email bilan ro'yxatdan o'tilgan." };
     }
+
+    let hashedPassword = password;
+    let salt: string | undefined = undefined;
+
+    if (password) {
+      salt = generateSalt();
+      hashedPassword = await hashPassword(password, salt);
+    }
+
     const newUser: User = {
       id: "u_" + Date.now(),
       name,
       email,
-      password,
+      password: hashedPassword,
+      salt,
       avatar: "https://ui-avatars.com/api/?name=" + encodeURIComponent(name) + "&background=10b981&color=fff",
       historyIds: [],
       likedIds: [],
       savedIds: [],
       commentedIds: [],
     };
+
     setUsers((prev) => [...prev, newUser]);
     setUser(newUser);
     setIsLoginModalOpen(false);
     return { success: true, message: "Muvaffaqiyatli ro'yxatdan o'tdingiz!" };
   };
 
-  const login = (email: string, password?: string, isGoogle: boolean = false) => {
+  const login = async (email: string, password?: string, isGoogle: boolean = false) => {
     const existingUser = users.find((u) => u.email === email);
     
     if (isGoogle) {
@@ -118,7 +168,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { success: false, message: "Bunday foydalanuvchi topilmadi. Iltimos ro'yxatdan o'ting." };
     }
 
-    if (existingUser.password !== password) {
+    if (password && existingUser.password) {
+      if (existingUser.salt) {
+        // New hashed password mechanism
+        const inputHash = await hashPassword(password, existingUser.salt);
+        if (inputHash !== existingUser.password) {
+          return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+        }
+      } else {
+        // Fallback for older plaintext passwords
+        if (existingUser.password !== password) {
+          return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+        }
+      }
+    } else if (existingUser.password !== password) {
       return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
     }
 
