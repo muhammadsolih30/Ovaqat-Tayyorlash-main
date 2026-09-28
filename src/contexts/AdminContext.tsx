@@ -2,9 +2,9 @@ import React, { createContext, useContext, useState, ReactNode } from "react";
 import { Video, videos as defaultVideos } from "@/data/videos";
 import { Recipe, recipes as defaultRecipes } from "@/data/recipes";
 
-const SUPER_ADMIN_USER = "muhammadsolih";
+const SUPER_ADMIN_USER = import.meta.env.VITE_SUPER_ADMIN_USER || "muhammadsolih";
 // Security: Passwords are hashed using SHA-256 to avoid storing plaintext credentials in the source code
-const SUPER_ADMIN_PASS_HASH = "83fba4e0976dd2b82071cb4b1dd83c25e70706137ccd2648b8e3ab5c4ed14533";
+const SUPER_ADMIN_PASS_HASH = import.meta.env.VITE_SUPER_ADMIN_PASS_HASH || "83fba4e0976dd2b82071cb4b1dd83c25e70706137ccd2648b8e3ab5c4ed14533";
 
 // Helper function to hash a password using SHA-256
 async function hashPassword(password: string): Promise<string> {
