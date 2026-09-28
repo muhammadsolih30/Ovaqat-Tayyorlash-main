@@ -61,7 +61,8 @@ export const LoginModal: React.FC = () => {
         {/* Close Button */}
         <button
           onClick={closeLoginModal}
-          className="absolute top-5 right-5 w-9 h-9 rounded-full flex items-center justify-center text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:text-white hover:bg-zinc-100 dark:bg-zinc-800/60 transition-colors"
+          aria-label="Yopish"
+          className="absolute top-5 right-5 w-9 h-9 rounded-full flex items-center justify-center text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:text-white hover:bg-zinc-100 dark:bg-zinc-800/60 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
         >
           <X size={18} />
         </button>
