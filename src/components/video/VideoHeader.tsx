@@ -80,6 +80,7 @@ export const VideoHeader = ({
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="p-2 rounded-full hover:bg-zinc-100 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors"
           title="Menyu"
+          aria-label="Menyu"
         >
           <Menu size={20} />
         </button>
@@ -118,6 +119,7 @@ export const VideoHeader = ({
                   setSuggestions([]);
                 }}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 dark:text-zinc-500 hover:text-zinc-700 dark:text-zinc-300"
+                aria-label="Qidiruvni tozalash"
               >
                 <X size={15} />
               </button>
@@ -127,6 +129,7 @@ export const VideoHeader = ({
             type="submit"
             className="h-10 px-6 rounded-r-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:bg-zinc-700/80 border border-l-0 border-zinc-300 dark:border-zinc-700/80 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:text-white transition-colors flex items-center justify-center"
             title="Qidirish"
+            aria-label="Qidirish"
           >
             <Search size={18} />
           </button>
@@ -174,6 +177,7 @@ export const VideoHeader = ({
                   ? "bg-emerald-600 text-white shadow-xs"
                   : "hover:text-zinc-800 dark:text-zinc-200"
               }`}
+              aria-label={`Tilni o'zgartirish: ${l}`}
             >
               {l}
             </button>
@@ -185,6 +189,7 @@ export const VideoHeader = ({
           onClick={toggleDark}
           className="p-2 rounded-full hover:bg-zinc-100 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors"
           title={dark ? "Yorug' rejim" : "Qorong'u rejim"}
+          aria-label={dark ? "Yorug' rejim" : "Qorong'u rejim"}
         >
           {dark ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} />}
         </button>
@@ -195,6 +200,7 @@ export const VideoHeader = ({
             <button
               onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
               className="flex items-center gap-2 p-1 rounded-full hover:bg-zinc-100 dark:bg-zinc-800/80 transition-colors"
+              aria-label="Profil menyusini ochish"
             >
               <img
                 src={
