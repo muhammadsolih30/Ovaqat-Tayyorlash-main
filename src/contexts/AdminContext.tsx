@@ -7,7 +7,7 @@ const SUPER_ADMIN_USER = "muhammadsolih";
 const SUPER_ADMIN_PASS_HASH = "83fba4e0976dd2b82071cb4b1dd83c25e70706137ccd2648b8e3ab5c4ed14533";
 
 // Helper function to hash a password using SHA-256
-async function hashPassword(password: string): Promise<string> {
+export async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(password);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
