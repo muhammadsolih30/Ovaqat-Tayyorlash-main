@@ -1,6 +1,7 @@
 // src/pages/admin/sections/AdminOshpazlar.tsx
 
 import { useState } from "react";
+import { hashPassword } from "@/contexts/AdminContext";
 import {
   Plus,
   Trash2,
@@ -125,7 +126,7 @@ export default function AdminOshpazlar({
   const getAdminVideos = (adminName: string) =>
     videoList.filter((v) => v.chef === adminName);
 
-  const handleAddAdmin = () => {
+  const handleAddAdmin = async () => {
     if (!form.name.trim()) {
       toast("To'liq ism kiritilmadi!", false);
       return;
@@ -142,11 +143,14 @@ export default function AdminOshpazlar({
       toast("Bu username allaqachon mavjud!", false);
       return;
     }
+
+    const hashedPassword = await hashPassword(form.password);
+
     addAdminUser({
       id: `a${Date.now()}`,
       name: form.name.trim(),
       username: form.username.trim(),
-      password: form.password,
+      password: hashedPassword,
       role: "chef",
       blocked: false,
       createdAt: new Date().toISOString().split("T")[0],
