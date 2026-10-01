@@ -20,6 +20,7 @@ const RecipeDetail = ({ recipe, onBack }: RecipeDetailProps) => {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 to-transparent" />
         <button
+          aria-label={t("goBack")}
           onClick={onBack}
           className="absolute top-4 left-4 w-9 h-9 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-card transition-colors"
         >

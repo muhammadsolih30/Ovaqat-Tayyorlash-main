@@ -49,6 +49,7 @@ const RecipeCard = ({
 
         {/* Saqlash tugmasi */}
         <button
+          aria-label={saved ? t("removeRecipe") : t("saveRecipe")}
           onClick={(e) => {
             e.stopPropagation();
             onToggleSave?.();
