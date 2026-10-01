@@ -237,6 +237,7 @@ const BottomNav = ({
                 </p>
               </div>
               <button
+                aria-label={t("close")}
                 onClick={closePanel}
                 style={{
                   width: 32,
