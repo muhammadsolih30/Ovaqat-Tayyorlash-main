@@ -1,0 +1,3 @@
+## 2025-02-28 - Missing ARIA Labels on Icon Buttons
+**Learning:** Many interactive icon-only buttons in this application (like save or back buttons) lack proper `aria-label`s and clear focus states, reducing accessibility for screen reader and keyboard navigation users.
+**Action:** Always verify that icon-only buttons include descriptive, localized `aria-label`s and explicit `focus-visible` styles when building or modifying components.
