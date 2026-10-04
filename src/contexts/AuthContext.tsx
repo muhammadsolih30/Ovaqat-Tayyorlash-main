@@ -15,8 +15,8 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
-  login: (email: string, password?: string, isGoogle?: boolean) => { success: boolean; message: string };
-  register: (name: string, email: string, password?: string) => { success: boolean; message: string };
+  login: (email: string, password?: string, isGoogle?: boolean) => Promise<{ success: boolean; message: string }>;
+  register: (name: string, email: string, password?: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   isLoginModalOpen: boolean;
   openLoginModal: () => void;
@@ -30,6 +30,64 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Helper function to hash a password using PBKDF2 with SHA-256 and a random salt
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(password),
+    { name: "PBKDF2" },
+    false,
+    ["deriveBits"]
+  );
+  const hashBuffer = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: salt,
+      iterations: 100000,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    256
+  );
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const saltArray = Array.from(salt);
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  const saltHex = saltArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  return `${saltHex}:${hashHex}`;
+}
+
+async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
+  if (!storedHash.includes(":")) {
+    // Fallback for old plaintext passwords (mock environment migration)
+    return password === storedHash;
+  }
+  const [saltHex, hashHex] = storedHash.split(":");
+  const salt = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
+  const encoder = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(password),
+    { name: "PBKDF2" },
+    false,
+    ["deriveBits"]
+  );
+  const hashBuffer = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: salt,
+      iterations: 100000,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    256
+  );
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const computedHashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  return computedHashHex === hashHex;
+}
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [users, setUsers] = useState<User[]>(() => {
@@ -67,15 +125,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("taomuz_subscriptions", JSON.stringify(subscribedChefIds));
   }, [subscribedChefIds]);
 
-  const register = (name: string, email: string, password?: string) => {
+  const register = async (name: string, email: string, password?: string) => {
     if (users.find((u) => u.email === email)) {
       return { success: false, message: "Bu email bilan ro'yxatdan o'tilgan." };
+    }
+    let hashedPassword = password;
+    if (password) {
+      hashedPassword = await hashPassword(password);
     }
     const newUser: User = {
       id: "u_" + Date.now(),
       name,
       email,
-      password,
+      password: hashedPassword,
       avatar: "https://ui-avatars.com/api/?name=" + encodeURIComponent(name) + "&background=10b981&color=fff",
       historyIds: [],
       likedIds: [],
@@ -88,7 +150,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { success: true, message: "Muvaffaqiyatli ro'yxatdan o'tdingiz!" };
   };
 
-  const login = (email: string, password?: string, isGoogle: boolean = false) => {
+  const login = async (email: string, password?: string, isGoogle: boolean = false) => {
     const existingUser = users.find((u) => u.email === email);
     
     if (isGoogle) {
@@ -118,8 +180,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { success: false, message: "Bunday foydalanuvchi topilmadi. Iltimos ro'yxatdan o'ting." };
     }
 
-    if (existingUser.password !== password) {
-      return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+    if (password) {
+      if (!existingUser.password) {
+        return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+      }
+      const isValid = await verifyPassword(password, existingUser.password);
+      if (!isValid) {
+        return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+      }
+
+      // Migrate plaintext password to hashed password on successful login
+      if (!existingUser.password.includes(":")) {
+        const newPassword = await hashPassword(password);
+        const updatedUser = { ...existingUser, password: newPassword };
+        setUsers(prev => prev.map(u => u.id === existingUser.id ? updatedUser : u));
+        setUser(updatedUser);
+        setIsLoginModalOpen(false);
+        return { success: true, message: "Muvaffaqiyatli kirdingiz!" };
+      }
+    } else if (existingUser.password) {
+       return { success: false, message: "Parol kiritilmagan." };
     }
 
     setUser(existingUser);
