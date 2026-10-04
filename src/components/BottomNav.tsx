@@ -238,6 +238,8 @@ const BottomNav = ({
               </div>
               <button
                 onClick={closePanel}
+                aria-label="Yopish"
+                className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                 style={{
                   width: 32,
                   height: 32,
