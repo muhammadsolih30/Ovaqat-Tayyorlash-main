@@ -50,6 +50,8 @@ const translations: Record<string, Record<Lang, string>> = {
     ru: "Популярные шеф-повара",
   },
   favorites: { uz: "Sevimlilar", en: "Favorites", ru: "Избранное" },
+  saved: { uz: "Saqlangan", en: "Saved", ru: "Сохраненные" },
+  save: { uz: "Saqlash", en: "Save", ru: "Сохранить" },
   share: { uz: "Ulashish", en: "Share", ru: "Поделиться" },
   cookTime: { uz: "Vaqt", en: "Time", ru: "Время" },
   servings: { uz: "Porsiya", en: "Servings", ru: "Порции" },
