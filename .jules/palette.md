@@ -1,0 +1,3 @@
+## 2024-05-24 - Accessibility improvements for icon-only buttons
+**Learning:** Found several icon-only buttons (like Save/Bookmark, Back, Play, Menu, Light/Dark mode toggles) without `aria-label` attributes. Missing these attributes prevents screen reader users from understanding the button's purpose, decreasing app accessibility. Focus styles for keyboard accessibility could also be improved.
+**Action:** Always add descriptive `aria-label`s to icon-only buttons. Add `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500` or similar styles to make keyboard navigation visible.
