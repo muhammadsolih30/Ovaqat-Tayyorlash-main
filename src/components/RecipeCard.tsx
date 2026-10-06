@@ -53,6 +53,7 @@ const RecipeCard = ({
             e.stopPropagation();
             onToggleSave?.();
           }}
+          aria-label={saved ? "Saqlanganlardan o'chirish" : "Saqlash"}
           className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm transition-all ${
             saved
               ? "bg-rose-500 text-white shadow-lg"

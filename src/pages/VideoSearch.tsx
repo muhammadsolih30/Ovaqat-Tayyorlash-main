@@ -79,6 +79,7 @@ const VideoSearch = ({
         </div>
         <button
           onClick={() => setShowFilters(!showFilters)}
+          aria-label="Filtrlarni ko'rsatish/yashirish"
           className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all"
           style={{
             background: showFilters
