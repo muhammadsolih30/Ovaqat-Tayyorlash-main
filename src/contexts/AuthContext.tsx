@@ -5,7 +5,9 @@ export interface User {
   name: string;
   email: string;
   avatar: string;
-  password?: string;
+  password?: string; // Kept for backwards compatibility if needed
+  salt?: string;
+  passwordHash?: string;
   historyIds?: string[];
   likedIds?: string[];
   savedIds?: string[];
@@ -15,8 +17,8 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
-  login: (email: string, password?: string, isGoogle?: boolean) => { success: boolean; message: string };
-  register: (name: string, email: string, password?: string) => { success: boolean; message: string };
+  login: (email: string, password?: string, isGoogle?: boolean) => Promise<{ success: boolean; message: string }>;
+  register: (name: string, email: string, password?: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   isLoginModalOpen: boolean;
   openLoginModal: () => void;
@@ -28,6 +30,41 @@ interface AuthContextType {
   toggleSave: (videoId: string) => boolean;
   addToCommented: (videoId: string) => void;
 }
+
+
+const generateSalt = () => {
+  const array = new Uint8Array(16);
+  crypto.getRandomValues(array);
+  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+};
+
+const hashPassword = async (password: string, salt: string) => {
+  const encoder = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(password),
+    { name: "PBKDF2" },
+    false,
+    ["deriveBits", "deriveKey"]
+  );
+
+  const saltBuffer = encoder.encode(salt);
+
+  const key = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: saltBuffer,
+      iterations: 100000,
+      hash: "SHA-256"
+    },
+    keyMaterial,
+    256
+  );
+
+  return Array.from(new Uint8Array(key))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -67,15 +104,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("taomuz_subscriptions", JSON.stringify(subscribedChefIds));
   }, [subscribedChefIds]);
 
-  const register = (name: string, email: string, password?: string) => {
+  const register = async (name: string, email: string, password?: string) => {
     if (users.find((u) => u.email === email)) {
       return { success: false, message: "Bu email bilan ro'yxatdan o'tilgan." };
     }
+
+    let salt, passwordHash;
+    if (password) {
+      salt = generateSalt();
+      passwordHash = await hashPassword(password, salt);
+    }
+
     const newUser: User = {
       id: "u_" + Date.now(),
       name,
       email,
-      password,
+      salt,
+      passwordHash,
+
       avatar: "https://ui-avatars.com/api/?name=" + encodeURIComponent(name) + "&background=10b981&color=fff",
       historyIds: [],
       likedIds: [],
@@ -88,7 +134,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { success: true, message: "Muvaffaqiyatli ro'yxatdan o'tdingiz!" };
   };
 
-  const login = (email: string, password?: string, isGoogle: boolean = false) => {
+  const login = async (email: string, password?: string, isGoogle: boolean = false) => {
     const existingUser = users.find((u) => u.email === email);
     
     if (isGoogle) {
@@ -118,7 +164,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { success: false, message: "Bunday foydalanuvchi topilmadi. Iltimos ro'yxatdan o'ting." };
     }
 
-    if (existingUser.password !== password) {
+    if (existingUser.passwordHash && existingUser.salt && password) {
+      const hash = await hashPassword(password, existingUser.salt);
+      if (hash !== existingUser.passwordHash) {
+        return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+      }
+    } else if (existingUser.password !== password) {
+      // Fallback for old unhashed passwords
       return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
     }
 
