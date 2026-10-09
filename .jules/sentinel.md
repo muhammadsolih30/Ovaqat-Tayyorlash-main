@@ -1,4 +1,4 @@
-## 2025-03-06 - [Hardcoded Admin Credentials]
-**Vulnerability:** Found hardcoded super admin credentials in `src/contexts/AdminContext.tsx`. The credentials (`SUPER_ADMIN_USER = "muhammadsolih"` and `SUPER_ADMIN_PASS = "muhammadsolih2234"`) are explicitly stored in the client-side code.
-**Learning:** In a pure frontend application, any hardcoded credentials can be easily read by anyone inspecting the code or the bundled JavaScript files. This grants unauthorized full admin access to the application, bypassing all intended security controls.
-**Prevention:** Never hardcode credentials or secrets in the client-side code. Use environment variables (e.g., `import.meta.env.VITE_SUPER_ADMIN_USER`) during the build process, or implement a proper backend service for authentication where secrets remain on the server.
+## 2025-03-06 - Hash Passwords in Frontend Mock Auth Environments
+**Vulnerability:** The application was storing user passwords in plaintext within the local storage (`taomuz_users`) and memory mock database via the `AuthContext` implementation.
+**Learning:** Even in applications that are entirely frontend-driven or mock APIs locally, storing user credentials in plaintext in `localStorage` or memory poses a critical risk if a local environment is compromised. It represents bad security practices.
+**Prevention:** In mock frontend authentication states, password data must be securely hashed. Use the Web Crypto API (`crypto.subtle`) with a robust algorithm like PBKDF2 with SHA-256 and salt to securely handle mock authentication, replicating real-world backend standards.
