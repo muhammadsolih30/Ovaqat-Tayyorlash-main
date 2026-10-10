@@ -5,7 +5,8 @@ export interface User {
   name: string;
   email: string;
   avatar: string;
-  password?: string;
+  passwordHash?: string;
+  passwordSalt?: string;
   historyIds?: string[];
   likedIds?: string[];
   savedIds?: string[];
@@ -15,8 +16,8 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
-  login: (email: string, password?: string, isGoogle?: boolean) => { success: boolean; message: string };
-  register: (name: string, email: string, password?: string) => { success: boolean; message: string };
+  login: (email: string, password?: string, isGoogle?: boolean) => Promise<{ success: boolean; message: string }>;
+  register: (name: string, email: string, password?: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   isLoginModalOpen: boolean;
   openLoginModal: () => void;
@@ -29,7 +30,42 @@ interface AuthContextType {
   addToCommented: (videoId: string) => void;
 }
 
+
+async function hashPassword(password: string, saltHex?: string): Promise<{ hash: string, salt: string }> {
+  const encoder = new TextEncoder();
+  let saltBuffer;
+  if (saltHex) {
+    saltBuffer = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
+  } else {
+    saltBuffer = crypto.getRandomValues(new Uint8Array(16));
+  }
+  const saltResultHex = Array.from(saltBuffer).map(b => b.toString(16).padStart(2, '0')).join('');
+
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+
+  const hashBuffer = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: saltBuffer,
+      iterations: 100000,
+      hash: "SHA-256"
+    },
+    keyMaterial,
+    256
+  );
+
+  const hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return { hash: hashHex, salt: saltResultHex };
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [users, setUsers] = useState<User[]>(() => {
@@ -67,15 +103,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("taomuz_subscriptions", JSON.stringify(subscribedChefIds));
   }, [subscribedChefIds]);
 
-  const register = (name: string, email: string, password?: string) => {
+    const register = async (name: string, email: string, password?: string) => {
     if (users.find((u) => u.email === email)) {
       return { success: false, message: "Bu email bilan ro'yxatdan o'tilgan." };
     }
+
+    let passwordHash;
+    let passwordSalt;
+    if (password) {
+      const result = await hashPassword(password);
+      passwordHash = result.hash;
+      passwordSalt = result.salt;
+    }
+
     const newUser: User = {
       id: "u_" + Date.now(),
       name,
       email,
-      password,
+      passwordHash,
+      passwordSalt,
       avatar: "https://ui-avatars.com/api/?name=" + encodeURIComponent(name) + "&background=10b981&color=fff",
       historyIds: [],
       likedIds: [],
@@ -88,7 +134,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { success: true, message: "Muvaffaqiyatli ro'yxatdan o'tdingiz!" };
   };
 
-  const login = (email: string, password?: string, isGoogle: boolean = false) => {
+    const login = async (email: string, password?: string, isGoogle: boolean = false) => {
     const existingUser = users.find((u) => u.email === email);
     
     if (isGoogle) {
@@ -118,8 +164,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { success: false, message: "Bunday foydalanuvchi topilmadi. Iltimos ro'yxatdan o'ting." };
     }
 
-    if (existingUser.password !== password) {
+    if (!password) {
       return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+    }
+
+    if (password && existingUser.passwordSalt) {
+      const { hash } = await hashPassword(password, existingUser.passwordSalt);
+      if (existingUser.passwordHash !== hash) {
+        return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+      }
+    } else if (password && !existingUser.passwordSalt) {
+       // Support for existing plain text passwords for backwards compatibility during transition, or reject them.
+       // Let's assume we reject if it doesn't match hash. But since we changed the interface, old users might have `password` field still. Let's cast to any to check if old password exists.
+       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       const legacyPassword = (existingUser as any).password;
+       if (legacyPassword) {
+         if (legacyPassword !== password) {
+           return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+         } else {
+           // Upgrade legacy password to hash
+           const { hash, salt } = await hashPassword(password);
+           const upgradedUser = { ...existingUser, passwordHash: hash, passwordSalt: salt };
+           // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           delete (upgradedUser as any).password;
+
+           setUsers((prev) => prev.map((u) => u.id === upgradedUser.id ? upgradedUser : u));
+           setUser(upgradedUser);
+           setIsLoginModalOpen(false);
+           return { success: true, message: "Muvaffaqiyatli kirdingiz!" };
+         }
+       } else {
+         return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+       }
+    } else if (!password && existingUser.passwordHash) {
+        return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
     }
 
     setUser(existingUser);
