@@ -1,0 +1,3 @@
+## 2024-05-18 - Missing ARIA labels and focus styles on Icon-only buttons
+**Learning:** Found several icon-only buttons in the main navigation components (e.g. `VideoHeader.tsx`) that are missing `aria-label` attributes, which makes them inaccessible to screen readers. They also lack clear keyboard focus styling (`focus-visible:ring-2`, `focus-visible:ring-emerald-500`, `focus-visible:outline-none`).
+**Action:** Add `aria-label` and `focus-visible` classes to all icon-only buttons to improve accessibility and keyboard navigation. We should do this specifically for `VideoHeader.tsx` as a micro-UX improvement.
