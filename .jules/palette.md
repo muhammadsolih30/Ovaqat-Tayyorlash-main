@@ -1,0 +1,3 @@
+## 2024-05-18 - Missing ARIA Labels on Icon-only Buttons
+**Learning:** Found a recurring pattern across the app where icon-only buttons (like save/bookmark icons on cards and close buttons on modals) lacked `aria-label`s, `title`s and visible focus states for keyboard navigation. This significantly degrades the experience for screen-reader and keyboard-only users.
+**Action:** Added appropriate translations (Uzbek) via `aria-label` and `title` alongside `focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none` utilities to ensure clear context and interaction cues for these interactive elements.
