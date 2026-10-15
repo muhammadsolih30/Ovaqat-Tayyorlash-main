@@ -11,6 +11,8 @@ interface VideoLangContextType {
 
 const translations: Record<string, Record<Lang, string>> = {
   home: { uz: "Bosh sahifa", en: "Home", ru: "Главная" },
+  save: { uz: "Saqlash", en: "Save", ru: "Сохранить" },
+  saved: { uz: "Saqlandi", en: "Saved", ru: "Сохранено" },
   trending: { uz: "Trend", en: "Trending", ru: "В тренде" },
   uzbekCuisine: {
     uz: "O'zbek taomlari",

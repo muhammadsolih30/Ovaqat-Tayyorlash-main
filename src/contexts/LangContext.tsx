@@ -23,6 +23,7 @@ const translations: Translations = {
   american: { uz: "Amerika", en: "American" },
   recipes: { uz: "Taomlar", en: "Recipes" },
   ingredients: { uz: "Maslahatlar", en: "By Ingredients" },
+  save: { uz: "Saqlash", en: "Save" },
   saved: { uz: "Saqlangan", en: "Saved" },
   tips: { uz: "Foydali", en: "Tips" },
   profile: { uz: "Profil", en: "Profile" },
