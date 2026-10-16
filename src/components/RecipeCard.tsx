@@ -53,11 +53,12 @@ const RecipeCard = ({
             e.stopPropagation();
             onToggleSave?.();
           }}
-          className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm transition-all ${
+          className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
             saved
               ? "bg-rose-500 text-white shadow-lg"
               : "bg-black/25 text-zinc-900 dark:text-white hover:bg-black/45"
           }`}
+          aria-label={saved ? "Saqlanganlardan o'chirish" : "Saqlash"}
         >
           <svg
             width="14"
