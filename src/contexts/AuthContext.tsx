@@ -1,11 +1,31 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
+// Helper function to hash a password using PBKDF2 with SHA-256
+async function hashPassword(password: string | undefined, saltHex?: string): Promise<{ hash: string, salt: string }> {
+  if (password === undefined || password === "") return { hash: "", salt: "" };
+
+  const salt = saltHex
+    ? new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)))
+    : crypto.getRandomValues(new Uint8Array(16));
+
+  const encoder = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(password), { name: "PBKDF2" }, false, ["deriveBits"]);
+  const hashBuffer = await crypto.subtle.deriveBits({ name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" }, keyMaterial, 256);
+
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashString = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  const saltString = Array.from(salt).map(b => b.toString(16).padStart(2, "0")).join("");
+
+  return { hash: hashString, salt: saltString };
+}
+
 export interface User {
   id: string;
   name: string;
   email: string;
   avatar: string;
   password?: string;
+  salt?: string;
   historyIds?: string[];
   likedIds?: string[];
   savedIds?: string[];
@@ -15,8 +35,8 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
-  login: (email: string, password?: string, isGoogle?: boolean) => { success: boolean; message: string };
-  register: (name: string, email: string, password?: string) => { success: boolean; message: string };
+  login: (email: string, password?: string, isGoogle?: boolean) => Promise<{ success: boolean; message: string }>;
+  register: (name: string, email: string, password?: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   isLoginModalOpen: boolean;
   openLoginModal: () => void;
@@ -67,15 +87,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("taomuz_subscriptions", JSON.stringify(subscribedChefIds));
   }, [subscribedChefIds]);
 
-  const register = (name: string, email: string, password?: string) => {
+  const register = async (name: string, email: string, password?: string) => {
     if (users.find((u) => u.email === email)) {
       return { success: false, message: "Bu email bilan ro'yxatdan o'tilgan." };
     }
+
+    const { hash, salt } = await hashPassword(password);
+
     const newUser: User = {
       id: "u_" + Date.now(),
       name,
       email,
-      password,
+      password: hash,
+      salt: salt,
       avatar: "https://ui-avatars.com/api/?name=" + encodeURIComponent(name) + "&background=10b981&color=fff",
       historyIds: [],
       likedIds: [],
@@ -88,7 +112,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { success: true, message: "Muvaffaqiyatli ro'yxatdan o'tdingiz!" };
   };
 
-  const login = (email: string, password?: string, isGoogle: boolean = false) => {
+  const login = async (email: string, password?: string, isGoogle: boolean = false) => {
     const existingUser = users.find((u) => u.email === email);
     
     if (isGoogle) {
@@ -115,11 +139,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     if (!existingUser) {
-      return { success: false, message: "Bunday foydalanuvchi topilmadi. Iltimos ro'yxatdan o'ting." };
+      // Prevent timing attacks by performing the hash operation anyway
+      await hashPassword(password);
+      return { success: false, message: "Email yoki parol xato." };
     }
 
-    if (existingUser.password !== password) {
-      return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+    const { hash } = await hashPassword(password, existingUser.salt);
+    if (existingUser.password !== hash) {
+      return { success: false, message: "Email yoki parol xato." };
     }
 
     setUser(existingUser);
