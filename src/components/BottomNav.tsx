@@ -238,6 +238,7 @@ const BottomNav = ({
               </div>
               <button
                 onClick={closePanel}
+                aria-label={lang === "uz" ? "Yopish" : "Close"}
                 style={{
                   width: 32,
                   height: 32,

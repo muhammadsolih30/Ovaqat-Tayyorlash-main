@@ -275,6 +275,7 @@ export const VideoWatch = ({
                 <div className="w-[1px] h-4 bg-zinc-200 dark:bg-zinc-700" />
                 <button
                   onClick={handleDislike}
+                  aria-label="Yoqmadi"
                   className={`px-3 py-2 text-xs hover:bg-zinc-200 dark:bg-zinc-700/80 transition-colors ${
                     disliked ? "text-red-400" : "text-zinc-700 dark:text-zinc-300"
                   }`}
