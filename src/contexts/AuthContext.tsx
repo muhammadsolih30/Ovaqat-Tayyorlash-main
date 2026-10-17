@@ -6,6 +6,7 @@ export interface User {
   email: string;
   avatar: string;
   password?: string;
+  salt?: string;
   historyIds?: string[];
   likedIds?: string[];
   savedIds?: string[];
@@ -15,8 +16,8 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
-  login: (email: string, password?: string, isGoogle?: boolean) => { success: boolean; message: string };
-  register: (name: string, email: string, password?: string) => { success: boolean; message: string };
+  login: (email: string, password?: string, isGoogle?: boolean) => Promise<{ success: boolean; message: string }>;
+  register: (name: string, email: string, password?: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   isLoginModalOpen: boolean;
   openLoginModal: () => void;
@@ -27,6 +28,28 @@ interface AuthContextType {
   toggleLike: (videoId: string) => boolean;
   toggleSave: (videoId: string) => boolean;
   addToCommented: (videoId: string) => void;
+}
+
+async function hashPassword(password: string, salt: string): Promise<string> {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(password),
+    { name: "PBKDF2" },
+    false,
+    ["deriveBits"]
+  );
+  const buffer = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: enc.encode(salt),
+      iterations: 100000,
+      hash: "SHA-256"
+    },
+    keyMaterial,
+    256
+  );
+  return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -67,15 +90,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("taomuz_subscriptions", JSON.stringify(subscribedChefIds));
   }, [subscribedChefIds]);
 
-  const register = (name: string, email: string, password?: string) => {
+  const register = async (name: string, email: string, password?: string) => {
     if (users.find((u) => u.email === email)) {
       return { success: false, message: "Bu email bilan ro'yxatdan o'tilgan." };
     }
+
+    let finalPassword = password;
+    let salt = undefined;
+
+    if (password !== undefined && password !== "") {
+      salt = crypto.randomUUID();
+      finalPassword = await hashPassword(password, salt);
+    }
+
     const newUser: User = {
       id: "u_" + Date.now(),
       name,
       email,
-      password,
+      password: finalPassword,
+      salt,
       avatar: "https://ui-avatars.com/api/?name=" + encodeURIComponent(name) + "&background=10b981&color=fff",
       historyIds: [],
       likedIds: [],
@@ -88,7 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { success: true, message: "Muvaffaqiyatli ro'yxatdan o'tdingiz!" };
   };
 
-  const login = (email: string, password?: string, isGoogle: boolean = false) => {
+  const login = async (email: string, password?: string, isGoogle: boolean = false) => {
     const existingUser = users.find((u) => u.email === email);
     
     if (isGoogle) {
@@ -115,11 +148,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     if (!existingUser) {
-      return { success: false, message: "Bunday foydalanuvchi topilmadi. Iltimos ro'yxatdan o'ting." };
+      return { success: false, message: "Email yoki parol xato" };
     }
 
-    if (existingUser.password !== password) {
-      return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+    if (existingUser.password !== undefined && existingUser.password !== "") {
+      if (existingUser.salt !== undefined && existingUser.salt !== "") {
+        if (password === undefined || password === "") {
+          return { success: false, message: "Email yoki parol xato" };
+        }
+        const hashedAttempt = await hashPassword(password, existingUser.salt);
+        if (existingUser.password !== hashedAttempt) {
+          return { success: false, message: "Email yoki parol xato" };
+        }
+      } else {
+        if (existingUser.password !== password) {
+          return { success: false, message: "Email yoki parol xato" };
+        }
+      }
+    } else {
+      if (password !== undefined && password !== "") {
+        return { success: false, message: "Email yoki parol xato" };
+      }
     }
 
     setUser(existingUser);
