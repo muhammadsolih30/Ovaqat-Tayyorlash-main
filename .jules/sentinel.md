@@ -2,3 +2,8 @@
 **Vulnerability:** Found hardcoded super admin credentials in `src/contexts/AdminContext.tsx`. The credentials (`SUPER_ADMIN_USER = "muhammadsolih"` and `SUPER_ADMIN_PASS = "muhammadsolih2234"`) are explicitly stored in the client-side code.
 **Learning:** In a pure frontend application, any hardcoded credentials can be easily read by anyone inspecting the code or the bundled JavaScript files. This grants unauthorized full admin access to the application, bypassing all intended security controls.
 **Prevention:** Never hardcode credentials or secrets in the client-side code. Use environment variables (e.g., `import.meta.env.VITE_SUPER_ADMIN_USER`) during the build process, or implement a proper backend service for authentication where secrets remain on the server.
+
+## 2025-03-10 - [Plaintext Passwords and Account Enumeration]
+**Vulnerability:** Found plaintext password storage in `localStorage` through `src/contexts/AuthContext.tsx` and account enumeration vulnerabilities in the `login` function.
+**Learning:** Storing plaintext passwords exposes them if a system is compromised. Furthermore, returning different errors when an account is not found vs an incorrect password allows attackers to deduce valid emails in the system. When applying security fixes to a mock auth system, careful handling is needed to maintain backward compatibility with old plaintext credentials in localStorage and OAuth logic without strict falsy checks.
+**Prevention:** Use `crypto.subtle` with PBKDF2 and SHA-256 with a unique salt to securely hash passwords. Return generic "Email yoki parol xato" messages on all auth failures. Maintain undefined/falsy checks correctly when preserving OAuth mock implementations.
