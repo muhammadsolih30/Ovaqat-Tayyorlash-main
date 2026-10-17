@@ -145,6 +145,7 @@ export const VideoCardYT: React.FC<VideoCardYTProps> = ({
         {/* Save button hover */}
         <button
           onClick={handleSaveClick}
+          aria-label={isSaved ? "Saqlanganlardan o'chirish" : "Keyinroq ko'rish"}
           className={`absolute bottom-2 left-2 p-1.5 rounded-xl backdrop-blur-md transition-all ${
             isSaved
               ? "bg-emerald-600 text-white"
