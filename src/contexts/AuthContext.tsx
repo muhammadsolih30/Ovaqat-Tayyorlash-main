@@ -115,11 +115,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     if (!existingUser) {
-      return { success: false, message: "Bunday foydalanuvchi topilmadi. Iltimos ro'yxatdan o'ting." };
+      // Security: Generic error message to prevent account enumeration
+      return { success: false, message: "Email yoki parol xato." };
     }
 
     if (existingUser.password !== password) {
-      return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+      // Security: Generic error message to prevent account enumeration
+      return { success: false, message: "Email yoki parol xato." };
     }
 
     setUser(existingUser);
