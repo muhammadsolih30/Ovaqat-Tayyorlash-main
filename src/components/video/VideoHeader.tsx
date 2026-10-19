@@ -77,8 +77,9 @@ export const VideoHeader = ({
       {/* LEFT: Menu button & Logo */}
       <div className="flex items-center gap-3.5 flex-shrink-0">
         <button
+          aria-label="Menyu"
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 rounded-full hover:bg-zinc-100 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors"
+          className="p-2 rounded-full hover:bg-zinc-100 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
           title="Menyu"
         >
           <Menu size={20} />
@@ -112,20 +113,22 @@ export const VideoHeader = ({
             />
             {query && (
               <button
+                aria-label="Qidiruvni tozalash"
                 type="button"
                 onClick={() => {
                   setQuery("");
                   setSuggestions([]);
                 }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 dark:text-zinc-500 hover:text-zinc-700 dark:text-zinc-300"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 dark:text-zinc-500 hover:text-zinc-700 dark:text-zinc-300 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none rounded-full p-1"
               >
                 <X size={15} />
               </button>
             )}
           </div>
           <button
+            aria-label="Qidirish"
             type="submit"
-            className="h-10 px-6 rounded-r-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:bg-zinc-700/80 border border-l-0 border-zinc-300 dark:border-zinc-700/80 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:text-white transition-colors flex items-center justify-center"
+            className="h-10 px-6 rounded-r-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:bg-zinc-700/80 border border-l-0 border-zinc-300 dark:border-zinc-700/80 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:text-white transition-colors flex items-center justify-center focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
             title="Qidirish"
           >
             <Search size={18} />
@@ -182,8 +185,9 @@ export const VideoHeader = ({
 
         {/* Dark/Light mode toggle */}
         <button
+          aria-label={dark ? "Yorug' rejim" : "Qorong'u rejim"}
           onClick={toggleDark}
-          className="p-2 rounded-full hover:bg-zinc-100 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors"
+          className="p-2 rounded-full hover:bg-zinc-100 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
           title={dark ? "Yorug' rejim" : "Qorong'u rejim"}
         >
           {dark ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} />}
@@ -193,8 +197,9 @@ export const VideoHeader = ({
         {isLoggedIn ? (
           <div className="relative">
             <button
+              aria-label="Profil"
               onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-              className="flex items-center gap-2 p-1 rounded-full hover:bg-zinc-100 dark:bg-zinc-800/80 transition-colors"
+              className="flex items-center gap-2 p-1 rounded-full hover:bg-zinc-100 dark:bg-zinc-800/80 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
             >
               <img
                 src={
