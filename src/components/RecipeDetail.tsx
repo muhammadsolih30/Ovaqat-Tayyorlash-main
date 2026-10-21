@@ -21,7 +21,8 @@ const RecipeDetail = ({ recipe, onBack }: RecipeDetailProps) => {
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 to-transparent" />
         <button
           onClick={onBack}
-          className="absolute top-4 left-4 w-9 h-9 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-card transition-colors"
+          aria-label="Orqaga"
+          className="absolute top-4 left-4 w-9 h-9 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-card transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
         >
           <ArrowLeft size={18} />
         </button>
