@@ -115,11 +115,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     if (!existingUser) {
-      return { success: false, message: "Bunday foydalanuvchi topilmadi. Iltimos ro'yxatdan o'ting." };
+      return { success: false, message: "Email yoki parol xato." };
     }
 
-    if (existingUser.password !== password) {
-      return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+    if (!existingUser.password || existingUser.password !== password) {
+      return { success: false, message: "Email yoki parol xato." };
     }
 
     setUser(existingUser);
