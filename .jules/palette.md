@@ -1,0 +1,3 @@
+## 2026-10-22 - Icon-only buttons accessibility pattern
+**Learning:** Found that some icon-only buttons (like save toggle and back buttons) were missing ARIA labels and clear keyboard focus states, making them inaccessible to screen readers and keyboard users.
+**Action:** Added `aria-label` utilizing translation functions when available (e.g. `t("saved")`, `t("back")`) and added `focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none` classes to these buttons. This should be applied consistently to all icon-only interactive elements in the application.
