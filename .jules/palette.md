@@ -1,0 +1,3 @@
+## 2026-10-24 - Missing ARIA labels and focus states on icon-only buttons
+**Learning:** Common missing accessibility features were found across multiple components for icon-only buttons, particularly `aria-label`s and `focus-visible` states, reducing clarity for screen readers and hindering keyboard navigation.
+**Action:** Always verify that buttons containing only icons have descriptive `aria-label` attributes (matching app language or fallback strings) and visible focus states (e.g. `focus-visible:ring-2`) implemented using existing Tailwind classes to ensure they meet basic accessibility standards.
