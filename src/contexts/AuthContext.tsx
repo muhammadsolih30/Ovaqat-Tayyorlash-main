@@ -114,12 +114,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { success: true, message: "Google orqali kirdingiz!" };
     }
 
-    if (!existingUser) {
-      return { success: false, message: "Bunday foydalanuvchi topilmadi. Iltimos ro'yxatdan o'ting." };
-    }
-
-    if (existingUser.password !== password) {
-      return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+    if (!existingUser || !existingUser.password || existingUser.password !== password) {
+      // Security: Use generic error message to prevent account enumeration
+      return { success: false, message: "Email yoki parol xato" };
     }
 
     setUser(existingUser);
