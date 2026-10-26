@@ -148,9 +148,10 @@ export const VideoCardYT: React.FC<VideoCardYTProps> = ({
           className={`absolute bottom-2 left-2 p-1.5 rounded-xl backdrop-blur-md transition-all ${
             isSaved
               ? "bg-emerald-600 text-white"
-              : "bg-black/60 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:text-white hover:bg-black/80 opacity-0 group-hover:opacity-100"
+              : "bg-black/60 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:text-white hover:bg-black/80 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
           }`}
           title={isSaved ? "Saqlanganlardan o'chirish" : "Keyinroq ko'rish"}
+          aria-label={isSaved ? "Saqlanganlardan o'chirish" : "Keyinroq ko'rish"}
         >
           <Bookmark size={14} fill={isSaved ? "currentColor" : "none"} />
         </button>
