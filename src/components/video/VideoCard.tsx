@@ -168,7 +168,8 @@ const VideoCard = ({
               e.stopPropagation();
               onToggleSave(video.id);
             }}
-            className="absolute top-2.5 right-2.5 w-8 h-8 rounded-xl flex items-center justify-center transition-all"
+            className="absolute top-2.5 right-2.5 w-8 h-8 rounded-xl flex items-center justify-center transition-all focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
+            aria-label={saved ? "Saqlanganni o'chirish" : "Saqlash"}
             style={{
               background: saved
                 ? "linear-gradient(135deg, #F5A623, #E8960F)"
