@@ -114,12 +114,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { success: true, message: "Google orqali kirdingiz!" };
     }
 
-    if (!existingUser) {
-      return { success: false, message: "Bunday foydalanuvchi topilmadi. Iltimos ro'yxatdan o'ting." };
-    }
-
-    if (existingUser.password !== password) {
-      return { success: false, message: "Parol xato. Qaytadan urinib ko'ring." };
+    // Prevent account enumeration by giving generic error messages for non-existent users
+    // Prevent bypass for oauth-created accounts by explicitly failing if password is undefined
+    if (!existingUser || existingUser.password === undefined || existingUser.password !== password) {
+      return { success: false, message: "Email yoki parol xato." };
     }
 
     setUser(existingUser);
