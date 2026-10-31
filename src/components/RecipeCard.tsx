@@ -19,7 +19,15 @@ const RecipeCard = ({
 
   return (
     <div
-      className="group bg-card rounded-2xl overflow-hidden border border-border cursor-pointer animate-fade-in"
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      className="group bg-card rounded-2xl overflow-hidden border border-border cursor-pointer animate-fade-in focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
       style={{
         boxShadow: "0 2px 12px hsl(152 40% 25% / 0.08)",
         transform: "translateY(0)",
@@ -49,11 +57,12 @@ const RecipeCard = ({
 
         {/* Saqlash tugmasi */}
         <button
+          aria-label={saved ? "Saqlanganlardan olib tashlash" : "Saqlash"}
           onClick={(e) => {
             e.stopPropagation();
             onToggleSave?.();
           }}
-          className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm transition-all ${
+          className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm transition-all focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none ${
             saved
               ? "bg-rose-500 text-white shadow-lg"
               : "bg-black/25 text-zinc-900 dark:text-white hover:bg-black/45"
