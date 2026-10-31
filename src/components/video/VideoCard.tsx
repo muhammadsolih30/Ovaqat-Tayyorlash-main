@@ -36,7 +36,15 @@ const VideoCard = ({
   if (size === "horizontal") {
     return (
       <div
-        className="flex gap-3 cursor-pointer group"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onClick();
+          }
+        }}
+        className="flex gap-3 cursor-pointer group focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none rounded-2xl"
         onClick={onClick}
         style={{ fontFamily: "var(--font-body)" }}
       >
@@ -86,7 +94,15 @@ const VideoCard = ({
 
   return (
     <div
-      className="group cursor-pointer rounded-3xl overflow-hidden transition-all duration-500"
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      className="group cursor-pointer rounded-3xl overflow-hidden transition-all duration-500 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -164,11 +180,12 @@ const VideoCard = ({
         {/* Save button */}
         {onToggleSave && (
           <button
+            aria-label={saved ? "Saqlanganlardan olib tashlash" : "Saqlash"}
             onClick={(e) => {
               e.stopPropagation();
               onToggleSave(video.id);
             }}
-            className="absolute top-2.5 right-2.5 w-8 h-8 rounded-xl flex items-center justify-center transition-all"
+            className="absolute top-2.5 right-2.5 w-8 h-8 rounded-xl flex items-center justify-center transition-all focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
             style={{
               background: saved
                 ? "linear-gradient(135deg, #F5A623, #E8960F)"
