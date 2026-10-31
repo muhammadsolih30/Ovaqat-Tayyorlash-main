@@ -12,11 +12,19 @@ export interface User {
   commentedIds?: string[];
 }
 
+const hashPasswordPbkdf2 = async (password: string, saltStr?: string): Promise<string> => {
+  const enc = new TextEncoder();
+  const salt = saltStr ? Uint8Array.from(atob(saltStr), c => c.charCodeAt(0)) : crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveBits"]);
+  const hashBuf = await crypto.subtle.deriveBits({ name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" }, key, 256);
+  return btoa(String.fromCharCode(...salt)) + ":" + btoa(String.fromCharCode(...new Uint8Array(hashBuf)));
+};
+
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
-  login: (email: string, password?: string, isGoogle?: boolean) => { success: boolean; message: string };
-  register: (name: string, email: string, password?: string) => { success: boolean; message: string };
+  login: (email: string, password?: string, isGoogle?: boolean) => Promise<{ success: boolean; message: string }>;
+  register: (name: string, email: string, password?: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   isLoginModalOpen: boolean;
   openLoginModal: () => void;
@@ -67,15 +75,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("taomuz_subscriptions", JSON.stringify(subscribedChefIds));
   }, [subscribedChefIds]);
 
-  const register = (name: string, email: string, password?: string) => {
+  const register = async (name: string, email: string, password?: string) => {
     if (users.find((u) => u.email === email)) {
       return { success: false, message: "Bu email bilan ro'yxatdan o'tilgan." };
     }
+
+    let hashedPassword = password;
+    if (password) {
+      hashedPassword = await hashPasswordPbkdf2(password);
+    }
+
     const newUser: User = {
       id: "u_" + Date.now(),
       name,
       email,
-      password,
+      password: hashedPassword,
       avatar: "https://ui-avatars.com/api/?name=" + encodeURIComponent(name) + "&background=10b981&color=fff",
       historyIds: [],
       likedIds: [],
@@ -88,7 +102,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { success: true, message: "Muvaffaqiyatli ro'yxatdan o'tdingiz!" };
   };
 
-  const login = (email: string, password?: string, isGoogle: boolean = false) => {
+  const login = async (email: string, password?: string, isGoogle: boolean = false) => {
     const existingUser = users.find((u) => u.email === email);
     
     if (isGoogle) {
@@ -115,8 +129,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     // Prevent account enumeration by giving generic error messages for non-existent users
+    let isPasswordMatch = false;
+    if (existingUser && existingUser.password !== undefined && password !== undefined) {
+      if (existingUser.password.includes(":")) {
+        const saltStr = existingUser.password.split(":")[0];
+        try {
+          const hash = await hashPasswordPbkdf2(password, saltStr);
+          isPasswordMatch = existingUser.password === hash;
+        } catch (e) {
+          // If hashing fails (e.g. invalid salt), treat as false match
+          isPasswordMatch = false;
+        }
+      } else {
+        // Fallback for existing plaintext passwords during transition
+        isPasswordMatch = existingUser.password === password;
+      }
+    }
+
     // Prevent bypass for oauth-created accounts by explicitly failing if password is undefined
-    if (!existingUser || existingUser.password === undefined || existingUser.password !== password) {
+    if (!existingUser || existingUser.password === undefined || !isPasswordMatch) {
       return { success: false, message: "Email yoki parol xato." };
     }
 
