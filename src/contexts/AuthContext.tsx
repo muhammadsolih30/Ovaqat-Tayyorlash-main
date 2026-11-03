@@ -12,11 +12,29 @@ export interface User {
   commentedIds?: string[];
 }
 
+// Helper function to hash a password using PBKDF2 with SHA-256
+async function hashPassword(password: string, salt: string): Promise<string> {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(password),
+    { name: "PBKDF2" },
+    false,
+    ["deriveBits"]
+  );
+  const buffer = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt: enc.encode(salt), iterations: 100000, hash: "SHA-256" },
+    keyMaterial,
+    256
+  );
+  return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
-  login: (email: string, password?: string, isGoogle?: boolean) => { success: boolean; message: string };
-  register: (name: string, email: string, password?: string) => { success: boolean; message: string };
+  login: (email: string, password?: string, isGoogle?: boolean) => Promise<{ success: boolean; message: string }>;
+  register: (name: string, email: string, password?: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   isLoginModalOpen: boolean;
   openLoginModal: () => void;
@@ -67,15 +85,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("taomuz_subscriptions", JSON.stringify(subscribedChefIds));
   }, [subscribedChefIds]);
 
-  const register = (name: string, email: string, password?: string) => {
+  const register = async (name: string, email: string, password?: string) => {
     if (users.find((u) => u.email === email)) {
       return { success: false, message: "Bu email bilan ro'yxatdan o'tilgan." };
     }
+
+    let storedPassword = password;
+    if (password) {
+      const salt = crypto.randomUUID();
+      storedPassword = salt + ":" + await hashPassword(password, salt);
+    }
+
     const newUser: User = {
       id: "u_" + Date.now(),
       name,
       email,
-      password,
+      password: storedPassword,
       avatar: "https://ui-avatars.com/api/?name=" + encodeURIComponent(name) + "&background=10b981&color=fff",
       historyIds: [],
       likedIds: [],
@@ -88,7 +113,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { success: true, message: "Muvaffaqiyatli ro'yxatdan o'tdingiz!" };
   };
 
-  const login = (email: string, password?: string, isGoogle: boolean = false) => {
+  const login = async (email: string, password?: string, isGoogle: boolean = false) => {
     const existingUser = users.find((u) => u.email === email);
     
     if (isGoogle) {
@@ -116,7 +141,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Prevent account enumeration by giving generic error messages for non-existent users
     // Prevent bypass for oauth-created accounts by explicitly failing if password is undefined
-    if (!existingUser || existingUser.password === undefined || existingUser.password !== password) {
+    let passMatch = false;
+    if (existingUser && existingUser.password !== undefined && password !== undefined) {
+      if (existingUser.password.includes(":")) {
+        const [salt, hash] = existingUser.password.split(":");
+        passMatch = hash === await hashPassword(password, salt);
+      } else {
+        // Backward compatibility for existing mock accounts without hashed passwords
+        passMatch = existingUser.password === password;
+      }
+    }
+
+    if (!existingUser || existingUser.password === undefined || !passMatch) {
       return { success: false, message: "Email yoki parol xato." };
     }
 
