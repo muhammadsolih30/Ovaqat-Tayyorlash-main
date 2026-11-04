@@ -1,5 +1,31 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
+// Helper functions for secure password hashing with salt
+const generateSalt = () => {
+  const array = new Uint8Array(16);
+  crypto.getRandomValues(array);
+  return Array.from(array, (b) => b.toString(16).padStart(2, "0")).join("");
+};
+
+const hashPassword = async (password: string, salt: string): Promise<string> => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password + salt);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hash = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  return `${salt}:${hash}`;
+};
+
+const verifyPassword = async (password: string, storedPasswordHash: string): Promise<boolean> => {
+  if (!storedPasswordHash.includes(":")) {
+    // Backward compatibility for existing plaintext passwords
+    return password === storedPasswordHash;
+  }
+  const [salt] = storedPasswordHash.split(":");
+  const calculatedHash = await hashPassword(password, salt);
+  return calculatedHash === storedPasswordHash;
+};
+
 export interface User {
   id: string;
   name: string;
@@ -15,8 +41,8 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
-  login: (email: string, password?: string, isGoogle?: boolean) => { success: boolean; message: string };
-  register: (name: string, email: string, password?: string) => { success: boolean; message: string };
+  login: (email: string, password?: string, isGoogle?: boolean) => Promise<{ success: boolean; message: string }>;
+  register: (name: string, email: string, password?: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   isLoginModalOpen: boolean;
   openLoginModal: () => void;
@@ -67,15 +93,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("taomuz_subscriptions", JSON.stringify(subscribedChefIds));
   }, [subscribedChefIds]);
 
-  const register = (name: string, email: string, password?: string) => {
+  const register = async (name: string, email: string, password?: string) => {
     if (users.find((u) => u.email === email)) {
       return { success: false, message: "Bu email bilan ro'yxatdan o'tilgan." };
     }
+
+    let storedPassword = password;
+    if (password) {
+      const salt = generateSalt();
+      storedPassword = await hashPassword(password, salt);
+    }
+
     const newUser: User = {
       id: "u_" + Date.now(),
       name,
       email,
-      password,
+      password: storedPassword,
       avatar: "https://ui-avatars.com/api/?name=" + encodeURIComponent(name) + "&background=10b981&color=fff",
       historyIds: [],
       likedIds: [],
@@ -88,7 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { success: true, message: "Muvaffaqiyatli ro'yxatdan o'tdingiz!" };
   };
 
-  const login = (email: string, password?: string, isGoogle: boolean = false) => {
+  const login = async (email: string, password?: string, isGoogle: boolean = false) => {
     const existingUser = users.find((u) => u.email === email);
     
     if (isGoogle) {
@@ -114,9 +147,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { success: true, message: "Google orqali kirdingiz!" };
     }
 
-    // Prevent account enumeration by giving generic error messages for non-existent users
+
+
     // Prevent bypass for oauth-created accounts by explicitly failing if password is undefined
-    if (!existingUser || existingUser.password === undefined || existingUser.password !== password) {
+    if (!existingUser || existingUser.password === undefined || password === undefined) {
+      return { success: false, message: "Email yoki parol xato." };
+    }
+
+    const isValid = await verifyPassword(password, existingUser.password);
+    if (!isValid) {
       return { success: false, message: "Email yoki parol xato." };
     }
 
