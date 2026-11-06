@@ -1,0 +1,3 @@
+## 2024-11-06 - Missing focus-visibility on hover-revealed controls
+**Learning:** Found a recurring pattern in the app's components (e.g. `CategoryBar`, `VideoCardYT`) where controls are visually hidden using `opacity-0` and revealed on hover (`group-hover:opacity-100`). These controls become completely inaccessible to keyboard users because they can navigate to them, but the elements remain invisible since focus does not trigger the hover state.
+**Action:** When applying `opacity-0` to interactable elements to hide them by default, always pair hover-reveal utility classes (`group-hover:opacity-100` or `hover:opacity-100`) with keyboard focus visibility classes (`focus-visible:opacity-100`) to guarantee they are visible during keyboard navigation.

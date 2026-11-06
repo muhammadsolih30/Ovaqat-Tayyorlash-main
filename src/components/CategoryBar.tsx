@@ -52,7 +52,7 @@ export const CategoryBar: React.FC<CategoryBarProps> = ({
       {/* Scroll Left Button */}
       <button
         onClick={() => handleScroll("left")}
-        className="absolute left-0 z-10 hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-zinc-50 dark:bg-zinc-900/90 border border-zinc-300 dark:border-zinc-700/60 shadow-md text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:text-white hover:bg-zinc-100 dark:bg-zinc-800 transition-all opacity-0 group-hover/bar:opacity-100"
+        className="absolute left-0 z-10 hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-zinc-50 dark:bg-zinc-900/90 border border-zinc-300 dark:border-zinc-700/60 shadow-md text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:text-white hover:bg-zinc-100 dark:bg-zinc-800 transition-all opacity-0 group-hover/bar:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
         aria-label="Oldingi"
       >
         <ChevronLeft size={18} />
@@ -87,7 +87,7 @@ export const CategoryBar: React.FC<CategoryBarProps> = ({
       {/* Scroll Right Button */}
       <button
         onClick={() => handleScroll("right")}
-        className="absolute right-0 z-10 hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-zinc-50 dark:bg-zinc-900/90 border border-zinc-300 dark:border-zinc-700/60 shadow-md text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:text-white hover:bg-zinc-100 dark:bg-zinc-800 transition-all opacity-0 group-hover/bar:opacity-100"
+        className="absolute right-0 z-10 hidden md:flex items-center justify-center w-8 h-8 rounded-full bg-zinc-50 dark:bg-zinc-900/90 border border-zinc-300 dark:border-zinc-700/60 shadow-md text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:text-white hover:bg-zinc-100 dark:bg-zinc-800 transition-all opacity-0 group-hover/bar:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
         aria-label="Keyingi"
       >
         <ChevronRight size={18} />
