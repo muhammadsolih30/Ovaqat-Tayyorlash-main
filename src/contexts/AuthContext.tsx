@@ -15,8 +15,8 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
-  login: (email: string, password?: string, isGoogle?: boolean) => { success: boolean; message: string };
-  register: (name: string, email: string, password?: string) => { success: boolean; message: string };
+  login: (email: string, password?: string, isGoogle?: boolean) => Promise<{ success: boolean; message: string }>;
+  register: (name: string, email: string, password?: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   isLoginModalOpen: boolean;
   openLoginModal: () => void;
@@ -49,6 +49,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return saved ? JSON.parse(saved) : ["c1"];
   });
 
+  // Helper function to hash password with salt
+  const hashPasswordWithSalt = async (password: string, salt: string): Promise<string> => {
+    const encoder = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      "raw",
+      encoder.encode(password),
+      { name: "PBKDF2" },
+      false,
+      ["deriveBits", "deriveKey"]
+    );
+    const hashBuffer = await crypto.subtle.deriveBits(
+      {
+        name: "PBKDF2",
+        salt: encoder.encode(salt),
+        iterations: 100000,
+        hash: "SHA-256"
+      },
+      keyMaterial,
+      256
+    );
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  };
+
   useEffect(() => {
     localStorage.setItem("taomuz_users", JSON.stringify(users));
   }, [users]);
@@ -67,15 +91,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("taomuz_subscriptions", JSON.stringify(subscribedChefIds));
   }, [subscribedChefIds]);
 
-  const register = (name: string, email: string, password?: string) => {
+  const register = async (name: string, email: string, password?: string) => {
     if (users.find((u) => u.email === email)) {
       return { success: false, message: "Bu email bilan ro'yxatdan o'tilgan." };
     }
+
+    let storedPassword = password;
+    if (password) {
+      const saltBuffer = crypto.getRandomValues(new Uint8Array(16));
+      const saltArray = Array.from(saltBuffer);
+      const salt = saltArray.map(b => b.toString(16).padStart(2, "0")).join("");
+      const hash = await hashPasswordWithSalt(password, salt);
+      storedPassword = `${salt}:${hash}`;
+    }
+
     const newUser: User = {
       id: "u_" + Date.now(),
       name,
       email,
-      password,
+      password: storedPassword,
       avatar: "https://ui-avatars.com/api/?name=" + encodeURIComponent(name) + "&background=10b981&color=fff",
       historyIds: [],
       likedIds: [],
@@ -88,7 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { success: true, message: "Muvaffaqiyatli ro'yxatdan o'tdingiz!" };
   };
 
-  const login = (email: string, password?: string, isGoogle: boolean = false) => {
+  const login = async (email: string, password?: string, isGoogle: boolean = false) => {
     const existingUser = users.find((u) => u.email === email);
     
     if (isGoogle) {
@@ -116,7 +150,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Prevent account enumeration by giving generic error messages for non-existent users
     // Prevent bypass for oauth-created accounts by explicitly failing if password is undefined
-    if (!existingUser || existingUser.password === undefined || existingUser.password !== password) {
+    if (!existingUser || existingUser.password === undefined || !password) {
+      return { success: false, message: "Email yoki parol xato." };
+    }
+
+    let isValid = false;
+    if (existingUser.password.includes(":")) {
+      // Hashed password
+      const [salt, hash] = existingUser.password.split(":");
+      const inputHash = await hashPasswordWithSalt(password, salt);
+      isValid = inputHash === hash;
+    } else {
+      // Plaintext fallback for legacy mock accounts
+      isValid = existingUser.password === password;
+    }
+
+    if (!isValid) {
       return { success: false, message: "Email yoki parol xato." };
     }
 

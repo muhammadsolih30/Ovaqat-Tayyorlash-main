@@ -7,3 +7,8 @@
 **Vulnerability:** Found an account enumeration vulnerability in the login function in `src/contexts/AuthContext.tsx`. The login function returned distinct error messages for a non-existent user versus an incorrect password, allowing attackers to check if specific email addresses are registered on the platform. It also lacked protection against bypassing authentication for OAuth accounts where the stored password could be undefined.
 **Learning:** Returning specific error messages during authentication processes can expose user information. Always use generic error messages like "Email or password incorrect". Additionally, ensuring robust validation handles accounts without explicit passwords (like those from OAuth) is crucial.
 **Prevention:** Implement unified error messaging for authentication failures. Ensure that authentication logic explicitly checks and rejects cases where an account might not have a password set to prevent bypasses.
+
+## 2025-03-06 - [Plaintext Password Storage]
+**Vulnerability:** Found that user passwords were being stored in plaintext in the client-side `AuthContext.tsx` when mocking the register/login flow.
+**Learning:** Storing passwords in plaintext poses a severe security risk. If a database (or in this mock case, local storage/memory) is compromised, all user passwords are exposed.
+**Prevention:** Passwords must always be hashed with a salt before being stored. Used the Web Crypto API (`PBKDF2` with `SHA-256`) to derive a secure hash from the password and a generated salt, storing only the result.
