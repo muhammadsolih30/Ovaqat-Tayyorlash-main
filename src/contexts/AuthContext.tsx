@@ -15,8 +15,8 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
-  login: (email: string, password?: string, isGoogle?: boolean) => { success: boolean; message: string };
-  register: (name: string, email: string, password?: string) => { success: boolean; message: string };
+  login: (email: string, password?: string, isGoogle?: boolean) => Promise<{ success: boolean; message: string }>;
+  register: (name: string, email: string, password?: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   isLoginModalOpen: boolean;
   openLoginModal: () => void;
@@ -27,6 +27,42 @@ interface AuthContextType {
   toggleLike: (videoId: string) => boolean;
   toggleSave: (videoId: string) => boolean;
   addToCommented: (videoId: string) => void;
+}
+
+
+// Security: Passwords are hashed using PBKDF2 with SHA-256
+async function hashPassword(password: string, saltHex?: string): Promise<string> {
+  const encoder = new TextEncoder();
+  let salt;
+  if (saltHex) {
+    salt = new Uint8Array(saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
+  } else {
+    salt = crypto.getRandomValues(new Uint8Array(16));
+  }
+  const saltHexStr = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
+
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(password),
+    { name: "PBKDF2" },
+    false,
+    ["deriveBits"]
+  );
+
+  const hashBuffer = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: salt,
+      iterations: 100000,
+      hash: "SHA-256"
+    },
+    keyMaterial,
+    256
+  );
+
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  return `${saltHexStr}:${hashHex}`;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -67,7 +103,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("taomuz_subscriptions", JSON.stringify(subscribedChefIds));
   }, [subscribedChefIds]);
 
-  const register = (name: string, email: string, password?: string) => {
+  const register = async (name: string, email: string, password?: string) => {
     if (users.find((u) => u.email === email)) {
       return { success: false, message: "Bu email bilan ro'yxatdan o'tilgan." };
     }
@@ -75,7 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       id: "u_" + Date.now(),
       name,
       email,
-      password,
+      password: password ? await hashPassword(password) : undefined,
       avatar: "https://ui-avatars.com/api/?name=" + encodeURIComponent(name) + "&background=10b981&color=fff",
       historyIds: [],
       likedIds: [],
@@ -88,7 +124,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { success: true, message: "Muvaffaqiyatli ro'yxatdan o'tdingiz!" };
   };
 
-  const login = (email: string, password?: string, isGoogle: boolean = false) => {
+  const login = async (email: string, password?: string, isGoogle: boolean = false) => {
     const existingUser = users.find((u) => u.email === email);
     
     if (isGoogle) {
@@ -116,7 +152,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Prevent account enumeration by giving generic error messages for non-existent users
     // Prevent bypass for oauth-created accounts by explicitly failing if password is undefined
-    if (!existingUser || existingUser.password === undefined || existingUser.password !== password) {
+    if (!existingUser || existingUser.password === undefined) {
+      return { success: false, message: "Email yoki parol xato." };
+    }
+
+    if (password === undefined) {
+      return { success: false, message: "Email yoki parol xato." };
+    }
+
+    // Check if password has a salt delimiter, fallback to plaintext for backward compatibility
+    let isPasswordCorrect = false;
+    if (existingUser.password.includes(":")) {
+      const salt = existingUser.password.split(":")[0];
+      const hashedPassword = await hashPassword(password, salt);
+      isPasswordCorrect = existingUser.password === hashedPassword;
+    } else {
+      isPasswordCorrect = existingUser.password === password;
+    }
+
+    if (!isPasswordCorrect) {
       return { success: false, message: "Email yoki parol xato." };
     }
 
