@@ -1,0 +1,3 @@
+## 2024-05-18 - Keyboard Accessibility for Hover-Visible Elements
+**Learning:** Elements that use hover-based utility classes to become visible (e.g., `opacity-0 group-hover:opacity-100`) become inaccessible to keyboard users because they cannot be seen when focused via Tab navigation. This was observed on the save button in `VideoCardYT.tsx`.
+**Action:** Always pair hover-based visibility utility classes (like `group-hover:opacity-100`) with keyboard focus visibility classes (like `focus-visible:opacity-100`) on interactive elements, and ensure they have visible focus rings (e.g., `focus-visible:ring-2 focus-visible:outline-none`) and `aria-label` attributes if they are icon-only.
